@@ -1,0 +1,31 @@
+package com.businessplatform;
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+
+import org.junit.jupiter.api.Test;
+
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
+
+/** The shared core never depends on a module; modules reach the core through its interfaces. */
+class ArchitectureTest {
+
+    private static final JavaClasses CLASSES = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS).importPackages("com.businessplatform");
+
+    @Test
+    void the_core_does_not_depend_on_modules() {
+        noClasses().that().resideInAnyPackage("..common..", "..identity..", "..org..", "..module..", "..workflow..",
+                "..calendar..", "..activity..", "..notification..", "..file..")
+                .should().dependOnClassesThat().resideInAnyPackage("..project..", "..overview..")
+                .check(CLASSES);
+    }
+
+    @Test
+    void controllers_do_not_use_repositories() {
+        noClasses().that().haveSimpleNameEndingWith("Controller").and().doNotHaveSimpleName("MeController")
+                .should().dependOnClassesThat().haveSimpleNameEndingWith("Repository")
+                .check(CLASSES);
+    }
+}

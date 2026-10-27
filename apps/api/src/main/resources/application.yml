@@ -1,0 +1,45 @@
+server:
+  port: ${PORT:8280}
+
+spring:
+  application:
+    name: business-platform-api
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://127.0.0.1:5433/business_platform}
+    username: ${DATABASE_USERNAME:bizplat}
+    password: ${DATABASE_PASSWORD:bizplat}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+platform:
+  auth:
+    # Required outside local: at least 32 random bytes, Base64 (openssl rand -base64 48).
+    jwt-secret: ${PLATFORM_JWT_SECRET:bG9jYWwtZGV2LW9ubHktc2VjcmV0LWNoYW5nZS1tZS0wMTIzNDU2Nzg5YWJjZGVm}
+    access-ttl: ${PLATFORM_ACCESS_TTL:PT15M}
+    refresh-ttl: ${PLATFORM_REFRESH_TTL:P30D}
+    cookie-secure: ${PLATFORM_COOKIE_SECURE:false}
+  files:
+    dir: ${PLATFORM_FILES_DIR:./data/files}
+  app-url: ${PLATFORM_APP_URL:http://localhost:3300}
+
+springdoc:
+  api-docs:
+    path: /api/docs
+  swagger-ui:
+    path: /api/docs/ui
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

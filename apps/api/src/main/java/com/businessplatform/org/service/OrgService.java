@@ -1,0 +1,285 @@
+package com.businessplatform.org.service;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.businessplatform.common.error.BusinessException;
+import com.businessplatform.common.error.ErrorCode;
+import com.businessplatform.common.persistence.Ids;
+import com.businessplatform.common.security.CurrentUser;
+import com.businessplatform.common.security.Tokens;
+import com.businessplatform.identity.domain.AppUser;
+import com.businessplatform.identity.repository.UserRepository;
+import com.businessplatform.module.domain.Module;
+import com.businessplatform.module.service.ModuleService;
+import com.businessplatform.org.domain.Invitation;
+import com.businessplatform.org.domain.Membership;
+import com.businessplatform.org.domain.OrgRole;
+import com.businessplatform.org.domain.Organisation;
+import com.businessplatform.org.domain.Team;
+import com.businessplatform.org.payload.OrgPayloads.*;
+import com.businessplatform.org.repository.InvitationRepository;
+import com.businessplatform.org.repository.MembershipRepository;
+import com.businessplatform.org.repository.OrganisationRepository;
+import com.businessplatform.org.repository.TeamRepository;
+
+import lombok.RequiredArgsConstructor;
+
+/** Organisations, members, invitations and teams. Owners and Admins manage; everyone else reads. */
+@Service
+@RequiredArgsConstructor
+public class OrgService {
+
+    static final Duration INVITE_TTL = Duration.ofDays(7);
+
+    private final OrganisationRepository orgs;
+    private final MembershipRepository memberships;
+    private final InvitationRepository invitations;
+    private final TeamRepository teams;
+    private final UserRepository users;
+    private final ModuleService modules;
+    private final OrgAccess access;
+    private final Clock clock;
+    private final org.springframework.core.env.Environment env;
+
+    @Transactional
+    public OrgSummary create(CreateOrgRequest in) {
+        UUID me = CurrentUser.id();
+        if (orgs.existsBySlug(in.slug())) {
+            throw BusinessException.field(ErrorCode.CONFLICT, "slug", "This address is taken");
+        }
+        Organisation o = new Organisation();
+        o.setId(Ids.next());
+        o.setSlug(in.slug());
+        o.setName(in.name().strip());
+        o.setCreatedBy(me);
+        orgs.save(o);
+        memberships.save(membership(o.getId(), me, OrgRole.OWNER));
+        modules.set(o.getId(), Module.PROJECTS, true, me);
+        return new OrgSummary(o.getId(), o.getSlug(), o.getName(), OrgRole.OWNER);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrgSummary> mine() {
+        UUID me = CurrentUser.id();
+        List<Membership> ms = memberships.findByUserIdAndStatus(me, Membership.ACTIVE);
+        Map<UUID, Organisation> byId = orgs.findAllById(ms.stream().map(Membership::getOrgId).toList()).stream()
+                .collect(Collectors.toMap(Organisation::getId, Function.identity()));
+        return ms.stream().map(m -> {
+            Organisation o = byId.get(m.getOrgId());
+            return new OrgSummary(o.getId(), o.getSlug(), o.getName(), m.getRole());
+        }).sorted(Comparator.comparing(OrgSummary::name, String.CASE_INSENSITIVE_ORDER)).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public OrgContextResponse context(String slug) {
+        OrgContext ctx = access.require(slug);
+        Set<String> on = modules.enabled(ctx.orgId());
+        List<ModuleState> states = modules.registry().stream()
+                .map(m -> new ModuleState(m.getKey(), m.getNameEn(), m.getNameKm(), m.getKind(), m.available(),
+                        on.contains(m.getKey())))
+                .toList();
+        return new OrgContextResponse(new OrgSummary(ctx.orgId(), ctx.slug(), ctx.orgName(), ctx.role()),
+                Permissions.of(ctx, on), states);
+    }
+
+    @Transactional
+    public OrgSummary update(String slug, UpdateOrgRequest in) {
+        OrgContext ctx = access.requireAdmin(slug);
+        Organisation o = orgs.findById(ctx.orgId()).orElseThrow();
+        o.setName(in.name().strip());
+        return new OrgSummary(o.getId(), o.getSlug(), o.getName(), ctx.role());
+    }
+
+    @Transactional
+    public void setModule(String slug, String key, boolean on) {
+        OrgContext ctx = access.requireAdmin(slug);
+        modules.set(ctx.orgId(), key, on, ctx.userId());
+    }
+
+    // ── Members ──────────────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<MemberResponse> members(String slug) {
+        OrgContext ctx = access.require(slug);
+        List<Membership> ms = memberships.findByOrgIdOrderByCreatedAt(ctx.orgId());
+        Map<UUID, AppUser> people = users.findByIdIn(ms.stream().map(Membership::getUserId).toList()).stream()
+                .collect(Collectors.toMap(AppUser::getId, Function.identity()));
+        return ms.stream()
+                .filter(m -> ctx.isAdmin() || Membership.ACTIVE.equals(m.getStatus()))
+                .map(m -> toMember(m, people.get(m.getUserId()))).toList();
+    }
+
+    @Transactional
+    public MemberResponse updateMember(String slug, UUID membershipId, UpdateMemberRequest in) {
+        OrgContext ctx = access.requireAdmin(slug);
+        Membership m = memberships.findById(membershipId).filter(x -> x.getOrgId().equals(ctx.orgId()))
+                .orElseThrow(BusinessException::notFound);
+        boolean touchesOwner = m.getRole() == OrgRole.OWNER || in.role() == OrgRole.OWNER;
+        if (touchesOwner && ctx.role() != OrgRole.OWNER) {
+            throw BusinessException.forbidden();
+        }
+        boolean losesOwner = m.getRole() == OrgRole.OWNER
+                && ((in.role() != null && in.role() != OrgRole.OWNER) || Membership.SUSPENDED.equals(in.status()));
+        if (losesOwner && memberships.countByOrgIdAndRoleAndStatus(ctx.orgId(), OrgRole.OWNER, Membership.ACTIVE) <= 1) {
+            throw BusinessException.field(ErrorCode.INVALID_STATE, "role", "An organisation needs at least one owner");
+        }
+        if (in.role() != null) {
+            m.setRole(in.role());
+        }
+        if (in.status() != null) {
+            m.setStatus(in.status());
+        }
+        if (in.title() != null) {
+            m.setTitle(in.title().isBlank() ? null : in.title().strip());
+        }
+        return toMember(m, users.findById(m.getUserId()).orElseThrow());
+    }
+
+    // ── Invitations ──────────────────────────────────────────────────────────────────
+
+    @Transactional
+    public InvitationResponse invite(String slug, InviteRequest in) {
+        OrgContext ctx = access.requireAdmin(slug);
+        if (in.role() == OrgRole.OWNER) {
+            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "role", "Invite as Admin, Member or Guest");
+        }
+        String email = in.email().strip().toLowerCase(java.util.Locale.ROOT);
+        users.findByEmail(email).ifPresent(u -> {
+            if (memberships.existsByOrgIdAndUserIdAndStatus(ctx.orgId(), u.getId(), Membership.ACTIVE)) {
+                throw BusinessException.field(ErrorCode.CONFLICT, "email", "Already a member");
+            }
+        });
+        String token = Tokens.random();
+        Invitation i = new Invitation();
+        i.setId(Ids.next());
+        i.setOrgId(ctx.orgId());
+        i.setEmail(email);
+        i.setRole(in.role());
+        i.setTokenHash(Tokens.sha256(token));
+        i.setInvitedBy(ctx.userId());
+        i.setCreatedAt(clock.instant());
+        i.setExpiresAt(clock.instant().plus(INVITE_TTL));
+        invitations.save(i);
+        return new InvitationResponse(i.getId(), email, i.getRole(), i.getExpiresAt(), link(token));
+    }
+
+    @Transactional(readOnly = true)
+    public List<InvitationResponse> pendingInvitations(String slug) {
+        OrgContext ctx = access.requireAdmin(slug);
+        return invitations.findByOrgIdAndAcceptedAtIsNullAndRevokedAtIsNullOrderByCreatedAtDesc(ctx.orgId()).stream()
+                .map(i -> new InvitationResponse(i.getId(), i.getEmail(), i.getRole(), i.getExpiresAt(), null)).toList();
+    }
+
+    @Transactional
+    public void revokeInvitation(String slug, UUID id) {
+        OrgContext ctx = access.requireAdmin(slug);
+        Invitation i = invitations.findById(id).filter(x -> x.getOrgId().equals(ctx.orgId()))
+                .orElseThrow(BusinessException::notFound);
+        i.setRevokedAt(clock.instant());
+    }
+
+    @Transactional(readOnly = true)
+    public InvitationPreview preview(String token) {
+        Invitation i = live(token, false);
+        Organisation o = orgs.findById(i.getOrgId()).orElseThrow();
+        return new InvitationPreview(o.getName(), i.getEmail(), i.getRole(), !i.getExpiresAt().isAfter(clock.instant()));
+    }
+
+    /** Joins the organisation; the signed-in account's email must be the invited one. */
+    @Transactional
+    public OrgSummary accept(String token) {
+        Invitation i = live(token, true);
+        AppUser me = users.findById(CurrentUser.id()).orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+        if (!me.getEmail().equalsIgnoreCase(i.getEmail())) {
+            throw BusinessException.field(ErrorCode.FORBIDDEN, "email", "This invitation is for another email address");
+        }
+        Membership m = memberships.findByOrgIdAndUserId(i.getOrgId(), me.getId()).orElse(null);
+        if (m == null) {
+            m = memberships.save(membership(i.getOrgId(), me.getId(), i.getRole()));
+        } else {
+            m.setStatus(Membership.ACTIVE);
+        }
+        i.setAcceptedAt(clock.instant());
+        Organisation o = orgs.findById(i.getOrgId()).orElseThrow();
+        return new OrgSummary(o.getId(), o.getSlug(), o.getName(), m.getRole());
+    }
+
+    // ── Teams ────────────────────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<TeamResponse> teams(String slug) {
+        OrgContext ctx = access.require(slug);
+        return teams.findByOrgIdOrderByName(ctx.orgId()).stream()
+                .map(t -> new TeamResponse(t.getId(), t.getName(), teams.memberIds(t.getId()))).toList();
+    }
+
+    @Transactional
+    public TeamResponse saveTeam(String slug, UUID id, TeamRequest in) {
+        OrgContext ctx = access.requireAdmin(slug);
+        Team t = id == null ? new Team() : teams.findByIdAndOrgId(id, ctx.orgId()).orElseThrow(BusinessException::notFound);
+        if (id == null) {
+            t.setId(Ids.next());
+            t.setOrgId(ctx.orgId());
+            t.setCreatedAt(clock.instant());
+        }
+        t.setName(in.name().strip());
+        teams.saveAndFlush(t);
+        List<UUID> wanted = in.membershipIds() == null ? List.of() : in.membershipIds().stream().distinct().toList();
+        Set<UUID> valid = memberships.findAllById(wanted).stream().filter(m -> m.getOrgId().equals(ctx.orgId()))
+                .map(Membership::getId).collect(Collectors.toSet());
+        if (valid.size() != wanted.size()) {
+            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "membershipIds", "Unknown member");
+        }
+        teams.clearMembers(t.getId());
+        wanted.forEach(mid -> teams.addMember(t.getId(), mid));
+        return new TeamResponse(t.getId(), t.getName(), wanted);
+    }
+
+    @Transactional
+    public void deleteTeam(String slug, UUID id) {
+        OrgContext ctx = access.requireAdmin(slug);
+        teams.delete(teams.findByIdAndOrgId(id, ctx.orgId()).orElseThrow(BusinessException::notFound));
+    }
+
+    private Invitation live(String token, boolean mustBeValid) {
+        Invitation i = invitations.findByTokenHash(Tokens.sha256(Objects.toString(token, "")))
+                .filter(x -> x.getRevokedAt() == null && x.getAcceptedAt() == null)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
+        if (mustBeValid && !i.getExpiresAt().isAfter(clock.instant())) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+        return i;
+    }
+
+    private Membership membership(UUID orgId, UUID userId, OrgRole role) {
+        Membership m = new Membership();
+        m.setId(Ids.next());
+        m.setOrgId(orgId);
+        m.setUserId(userId);
+        m.setRole(role);
+        m.setCreatedAt(Instant.now(clock));
+        return m;
+    }
+
+    private String link(String token) {
+        return env.getProperty("platform.app-url", "http://localhost:3300") + "/invite/" + token;
+    }
+
+    private static MemberResponse toMember(Membership m, AppUser u) {
+        return new MemberResponse(m.getId(), u.getId(), u.getName(), u.getEmail(), u.getAvatarUrl(), m.getRole(),
+                m.getStatus(), m.getTitle(), m.getCreatedAt());
+    }
+}
