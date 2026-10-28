@@ -25,6 +25,7 @@ public final class Permissions {
         }
         if (!ctx.isGuest()) {
             p.add("calendar.create");
+            p.add("reports.view");
         }
         if (ctx.isAdmin()) {
             p.addAll(List.of("org.settings.manage", "org.members.manage", "org.modules.manage",

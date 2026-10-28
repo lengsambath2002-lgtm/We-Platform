@@ -94,3 +94,8 @@ Only a request with changes requested can be resubmitted = អាចដាក់
 This request is already closed = សំណើនេះបានបិទរួចហើយ
 This kind of record can't be approved = មិនអាចអនុម័តកំណត់ត្រាប្រភេទនេះបានទេ
 Say why = សូមប្រាប់មូលហេតុ
+
+# Reports
+The start date must be on or before the end date = ថ្ងៃចាប់ផ្ដើមត្រូវតែនៅមុន ឬត្រូវនឹងថ្ងៃបញ្ចប់
+Choose at most 366 days = សូមជ្រើសរើសមិនលើសពី 366 ថ្ងៃ
+Between 1 and 365 days = ចន្លោះពី 1 ដល់ 365 ថ្ងៃ
