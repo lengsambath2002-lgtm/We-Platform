@@ -7,7 +7,15 @@ pnpm install
 pnpm dev            # http://localhost:3300 — /api/* is proxied to API_URL (default http://localhost:8280)
 pnpm typecheck
 pnpm lint
-pnpm test:e2e       # Playwright journeys; start the API (apps/api: ./gradlew bootRun) and `pnpm dev` first
+pnpm test:e2e       # Playwright journeys; start the API (apps/api: ./gradlew bootRun) and the web app first
+```
+
+The browser tests are most reliable against a production build (as CI runs them); `pnpm dev` compiles
+each page on first visit and can time out on a busy machine:
+
+```bash
+pnpm build && cp -R .next/static .next/standalone/.next/static && cp -R public .next/standalone/public
+PORT=3300 node .next/standalone/server.js   # then, in another terminal: pnpm test:e2e
 ```
 
 - `src/app/[org]/…` — pages inside an organisation (overview, my tasks, projects, tasks, approvals, calendar, teams, admin, `m/[module]` for modules not built yet).

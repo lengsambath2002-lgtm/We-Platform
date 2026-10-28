@@ -8,6 +8,8 @@ export default defineConfig({
   testDir: './e2e',
   timeout: 120_000, // the dev server compiles each page on first visit
   fullyParallel: false,
+  // Two browsers at a time: a dev server compiles pages on demand and stalls under more.
+  workers: 2,
   reporter: [['list']],
   use: { baseURL: process.env.WEB_URL ?? 'http://localhost:3300', trace: 'retain-on-failure' },
   projects: [
