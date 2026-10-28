@@ -30,8 +30,8 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 
 /**
- * Stateless API: a signed access token (HS256) in {@code Authorization: Bearer}; sign-in, refresh
- * and the docs are public. Organisation and project rules are checked in the services.
+ * Stateless API: a signed access token (HS256) in {@code Authorization: Bearer}; sign-in, refresh,
+ * the docs and the OpenID Connect provider's client-facing endpoints are public. Organisation and project rules are checked in the services.
  */
 @Configuration
 public class SecurityConfig {
@@ -42,6 +42,12 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/invitations/*").permitAll()
+                        // OpenID Connect: metadata, keys and the authorize page's check are public; the token and
+                        // shop-link endpoints authenticate the client themselves (HTTP Basic / body credentials).
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/oidc/.well-known/openid-configuration",
+                                "/api/oidc/jwks", "/api/oidc/authorize/check").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/oidc/token").permitAll()
+                        .requestMatchers("/api/integrations/virtualbiz/links/*").permitAll()
                         .requestMatchers("/api/auth/**", "/api/docs/**",
                                 "/actuator/health", "/error").permitAll()
                         .anyRequest().authenticated())

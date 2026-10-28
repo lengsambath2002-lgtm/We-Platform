@@ -50,6 +50,27 @@ reach anyone. On a development or test server that uses a real mailbox (e.g. Gma
 password: host `smtp.gmail.com`, port 587), set `PLATFORM_MAIL_ONLY_TO` to the addresses that may get
 real email; everyone else is only logged, so test sign-ups never bounce off the mailbox.
 
+**Single sign-on for VirtualBiz** (the Retail & Commerce module; contract in
+`docs/integrations/virtualbiz-sso.md`). The platform is an OpenID Connect provider (code + PKCE S256,
+RS256 ID tokens):
+
+- `PLATFORM_OIDC_SIGNING_KEY`: an RSA private key (2048 bits or more), PKCS#8 PEM, base64-encoded on one line:
+  `openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 | base64 | tr -d '\n'`.
+  Without it the API generates a temporary key at start-up only when `PLATFORM_ENV=local` (ID tokens stop
+  verifying after a restart); with clients configured, production refuses to start without it.
+- `PLATFORM_OIDC_CLIENTS`: the registered clients as one JSON array; only the SHA-256 of each secret is stored:
+  `[{"id":"virtualbiz","name":"VirtualBiz","secretHash":"<hex>","redirectUris":["https://shop.example.com/platform/callback"]}]`.
+  Make a secret and its hash with `SECRET=$(openssl rand -base64 32)` and
+  `printf %s "$SECRET" | shasum -a 256 | cut -d' ' -f1`; give `$SECRET` to VirtualBiz
+  (`VBIZ_PLATFORM_CLIENT_SECRET`) and keep only the hash here. In production every redirect URI must be `https://`.
+  With `PLATFORM_ENV=local` a development client `virtualbiz-local` (secret `local-dev-secret`, redirects
+  `http://localhost:3000/platform/callback` and `http://localhost:3100/platform/callback`) is always registered.
+- `PLATFORM_VIRTUALBIZ_URL`: VirtualBiz's web origin. Retail & Commerce can be switched on only when it is set.
+
+Endpoints: `/api/oidc/.well-known/openid-configuration`, `/api/oidc/jwks`, `/api/oidc/token`, the page
+`/oauth/authorize`, and the shop-link API `PUT|DELETE /api/integrations/virtualbiz/links/{businessId}`
+(HTTP Basic client credentials). People see and revoke approved apps on the account page (Connected apps).
+
 ## CI
 
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request: API tests against

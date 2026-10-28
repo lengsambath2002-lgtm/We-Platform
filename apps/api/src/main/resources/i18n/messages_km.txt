@@ -181,3 +181,7 @@ Leave cancelled: {title} = បានលុបចោលច្បាប់ឈប�
 There is already a holiday on this day = មានថ្ងៃឈប់សម្រាកនៅថ្ងៃនេះរួចហើយ
 This year's official holidays aren't built in yet; add them one by one = ថ្ងៃឈប់សម្រាកផ្លូវការនៃឆ្នាំនេះមិនទាន់មានក្នុងប្រព័ន្ធនៅឡើយ សូមបន្ថែមម្ដងមួយៗ
 These days are all weekends or public holidays = ថ្ងៃទាំងនេះសុទ្ធតែជាថ្ងៃចុងសប្ដាហ៍ ឬថ្ងៃឈប់សម្រាកសាធារណៈ
+
+# Single sign-on (OpenID Connect) and Retail & Commerce
+This app or its return address is not registered with the platform = កម្មវិធីនេះ ឬអាសយដ្ឋានត្រឡប់របស់វា មិនបានចុះឈ្មោះជាមួយវេទិកាទេ
+Retail & Commerce needs VirtualBiz: the server administrator must set PLATFORM_VIRTUALBIZ_URL first = លក់រាយ និងពាណិជ្ជកម្ម ត្រូវការ VirtualBiz៖ អ្នកគ្រប់គ្រងម៉ាស៊ីនមេត្រូវកំណត់ PLATFORM_VIRTUALBIZ_URL ជាមុនសិន

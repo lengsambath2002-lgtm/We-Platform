@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import com.businessplatform.common.api.ApiResponse;
-import com.businessplatform.module.domain.Module;
 import com.businessplatform.module.service.ModuleService;
 import com.businessplatform.org.payload.OrgPayloads.*;
 import com.businessplatform.org.service.OrgService;
@@ -60,8 +59,8 @@ public class OrgController {
     }
 
     @GetMapping("/api/modules")
-    public ResponseEntity<ApiResponse<List<Module>>> registry() {
-        return ResponseEntity.ok(ApiResponse.ok(modules.registry()));
+    public ResponseEntity<ApiResponse<List<ModuleService.ModuleInfo>>> registry() {
+        return ResponseEntity.ok(ApiResponse.ok(modules.catalogue()));
     }
 
     @PutMapping("/api/orgs/{org}/modules/{key}")

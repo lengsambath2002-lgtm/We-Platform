@@ -45,6 +45,16 @@ platform:
     # Development/test servers on a real mailbox: only these addresses (comma-separated) get real email.
     only-to: ${PLATFORM_MAIL_ONLY_TO:}
 
+  # OpenID Connect provider for VirtualBiz single sign-on (docs/integrations/virtualbiz-sso.md).
+  oidc:
+    # RSA private key, PKCS#8 PEM, base64-encoded (see README). Generated at start-up when environment=local.
+    signing-key: ${PLATFORM_OIDC_SIGNING_KEY:}
+    # JSON array: [{"id":"virtualbiz","name":"VirtualBiz","secretHash":"<sha-256 hex>","redirectUris":["https://…/platform/callback"]}]
+    clients-json: ${PLATFORM_OIDC_CLIENTS:}
+  # VirtualBiz's web origin; the Retail & Commerce module is available only when set.
+  virtualbiz:
+    url: ${PLATFORM_VIRTUALBIZ_URL:}
+
 springdoc:
   api-docs:
     path: /api/docs

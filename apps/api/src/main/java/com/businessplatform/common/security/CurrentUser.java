@@ -23,6 +23,12 @@ public final class CurrentUser {
         throw new BusinessException(ErrorCode.UNAUTHORIZED);
     }
 
+    /** The signed-in user's id, or null on a public endpoint called without a valid access token. */
+    public static UUID optionalId() {
+        Authentication a = SecurityContextHolder.getContext().getAuthentication();
+        return a != null && a.getPrincipal() instanceof Jwt jwt ? UUID.fromString(jwt.getSubject()) : null;
+    }
+
     /** The session (device) the access token was issued to, from its {@code sid} claim; null if none. */
     public static UUID sessionId() {
         Authentication a = SecurityContextHolder.getContext().getAuthentication();

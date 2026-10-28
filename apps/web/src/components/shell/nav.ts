@@ -16,8 +16,8 @@ import {
   Settings,
   type LucideIcon,
   ScrollText,
-  ShoppingCart,
   SlidersHorizontal,
+  Store,
   UserCog,
   Users,
   Wrench,
@@ -67,13 +67,13 @@ export const MODULE_ICON: Record<string, LucideIcon> = {
   projects: FolderKanban,
   business: Briefcase,
   education: GraduationCap,
-  retail: ShoppingCart,
+  retail: Store,
   hr: Users,
   service: Wrench,
 };
 
-/** Where a switched-on module lives: built modules have their own pages, the others a "planned" page. */
-export const moduleHref = (key: string) => (key === 'projects' ? 'projects' : key === 'hr' ? 'hr' : `m/${key}`);
+/** Where a switched-on module lives: built modules (projects, HR, retail) have their own pages, the others a "planned" page. */
+export const moduleHref = (key: string) => (['projects', 'hr', 'retail'].includes(key) ? key : `m/${key}`);
 
 /** HR's pages for the sidebar and HR's tabs, filtered by permission (the server re-checks). */
 export function hrNav(ctx: OrgContext): NavItem[] {

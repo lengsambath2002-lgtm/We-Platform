@@ -23,6 +23,7 @@ export default function ModulePage() {
   if (!m) notFound();
   if (m.key === 'projects') redirect(`/${slug}/projects`);
   if (m.key === 'hr' && m.available) redirect(`/${slug}/hr`);
+  if (m.key === 'retail' && m.available) redirect(`/${slug}/retail`);
   const Icon = MODULE_ICON[m.key] ?? Blocks;
   const planned = plannedKey(m.key);
 
