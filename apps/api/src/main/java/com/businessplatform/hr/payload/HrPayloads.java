@@ -78,6 +78,17 @@ public final class HrPayloads {
             boolean canEdit, boolean canEditContact) {
     }
 
+    public record HolidayRequest(@NotNull LocalDate date, @NotBlank @Size(max = 120) String nameEn,
+            @Size(max = 120) String nameKm) {
+    }
+
+    public record HolidayView(UUID id, LocalDate date, String nameEn, String nameKm) {
+    }
+
+    /** {@code added}: new days; {@code kept}: days that already had a holiday. */
+    public record HolidayImportResult(int added, int kept) {
+    }
+
     public record LeaveTypeView(UUID id, String nameEn, String nameKm, boolean paid, BigDecimal allowanceDays,
             boolean halfDays, boolean active) {
     }

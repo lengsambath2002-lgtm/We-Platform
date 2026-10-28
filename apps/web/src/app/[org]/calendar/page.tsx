@@ -3,7 +3,7 @@
 import {
   addDays, addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfDay, startOfMonth, startOfWeek,
 } from 'date-fns';
-import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Clock, Flag, FolderKanban, MapPin, Palmtree, Plus, Users } from 'lucide-react';
+import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Clock, Flag, FolderKanban, Landmark, MapPin, Palmtree, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
@@ -29,10 +29,10 @@ const iso = (d: Date) => format(d, 'yyyy-MM-dd');
 type Item = { kind: 'event'; e: CalendarEvent } | { kind: 'deadline'; d: Deadline } | { kind: 'period'; p: Period };
 const keyOf = (it: Item) => (it.kind === 'event' ? it.e.id : it.kind === 'deadline' ? it.d.id : `${it.p.id}`);
 
-/** Periods (approved leave) show on the working days they cover, like they are counted. */
+/** Approved leave shows on the working days it covers, like it is counted; a public holiday on its day, whatever the weekday. */
 function periodOn(p: Period, day: Date) {
   const d = iso(day);
-  return p.start <= d && p.end >= d && day.getDay() !== 0 && day.getDay() !== 6;
+  return p.start <= d && p.end >= d && (p.kind === 'holiday' || (day.getDay() !== 0 && day.getDay() !== 6));
 }
 
 function itemsOn(day: Date, events: CalendarEvent[], deadlines: Deadline[], periods: Period[] = []): Item[] {
@@ -49,10 +49,12 @@ function itemsOn(day: Date, events: CalendarEvent[], deadlines: Deadline[], peri
 function Chip({ item, compact, onOpen }: { org: string; item: Item; compact?: boolean; onOpen: (e: CalendarEvent) => void }) {
   if (item.kind === 'period') {
     const { p } = item;
-    const label = p.kind === 'leave' ? tr('hr.calAway', { name: p.title }) : p.title;
+    const holiday = p.kind === 'holiday';
+    const label = p.kind === 'leave' ? tr('hr.calAway', { name: p.title }) : holiday ? tr('hr.calHoliday', { name: p.title }) : p.title;
+    const Icon = holiday ? Landmark : Palmtree;
     return (
       <Link href={p.link} className="flex items-center gap-1 truncate rounded bg-muted px-1.5 py-0.5 text-xs text-foreground hover:underline" title={label}>
-        <Palmtree className="size-3 shrink-0 text-muted-foreground" aria-hidden /><span className="truncate">{compact ? p.title : label}</span>
+        <Icon className="size-3 shrink-0 text-muted-foreground" aria-hidden /><span className="truncate">{compact ? p.title : label}</span>
       </Link>
     );
   }

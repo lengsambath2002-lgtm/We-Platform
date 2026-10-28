@@ -7,6 +7,7 @@ import { Suspense, useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { PersonAvatar } from '@/components/common/person';
 import { EmptyState, ErrorState, ListSkeleton, PermissionDenied } from '@/components/common/states';
+import { Holidays } from '@/components/hr/holidays';
 import { BalanceCards, daysText, typeName } from '@/components/hr/leave-ui';
 import { AdjustDialog, LeaveTypeDialog } from '@/components/hr/settings-dialogs';
 import { Button } from '@/components/ui/button';
@@ -129,14 +130,15 @@ function HrSettings() {
   const params = useSearchParams();
   const router = useRouter();
   if (!can('hr.manage')) return <PermissionDenied />;
-  const tab = params.get('tab') === 'balances' || params.get('person') ? 'balances' : 'types';
+  const tab = params.get('tab') === 'balances' || params.get('person') ? 'balances' : params.get('tab') === 'holidays' ? 'holidays' : 'types';
   return (
     <>
       <PageHeader title={t('hr.settingsTitle')} subtitle={t('hr.settingsSubtitle')} />
-      <Tabs value={tab} onValueChange={(v) => router.replace(`/${slug}/hr/settings${v === 'balances' ? '?tab=balances' : ''}`, { scroll: false })}>
-        <TabsList className="mb-4"><TabsTrigger value="types">{t('hr.leaveTypes')}</TabsTrigger><TabsTrigger value="balances">{t('hr.balances')}</TabsTrigger></TabsList>
+      <Tabs value={tab} onValueChange={(v) => router.replace(`/${slug}/hr/settings${v === 'types' ? '' : `?tab=${v}`}`, { scroll: false })}>
+        <TabsList className="mb-4"><TabsTrigger value="types">{t('hr.leaveTypes')}</TabsTrigger><TabsTrigger value="balances">{t('hr.balances')}</TabsTrigger><TabsTrigger value="holidays">{t('hr.holidays')}</TabsTrigger></TabsList>
         <TabsContent value="types"><LeaveTypes org={slug} /></TabsContent>
         <TabsContent value="balances"><Balances org={slug} /></TabsContent>
+        <TabsContent value="holidays"><Holidays org={slug} /></TabsContent>
       </Tabs>
     </>
   );

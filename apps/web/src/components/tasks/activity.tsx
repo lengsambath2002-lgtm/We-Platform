@@ -83,6 +83,9 @@ export function describe(a: ActivityItem, moduleName: (key: string) => string = 
     case 'employee.updated': return tr('hr.actProfileUpdated', { name: s(d.name) });
     case 'leave_type.created': return tr('hr.actTypeCreated', { name: s(d.name) });
     case 'leave_type.updated': return tr('hr.actTypeUpdated', { name: s(d.name) });
+    case 'holiday.added': return tr('hr.actHolidayAdded', { name: s(d.name), date: day(s(d.date)) });
+    case 'holiday.removed': return tr('hr.actHolidayRemoved', { name: s(d.name), date: day(s(d.date)) });
+    case 'holiday.imported': return tr('hr.actHolidaysImported', { year: String(d.year ?? ''), count: Number(d.added ?? 0) });
     case 'approval.requested': return tr('tasks.actApprovalRequested', { workflow: s(d.workflow) });
     case 'approval.step.approved': return tr('tasks.actStepApproved');
     case 'approval.approved': return tr('tasks.actApproved');

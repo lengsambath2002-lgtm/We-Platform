@@ -16,7 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useT } from '@/i18n/provider';
-import { hrApi, useBalances, useLeaveTypes, workingDays } from '@/lib/api/hr';
+import { hrApi, useBalances, useHolidays, useLeaveTypes, workingDays } from '@/lib/api/hr';
 import { useOrgMutation } from '@/lib/api/queries';
 
 import { daysText, typeName } from './leave-ui';
@@ -56,7 +56,10 @@ export function RequestLeaveDialog({ org, open, onOpenChange }: { org: string; o
   const types = (typeList.data ?? []).filter((x) => x.active)
     .map((type) => ({ type, remaining: type.allowanceDays === null ? null : balances.data?.find((b) => b.type.id === type.id)?.remaining }));
   const chosen = types.find((b) => b.type.id === v.leaveTypeId);
-  const days = workingDays(v.startDate, v.endDate, v.halfStart, v.halfEnd);
+  const holidayList = useHolidays(org, year);
+  const holidays = useMemo(() => new Set((holidayList.data ?? []).map((x) => x.date)), [holidayList.data]);
+  const days = workingDays(v.startDate, v.endDate, v.halfStart, v.halfEnd, holidays);
+  const skipped = workingDays(v.startDate, v.endDate, false, false) - workingDays(v.startDate, v.endDate, false, false, holidays);
   const tooMany = chosen?.remaining != null && days > chosen.remaining;
   const send = useOrgMutation(org, (x: Values) => hrApi.requestLeave(org, { ...x, reason: x.reason || null }));
   const onSubmit = form.handleSubmit(async (x) => {
@@ -121,6 +124,7 @@ export function RequestLeaveDialog({ org, open, onOpenChange }: { org: string; o
             {days > 0 && (
               <p className={tooMany ? 'rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive' : 'rounded-md bg-muted px-3 py-2 text-sm'} aria-live="polite">
                 {t('hr.takes', { days: daysText(days) })}
+                {skipped > 0 && ` · ${t('hr.holidaysSkipped', { count: skipped })}`}
                 {chosen?.remaining != null && ` · ${tooMany ? t('hr.notEnoughLeft', { count: chosen.remaining }) : t('hr.leavesLeft', { count: chosen.remaining - days })}`}
               </p>
             )}

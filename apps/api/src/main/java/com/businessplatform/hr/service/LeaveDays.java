@@ -3,11 +3,11 @@ package com.businessplatform.hr.service;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.Set;
 
 /**
- * Working days in a leave request: Monday to Friday count, weekends don't. A half first day (starts at
- * midday) or half last day (ends at midday) counts 0.5. Public holidays are not known yet, so they count
- * as working days (HR can adjust a balance when that matters).
+ * Working days in a leave request: Monday to Friday count; weekends and the organisation's public
+ * holidays don't. A half first day (starts at midday) or half last day (ends at midday) counts 0.5.
  */
 public final class LeaveDays {
 
@@ -16,10 +16,11 @@ public final class LeaveDays {
     private LeaveDays() {
     }
 
-    public static BigDecimal count(LocalDate start, LocalDate end, boolean halfStart, boolean halfEnd) {
+    public static BigDecimal count(LocalDate start, LocalDate end, boolean halfStart, boolean halfEnd,
+            Set<LocalDate> holidays) {
         BigDecimal total = BigDecimal.ZERO.setScale(1);
         for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
-            if (!working(d)) {
+            if (!working(d) || holidays.contains(d)) {
                 continue;
             }
             boolean half = (halfStart && d.equals(start)) || (halfEnd && d.equals(end));

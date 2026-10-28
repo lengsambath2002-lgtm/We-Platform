@@ -118,6 +118,13 @@ const qs = (o: object) => {
   return s ? `?${s}` : '';
 };
 
+export interface Holiday {
+  id: string;
+  date: string;
+  nameEn: string;
+  nameKm: string;
+}
+
 export const hrKeys = {
   all: (org: string) => ['org', org, 'hr'] as const,
   people: (org: string) => ['org', org, 'hr', 'people'] as const,
@@ -129,6 +136,7 @@ export const hrKeys = {
   leaves: (org: string, f: LeaveFilter) => ['org', org, 'hr', 'leaves', f] as const,
   leave: (org: string, id: string) => ['org', org, 'hr', 'leave', id] as const,
   absences: (org: string, from: string, to: string) => ['org', org, 'hr', 'absences', from, to] as const,
+  holidays: (org: string, year: number) => ['org', org, 'hr', 'holidays', year] as const,
 };
 
 export const usePeople = (org: string) =>
@@ -151,6 +159,9 @@ export const useLeave = (org: string, id: string) =>
 export const useAbsences = (org: string, from: string, to: string) =>
   useQuery({ queryKey: hrKeys.absences(org, from, to), queryFn: () => http.get<Absence[]>(`${h(org)}/absences?from=${from}&to=${to}`) });
 
+export const useHolidays = (org: string, year: number) =>
+  useQuery({ queryKey: hrKeys.holidays(org, year), queryFn: () => http.get<Holiday[]>(`${h(org)}/holidays?year=${year}`) });
+
 export const hrApi = {
   updateProfile: (org: string, userId: string, body: unknown) => http.put<Profile>(`${h(org)}/people/${userId}`, body),
   updateContact: (org: string, body: unknown) => http.put<Profile>(`${h(org)}/me/contact`, body),
@@ -160,10 +171,13 @@ export const hrApi = {
   requestLeave: (org: string, body: unknown) => http.post<Leave>(`${h(org)}/leave`, body),
   withdraw: (org: string, id: string) => http.post<Leave>(`${h(org)}/leave/${id}/withdraw`),
   cancel: (org: string, id: string, reason: string | null) => http.post<Leave>(`${h(org)}/leave/${id}/cancel`, { reason }),
+  addHoliday: (org: string, body: unknown) => http.post<Holiday>(`${h(org)}/holidays`, body),
+  removeHoliday: (org: string, id: string) => http.delete<void>(`${h(org)}/holidays/${id}`),
+  importCambodia: (org: string, year: number) => http.post<{ added: number; kept: number }>(`${h(org)}/holidays/cambodia/${year}`),
 };
 
-/** Working days between two yyyy-MM-dd dates (Mon–Fri), as the API counts them. */
-export function workingDays(start: string, end: string, halfStart: boolean, halfEnd: boolean): number {
+/** Working days between two yyyy-MM-dd dates (Mon–Fri, not public holidays), as the API counts them. */
+export function workingDays(start: string, end: string, halfStart: boolean, halfEnd: boolean, holidays: ReadonlySet<string> = new Set()): number {
   if (!start || !end || end < start) return 0;
   let total = 0;
   const last = new Date(`${end}T00:00:00`);
@@ -171,6 +185,7 @@ export function workingDays(start: string, end: string, halfStart: boolean, half
     const wd = d.getDay();
     if (wd === 0 || wd === 6) continue;
     const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (holidays.has(iso)) continue;
     total += (halfStart && iso === start) || (halfEnd && iso === end) ? 0.5 : 1;
   }
   return total;

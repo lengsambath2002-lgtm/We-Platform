@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -108,12 +109,54 @@ class HrTest extends IntegrationTest {
     void working_days_skip_weekends_and_count_half_days() {
         LocalDate fri = LocalDate.of(2027, 3, 5);
         LocalDate mon = LocalDate.of(2027, 3, 8);
-        assertThat(LeaveDays.count(fri, mon, false, false)).isEqualByComparingTo("2");
-        assertThat(LeaveDays.count(fri, mon, true, false)).isEqualByComparingTo("1.5");
-        assertThat(LeaveDays.count(fri, mon, true, true)).isEqualByComparingTo("1");
-        assertThat(LeaveDays.count(fri, fri, true, false)).isEqualByComparingTo("0.5");
-        assertThat(LeaveDays.count(LocalDate.of(2027, 3, 1), LocalDate.of(2027, 3, 12), false, false)).isEqualByComparingTo("10");
-        assertThat(LeaveDays.count(LocalDate.of(2027, 3, 6), LocalDate.of(2027, 3, 7), false, false)).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(LeaveDays.count(fri, mon, false, false, Set.of())).isEqualByComparingTo("2");
+        assertThat(LeaveDays.count(fri, mon, true, false, Set.of())).isEqualByComparingTo("1.5");
+        assertThat(LeaveDays.count(fri, mon, true, true, Set.of())).isEqualByComparingTo("1");
+        assertThat(LeaveDays.count(fri, fri, true, false, Set.of())).isEqualByComparingTo("0.5");
+        assertThat(LeaveDays.count(LocalDate.of(2027, 3, 1), LocalDate.of(2027, 3, 12), false, false, Set.of())).isEqualByComparingTo("10");
+        assertThat(LeaveDays.count(LocalDate.of(2027, 3, 6), LocalDate.of(2027, 3, 7), false, false, Set.of())).isEqualByComparingTo(BigDecimal.ZERO);
+        // Monday 8 March 2027 is Women's Day: a holiday doesn't count.
+        assertThat(LeaveDays.count(fri, mon, false, false, Set.of(mon))).isEqualByComparingTo("1");
+    }
+
+    @Test
+    void public_holidays_are_imported_and_not_counted_as_leave() throws Exception {
+        Setup s = setup();
+        assertThat(code(call(s.employee(), HttpMethod.POST, s.hr() + "/holidays/cambodia/2027", null))).isEqualTo("FORBIDDEN");
+        JsonNode first = ok(call(s.owner(), HttpMethod.POST, s.hr() + "/holidays/cambodia/2027", null)).path("data");
+        assertThat(first.path("added").asInt()).isEqualTo(22);
+        assertThat(ok(call(s.owner(), HttpMethod.POST, s.hr() + "/holidays/cambodia/2027", null)).path("data")
+                .path("kept").asInt()).isEqualTo(22);
+        assertThat(code(call(s.owner(), HttpMethod.POST, s.hr() + "/holidays/cambodia/2031", null))).isEqualTo("VALIDATION_FAILED");
+
+        JsonNode list = ok(call(s.employee(), HttpMethod.GET, s.hr() + "/holidays?year=2027", null)).path("data");
+        assertThat(list).hasSize(22);
+        assertThat(list.findValuesAsText("nameEn")).contains("Water Festival", "Pchum Ben Festival");
+        assertThat(code(call(s.owner(), HttpMethod.POST, s.hr() + "/holidays",
+                Map.of("date", "2027-11-09", "nameEn", "Again")))).isEqualTo("CONFLICT");
+
+        // Mon 8 – Fri 12 Nov 2027: Independence Day (9th) and the Water Festival (12th) don't count.
+        JsonNode leave = ok(ask(s.employee(), s, "Annual leave", "2027-11-08", "2027-11-12", false, false)).path("data");
+        assertThat(leave.path("days").decimalValue()).isEqualByComparingTo("3");
+        assertThat(code(ask(s.employee(), s, "Annual leave", "2027-11-12", "2027-11-14", false, false)))
+                .isEqualTo("VALIDATION_FAILED");
+
+        // The calendar shows holidays to everyone, in the reader's language.
+        JsonNode periods = ok(callIn("km", s.employee(), HttpMethod.GET,
+                "/api/orgs/" + s.org() + "/calendar?from=2027-11-01&to=2027-11-30", null)).path("data").path("periods");
+        List<String> holidays = new java.util.ArrayList<>();
+        periods.forEach(p -> {
+            if ("holiday".equals(p.path("kind").asText())) {
+                holidays.add(p.path("title").asText());
+            }
+        });
+        assertThat(holidays).contains("ពិធីបុណ្យឯករាជ្យជាតិ").hasSize(4);
+
+        // HR can add their own day and remove it again.
+        String id = ok(call(s.owner(), HttpMethod.POST, s.hr() + "/holidays",
+                Map.of("date", "2027-12-31", "nameEn", "Company day off"))).path("data").path("id").asText();
+        ok(call(s.owner(), HttpMethod.DELETE, s.hr() + "/holidays/" + id, null));
+        assertThat(ok(call(s.employee(), HttpMethod.GET, s.hr() + "/holidays?year=2027", null)).path("data")).hasSize(22);
     }
 
     @Test

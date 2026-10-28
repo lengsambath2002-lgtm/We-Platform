@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import com.businessplatform.common.api.ApiResponse;
 import com.businessplatform.hr.payload.HrPayloads.*;
 import com.businessplatform.hr.service.BalanceService;
+import com.businessplatform.hr.service.HolidayService;
 import com.businessplatform.hr.service.LeaveService;
 import com.businessplatform.hr.service.LeaveTypeService;
 import com.businessplatform.hr.service.ProfileService;
@@ -30,6 +31,7 @@ public class HrController {
     private final LeaveTypeService types;
     private final BalanceService balances;
     private final LeaveService leave;
+    private final HolidayService holidays;
 
     // ── People ───────────────────────────────────────────────────────────────────────
 
@@ -55,6 +57,32 @@ public class HrController {
     public ResponseEntity<ApiResponse<ProfileView>> updateContact(@PathVariable String org,
             @Valid @RequestBody ContactRequest in) {
         return ResponseEntity.ok(ApiResponse.ok(profiles.updateContact(org, in)));
+    }
+
+    // ── Public holidays ──────────────────────────────────────────────────────────────
+
+    @GetMapping("/holidays")
+    public ResponseEntity<ApiResponse<List<HolidayView>>> holidays(@PathVariable String org, @RequestParam int year) {
+        return ResponseEntity.ok(ApiResponse.ok(holidays.list(org, year)));
+    }
+
+    @PostMapping("/holidays")
+    public ResponseEntity<ApiResponse<HolidayView>> addHoliday(@PathVariable String org,
+            @Valid @RequestBody HolidayRequest in) {
+        return ResponseEntity.status(201).body(ApiResponse.ok(holidays.add(org, in)));
+    }
+
+    @DeleteMapping("/holidays/{id}")
+    public ResponseEntity<ApiResponse<Void>> removeHoliday(@PathVariable String org, @PathVariable UUID id) {
+        holidays.remove(org, id);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    /** Copies in Cambodia's official public holidays of {@code year} (built in for the years announced). */
+    @PostMapping("/holidays/cambodia/{year}")
+    public ResponseEntity<ApiResponse<HolidayImportResult>> importCambodia(@PathVariable String org,
+            @PathVariable int year) {
+        return ResponseEntity.ok(ApiResponse.ok(holidays.importCambodia(org, year)));
     }
 
     // ── Leave types and balances ─────────────────────────────────────────────────────

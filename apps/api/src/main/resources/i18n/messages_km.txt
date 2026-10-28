@@ -170,10 +170,14 @@ The last day is before the first = ថ្ងៃចុងក្រោយនៅម
 Split leave that crosses into a new year into two requests = សូមបំបែកច្បាប់ឈប់សម្រាកដែលឆ្លងចូលឆ្នាំថ្មី ជាសំណើពីរ
 This leave type is taken in whole days = ប្រភេទច្បាប់នេះត្រូវឈប់ជាថ្ងៃពេញ
 For half a day, choose the morning or the afternoon = សម្រាប់កន្លះថ្ងៃ សូមជ្រើសរើសពេលព្រឹក ឬពេលរសៀល
-These days are all on a weekend = ថ្ងៃទាំងនេះសុទ្ធតែជាថ្ងៃចុងសប្ដាហ៍
 You already have leave on some of these days = អ្នកមានច្បាប់ឈប់សម្រាករួចហើយ នៅថ្ងៃខ្លះក្នុងចំណោមថ្ងៃទាំងនេះ
 Not enough days left of this leave type = ចំនួនថ្ងៃនៅសល់នៃប្រភេទច្បាប់នេះមិនគ្រប់គ្រាន់ទេ
 Only a request that is waiting can be withdrawn = មានតែសំណើដែលកំពុងរង់ចាំប៉ុណ្ណោះ ដែលអាចដកវិញបាន
 Only approved leave can be cancelled = មានតែច្បាប់ឈប់សម្រាកដែលបានអនុម័តប៉ុណ្ណោះ ដែលអាចលុបចោលបាន
 Leave that has started can only be cancelled by HR = ច្បាប់ឈប់សម្រាកដែលបានចាប់ផ្ដើមហើយ អាចលុបចោលបានដោយផ្នែកធនធានមនុស្សប៉ុណ្ណោះ
 Leave cancelled: {title} = បានលុបចោលច្បាប់ឈប់សម្រាក៖ {title}
+
+# HR: public holidays
+There is already a holiday on this day = មានថ្ងៃឈប់សម្រាកនៅថ្ងៃនេះរួចហើយ
+This year's official holidays aren't built in yet; add them one by one = ថ្ងៃឈប់សម្រាកផ្លូវការនៃឆ្នាំនេះមិនទាន់មានក្នុងប្រព័ន្ធនៅឡើយ សូមបន្ថែមម្ដងមួយៗ
+These days are all weekends or public holidays = ថ្ងៃទាំងនេះសុទ្ធតែជាថ្ងៃចុងសប្ដាហ៍ ឬថ្ងៃឈប់សម្រាកសាធារណៈ

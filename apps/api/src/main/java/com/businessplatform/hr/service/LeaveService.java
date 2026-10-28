@@ -67,6 +67,7 @@ public class LeaveService {
     private final ProfileService profiles;
     private final LeaveTypeService types;
     private final BalanceService balances;
+    private final HolidayService holidays;
     private final LeaveRequestRepository leaves;
     private final EmployeeProfileRepository profileRows;
     private final UserRepository users;
@@ -99,9 +100,9 @@ public class LeaveService {
         if (start.equals(end) && in.halfStart() && in.halfEnd()) {
             throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "halfEnd", "For half a day, choose the morning or the afternoon");
         }
-        BigDecimal days = LeaveDays.count(start, end, in.halfStart(), in.halfEnd());
+        BigDecimal days = LeaveDays.count(start, end, in.halfStart(), in.halfEnd(), holidays.dates(ctx, start, end));
         if (days.signum() == 0) {
-            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "startDate", "These days are all on a weekend");
+            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "startDate", "These days are all weekends or public holidays");
         }
         // One request at a time per person, so two quick requests can't both spend the last days.
         profiles.profile(ctx, ctx.userId());

@@ -12,6 +12,7 @@ import com.businessplatform.activity.RecordLabeler;
 import com.businessplatform.hr.domain.LeaveType;
 import com.businessplatform.hr.repository.EmployeeProfileRepository;
 import com.businessplatform.hr.repository.LeaveRequestRepository;
+import com.businessplatform.hr.repository.HolidayRepository;
 import com.businessplatform.hr.repository.LeaveTypeRepository;
 import com.businessplatform.identity.domain.AppUser;
 import com.businessplatform.identity.repository.UserRepository;
@@ -26,13 +27,14 @@ public class HrRecordLabeler implements RecordLabeler {
 
     private final LeaveRequestRepository leaves;
     private final LeaveTypeRepository types;
+    private final HolidayRepository holidays;
     private final EmployeeProfileRepository profiles;
     private final UserRepository users;
 
     @Override
     public boolean handles(String recordType) {
         return LeaveService.RECORD.equals(recordType) || ProfileService.RECORD.equals(recordType)
-                || LeaveTypeService.RECORD.equals(recordType);
+                || LeaveTypeService.RECORD.equals(recordType) || HolidayService.RECORD.equals(recordType);
     }
 
     @Override
@@ -55,6 +57,8 @@ public class HrRecordLabeler implements RecordLabeler {
                 found.forEach(p -> out.put(p.getId(), new Label(people.get(p.getUserId()).getName(),
                         base + "/people/" + p.getUserId())));
             }
+            case HolidayService.RECORD -> holidays.findAllById(ids).stream().filter(h -> h.getOrgId().equals(ctx.orgId()))
+                    .forEach(h -> out.put(h.getId(), new Label(h.getNameEn() + " · " + h.getDate(), base + "/settings")));
             default -> types.findAllById(ids).stream().filter(t -> t.getOrgId().equals(ctx.orgId()))
                     .forEach(t -> out.put(t.getId(), new Label(t.getNameEn(), base + "/settings")));
         }
