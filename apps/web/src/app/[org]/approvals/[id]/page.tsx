@@ -1,0 +1,61 @@
+'use client';
+
+import { ChevronRight, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { useParams } from 'next/navigation';
+
+import { ApprovalSteps } from '@/components/approvals/approval-steps';
+import { DecisionBar } from '@/components/approvals/decision-bar';
+import { ApprovalBadge } from '@/components/common/badges';
+import { ErrorState, ListSkeleton } from '@/components/common/states';
+import { Button } from '@/components/ui/button';
+import { useApproval } from '@/lib/api/queries';
+import { ago, day } from '@/lib/format';
+import { useOrg } from '@/lib/org-context';
+
+export default function ApprovalPage() {
+  const { slug } = useOrg();
+  const { id } = useParams<{ id: string }>();
+  const { data, error, isPending, refetch } = useApproval(slug, id);
+  if (error) return <ErrorState error={error} retry={() => refetch()} />;
+  if (isPending) return <ListSkeleton />;
+  const s = data.summary;
+
+  return (
+    <div className="mx-auto max-w-4xl">
+      <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1 text-sm text-muted-foreground">
+        <Link href={`/${slug}/approvals`} className="hover:text-foreground">Approvals</Link><ChevronRight className="size-3.5" /><span>Request</span>
+      </nav>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl font-semibold tracking-tight">{s.title}</h1>
+          <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <ApprovalBadge status={s.status} /> {data.workflowName} · requested by {s.requester.name} on {day(s.createdAt)}
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm"><Link href={s.recordLink.startsWith('/') ? s.recordLink : `/${slug}/${s.recordLink}`}><ExternalLink className="size-4" />Open the {s.recordType}</Link></Button>
+      </div>
+      <div className="grid gap-6 md:grid-cols-[1fr_280px]">
+        <div className="space-y-6">
+          {data.text && (
+            <section className="rounded-lg border bg-card p-4">
+              <h2 className="mb-2 text-sm font-semibold">Note from {s.requester.name}</h2>
+              <p className="whitespace-pre-wrap text-sm">{data.text}</p>
+            </section>
+          )}
+          <section className="rounded-lg border bg-card p-4">
+            <h2 className="mb-4 text-sm font-semibold">Steps</h2>
+            <ApprovalSteps detail={data} />
+          </section>
+        </div>
+        <aside className="space-y-3">
+          <div className="rounded-lg border bg-card p-4 text-sm">
+            <p className="text-xs text-muted-foreground">Last change</p><p>{ago(s.updatedAt)}</p>
+            <p className="mt-3 text-xs text-muted-foreground">Module</p><p className="capitalize">{s.moduleKey} · {s.recordType}</p>
+          </div>
+          <DecisionBar org={slug} detail={data} />
+        </aside>
+      </div>
+    </div>
+  );
+}

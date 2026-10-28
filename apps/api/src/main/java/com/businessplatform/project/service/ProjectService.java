@@ -172,8 +172,6 @@ public class ProjectService {
         }
         Set<UUID> before = members.findByProjectId(p.getId()).stream().map(ProjectMember::getUserId)
                 .collect(Collectors.toSet());
-        members.deleteByProjectId(p.getId());
-        members.flush();
         saveMembers(ctx, p, wanted);
         if (!wanted.containsKey(p.getLeadId()) || wanted.get(p.getLeadId()) != ProjectRole.LEAD) {
             p.setLeadId(wanted.entrySet().stream().filter(e -> e.getValue() == ProjectRole.LEAD).findFirst()
@@ -187,10 +185,13 @@ public class ProjectService {
         return members(slug, key);
     }
 
+    /** Makes the project's members exactly {@code wanted}: updates kept rows, deletes removed ones, inserts new ones. */
     private void saveMembers(OrgContext ctx, Project p, Map<UUID, ProjectRole> wanted) {
         Map<UUID, Membership> active = memberships.findByOrgIdOrderByCreatedAt(ctx.orgId()).stream()
                 .filter(m -> Membership.ACTIVE.equals(m.getStatus()))
                 .collect(Collectors.toMap(Membership::getUserId, m -> m));
+        Map<UUID, ProjectMember> existing = members.findByProjectId(p.getId()).stream()
+                .collect(Collectors.toMap(ProjectMember::getUserId, m -> m));
         List<ProjectMember> rows = new ArrayList<>();
         wanted.forEach((userId, role) -> {
             Membership m = active.get(userId);
@@ -200,13 +201,17 @@ public class ProjectService {
             if (m.getRole() == OrgRole.GUEST && role == ProjectRole.LEAD) {
                 throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "members", "A guest can't lead a project");
             }
-            ProjectMember pm = new ProjectMember();
-            pm.setProjectId(p.getId());
-            pm.setUserId(userId);
+            ProjectMember pm = existing.get(userId);
+            if (pm == null) {
+                pm = new ProjectMember();
+                pm.setProjectId(p.getId());
+                pm.setUserId(userId);
+                pm.setAddedAt(clock.instant());
+            }
             pm.setRole(role);
-            pm.setAddedAt(clock.instant());
             rows.add(pm);
         });
+        members.deleteAll(existing.values().stream().filter(m -> !wanted.containsKey(m.getUserId())).toList());
         members.saveAll(rows);
     }
 

@@ -54,10 +54,14 @@ public class OrgService {
     private final Clock clock;
     private final org.springframework.core.env.Environment env;
 
+    /** Addresses the web app uses for its own pages (/{slug} would shadow them). */
+    private static final Set<String> RESERVED_SLUGS = Set.of("account", "onboarding", "invite", "sign-in", "sign-up",
+            "api", "admin", "settings", "help", "login", "logout", "static", "_next");
+
     @Transactional
     public OrgSummary create(CreateOrgRequest in) {
         UUID me = CurrentUser.id();
-        if (orgs.existsBySlug(in.slug())) {
+        if (RESERVED_SLUGS.contains(in.slug()) || orgs.existsBySlug(in.slug())) {
             throw BusinessException.field(ErrorCode.CONFLICT, "slug", "This address is taken");
         }
         Organisation o = new Organisation();

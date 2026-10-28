@@ -103,4 +103,31 @@ class ProjectTaskTest extends IntegrationTest {
         assertThat(code(call(lead, HttpMethod.POST, "/api/orgs/" + org + "/projects/BRD/tasks",
                 Map.of("title", "x", "dueDate", "2026-01-01", "startDate", "2026-02-01")))).isEqualTo("VALIDATION_FAILED");
     }
+
+    @Test
+    void the_lead_changes_members_and_roles_and_removed_people_lose_a_private_project() throws Exception {
+        User lead = signUp("Team Lead");
+        User dev = signUp("Team Dev");
+        User other = signUp("Team Other");
+        String org = newOrg(lead);
+        join(lead, org, dev, "MEMBER");
+        join(lead, org, other, "MEMBER");
+        String path = "/api/orgs/" + org + "/projects/TM";
+        ok(call(lead, HttpMethod.POST, "/api/orgs/" + org + "/projects", Map.of("name", "Team", "key", "TM",
+                "visibility", "PRIVATE", "members", List.of(Map.of("userId", other.id(), "role", "MEMBER")))));
+
+        // Add dev, remove other; then change dev's role on the kept row.
+        JsonNode saved = ok(call(lead, HttpMethod.PUT, path + "/members", List.of(Map.of("userId", lead.id(), "role", "LEAD"),
+                Map.of("userId", dev.id(), "role", "VIEWER")))).path("data");
+        assertThat(saved).hasSize(2);
+        saved = ok(call(lead, HttpMethod.PUT, path + "/members", List.of(Map.of("userId", lead.id(), "role", "LEAD"),
+                Map.of("userId", dev.id(), "role", "LEAD")))).path("data");
+        assertThat(saved.findValuesAsText("role")).containsOnly("LEAD");
+        assertThat(code(call(other, HttpMethod.GET, path, null))).isEqualTo("NOT_FOUND");
+
+        // A list without a lead is refused; the old list stays.
+        assertThat(code(call(dev, HttpMethod.PUT, path + "/members", List.of(Map.of("userId", dev.id(), "role", "MEMBER")))))
+                .isEqualTo("VALIDATION_FAILED");
+        assertThat(ok(call(dev, HttpMethod.GET, path + "/members", null)).path("data")).hasSize(2);
+    }
 }
