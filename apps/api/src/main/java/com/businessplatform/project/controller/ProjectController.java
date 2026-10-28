@@ -122,6 +122,19 @@ public class ProjectController {
         return ResponseEntity.status(201).body(ApiResponse.ok(tasks.comment(org, id, in)));
     }
 
+    @PatchMapping("/tasks/{id}/comments/{commentId}")
+    public ResponseEntity<ApiResponse<CommentResponse>> editComment(@PathVariable String org, @PathVariable UUID id,
+            @PathVariable UUID commentId, @Valid @RequestBody CommentRequest in) {
+        return ResponseEntity.ok(ApiResponse.ok(tasks.editComment(org, id, commentId, in)));
+    }
+
+    @DeleteMapping("/tasks/{id}/comments/{commentId}")
+    public ResponseEntity<ApiResponse<Void>> deleteComment(@PathVariable String org, @PathVariable UUID id,
+            @PathVariable UUID commentId) {
+        tasks.deleteComment(org, id, commentId);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
     @GetMapping("/tasks/{id}/activity")
     public ResponseEntity<ApiResponse<List<ActivityResponse>>> history(@PathVariable String org, @PathVariable UUID id) {
         return ResponseEntity.ok(ApiResponse.ok(tasks.history(org, id)));

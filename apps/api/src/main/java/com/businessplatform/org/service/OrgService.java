@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.businessplatform.activity.ActivityService;
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
 import com.businessplatform.common.i18n.Messages;
@@ -53,6 +54,7 @@ public class OrgService {
     private final UserRepository users;
     private final ModuleService modules;
     private final OrgAccess access;
+    private final ActivityService activity;
     private final Clock clock;
     private final org.springframework.core.env.Environment env;
     private final MailService mail;
@@ -108,6 +110,7 @@ public class OrgService {
         OrgContext ctx = access.requireAdmin(slug);
         Organisation o = orgs.findById(ctx.orgId()).orElseThrow();
         o.setName(in.name().strip());
+        audit(ctx, "organisation", o.getId(), "org.updated", Map.of("name", o.getName()));
         return new OrgSummary(o.getId(), o.getSlug(), o.getName(), ctx.role());
     }
 
@@ -120,6 +123,7 @@ public class OrgService {
             throw new BusinessException(ErrorCode.INVALID_STATE,
                     "You are the only owner. Make another member an owner first, or delete the organisation", List.of());
         }
+        audit(ctx, "member", ctx.userId(), "org.member.left", Map.of());
         memberships.deleteById(ctx.membershipId());
     }
 
@@ -141,6 +145,7 @@ public class OrgService {
         Instant now = clock.instant();
         o.setDeletedAt(now);
         o.setDeletedBy(ctx.userId());
+        audit(ctx, "organisation", o.getId(), "org.deleted", Map.of("name", o.getName()));
         invitations.findByOrgIdAndAcceptedAtIsNullAndRevokedAtIsNullOrderByCreatedAtDesc(ctx.orgId())
                 .forEach(i -> i.setRevokedAt(now));
     }
@@ -149,6 +154,12 @@ public class OrgService {
     public void setModule(String slug, String key, boolean on) {
         OrgContext ctx = access.requireAdmin(slug);
         modules.set(ctx.orgId(), key, on, ctx.userId());
+        audit(ctx, "module", ctx.orgId(), on ? "org.module.enabled" : "org.module.disabled", Map.of("module", key));
+    }
+
+    /** Organisation changes go to the audit log (module {@code org}). */
+    private void audit(OrgContext ctx, String recordType, UUID recordId, String verb, Map<String, Object> data) {
+        activity.record(ctx.orgId(), "org", recordType, recordId, ctx.userId(), verb, data);
     }
 
     // ── Members ──────────────────────────────────────────────────────────────────────
@@ -187,7 +198,16 @@ public class OrgService {
         if (in.title() != null) {
             m.setTitle(in.title().isBlank() ? null : in.title().strip());
         }
-        return toMember(m, users.findById(m.getUserId()).orElseThrow());
+        AppUser who = users.findById(m.getUserId()).orElseThrow();
+        Map<String, Object> changed = new java.util.HashMap<>(Map.of("name", who.getName()));
+        if (in.role() != null) {
+            changed.put("role", in.role().name());
+        }
+        if (in.status() != null) {
+            changed.put("status", in.status());
+        }
+        audit(ctx, "member", m.getUserId(), "org.member.updated", changed);
+        return toMember(m, who);
     }
 
     // ── Invitations ──────────────────────────────────────────────────────────────────
@@ -215,6 +235,7 @@ public class OrgService {
         i.setCreatedAt(clock.instant());
         i.setExpiresAt(clock.instant().plus(INVITE_TTL));
         invitations.save(i);
+        audit(ctx, "invitation", i.getId(), "org.member.invited", Map.of("email", email, "role", i.getRole().name()));
         sendInvitation(ctx, i, token);
         return new InvitationResponse(i.getId(), email, i.getRole(), i.getExpiresAt(), link(token), mail.delivers());
     }
@@ -229,6 +250,7 @@ public class OrgService {
         String token = Tokens.random();
         i.setTokenHash(Tokens.sha256(token));
         i.setExpiresAt(clock.instant().plus(INVITE_TTL));
+        audit(ctx, "invitation", i.getId(), "org.invitation.resent", Map.of("email", i.getEmail()));
         sendInvitation(ctx, i, token);
         return new InvitationResponse(i.getId(), i.getEmail(), i.getRole(), i.getExpiresAt(), link(token),
                 mail.delivers());
@@ -266,6 +288,7 @@ public class OrgService {
         Invitation i = invitations.findById(id).filter(x -> x.getOrgId().equals(ctx.orgId()))
                 .orElseThrow(BusinessException::notFound);
         i.setRevokedAt(clock.instant());
+        audit(ctx, "invitation", i.getId(), "org.invitation.revoked", Map.of("email", i.getEmail()));
     }
 
     @Transactional(readOnly = true)
@@ -293,6 +316,8 @@ public class OrgService {
             m.setStatus(Membership.ACTIVE);
         }
         i.setAcceptedAt(clock.instant());
+        activity.record(i.getOrgId(), "org", "member", me.getId(), me.getId(), "org.member.joined",
+                Map.of("name", me.getName(), "role", m.getRole().name()));
         Organisation o = orgs.findById(i.getOrgId()).orElseThrow();
         return new OrgSummary(o.getId(), o.getSlug(), o.getName(), m.getRole());
     }
@@ -325,13 +350,16 @@ public class OrgService {
         }
         teams.clearMembers(t.getId());
         wanted.forEach(mid -> teams.addMember(t.getId(), mid));
+        audit(ctx, "team", t.getId(), id == null ? "org.team.created" : "org.team.updated", Map.of("name", t.getName()));
         return new TeamResponse(t.getId(), t.getName(), wanted);
     }
 
     @Transactional
     public void deleteTeam(String slug, UUID id) {
         OrgContext ctx = access.requireAdmin(slug);
-        teams.delete(teams.findByIdAndOrgId(id, ctx.orgId()).orElseThrow(BusinessException::notFound));
+        Team t = teams.findByIdAndOrgId(id, ctx.orgId()).orElseThrow(BusinessException::notFound);
+        teams.delete(t);
+        audit(ctx, "team", t.getId(), "org.team.deleted", Map.of("name", t.getName()));
     }
 
     private Invitation live(String token, boolean mustBeValid) {

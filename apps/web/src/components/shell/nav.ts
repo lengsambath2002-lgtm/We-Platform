@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   Settings,
   type LucideIcon,
+  ScrollText,
   ShoppingCart,
   UserCog,
   Users,
@@ -50,6 +51,7 @@ export function adminNav(ctx: OrgContext): NavItem[] {
     { href: 'admin/workflows', label: tr('shell.workflows'), icon: GitBranch },
     { href: 'admin/members', label: tr('shell.membersRoles'), icon: UserCog },
     { href: 'admin/settings', label: tr('settings.title'), icon: Settings },
+    ...(ctx.permissions.includes('activity.view') ? [{ href: 'admin/audit', label: tr('collab.auditNav'), icon: ScrollText }] : []),
   ];
 }
 

@@ -132,3 +132,8 @@ a guest = ភ្ញៀវ
 Sign in or create an account with {email} to accept. The link works for 7 days. = សូមចូលគណនី ឬបង្កើតគណនីដោយប្រើ {email} ដើម្បីទទួលយក។ តំណនេះប្រើបានរយៈពេល 7 ថ្ងៃ។
 Accept the invitation = ទទួលយកការអញ្ជើញ
 If you weren't expecting this, you can ignore this email. = ប្រសិនបើអ្នកមិនបានរំពឹងទុកការអញ្ជើញនេះទេ អ្នកអាចកុំខ្វល់នឹងអ៊ីមែលនេះបាន។
+
+# Collaboration: archived projects, notifications, audit log
+This project is archived = គម្រោងនេះត្រូវបានរក្សាទុកក្នុងបណ្ណសារ
+Unknown kind of notification = រកមិនឃើញប្រភេទការជូនដំណឹងនេះទេ
+The end is before the start = ថ្ងៃបញ្ចប់នៅមុនថ្ងៃចាប់ផ្ដើម

@@ -52,4 +52,13 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query(value = "SELECT task_id, COUNT(*) FROM task_comment WHERE task_id IN :taskIds GROUP BY task_id",
             nativeQuery = true)
     List<Object[]> commentCounts(Collection<UUID> taskIds);
+
+    @Query("SELECT t.id FROM Task t WHERE t.projectId = :projectId")
+    List<UUID> idsInProject(UUID projectId);
+
+    @Query("SELECT t.id FROM Task t WHERE t.parentId = :parentId")
+    List<UUID> subtaskIds(UUID parentId);
+
+    @Query(value = "SELECT file_id FROM task_attachment WHERE task_id IN :taskIds", nativeQuery = true)
+    List<UUID> attachmentIdsOf(Collection<UUID> taskIds);
 }

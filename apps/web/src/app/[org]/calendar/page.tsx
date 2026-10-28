@@ -1,13 +1,15 @@
 'use client';
 
 import {
-  addDays, addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfMonth, startOfWeek,
+  addDays, addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfDay, startOfMonth, startOfWeek,
 } from 'date-fns';
-import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Clock, Flag, MapPin, Plus, Trash2 } from 'lucide-react';
+import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Clock, Flag, FolderKanban, MapPin, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { EventDetail } from '@/components/calendar/event-detail';
 import { NewEventDialog } from '@/components/calendar/new-event-dialog';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
@@ -17,8 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tr } from '@/i18n/core';
 import { useT } from '@/i18n/provider';
-import { errorMessage } from '@/lib/api/client';
-import { orgApi, useCalendar, useOrgMutation } from '@/lib/api/queries';
+import { useCalendar } from '@/lib/api/queries';
 import type { CalendarEvent, Deadline } from '@/lib/api/types';
 import { fmt } from '@/lib/format';
 import { useOrg } from '@/lib/org-context';
@@ -36,7 +37,8 @@ function itemsOn(day: Date, events: CalendarEvent[], deadlines: Deadline[]): Ite
   ];
 }
 
-function Chip({ item, compact }: { org: string; item: Item; compact?: boolean }) {
+/** A deadline links to its record; an event opens its details (`onOpen`). */
+function Chip({ item, compact, onOpen }: { org: string; item: Item; compact?: boolean; onOpen: (e: CalendarEvent) => void }) {
   if (item.kind === 'deadline') {
     const { d } = item;
     return (
@@ -48,30 +50,49 @@ function Chip({ item, compact }: { org: string; item: Item; compact?: boolean })
   }
   const { e } = item;
   return (
-    <span className="flex items-center gap-1 truncate rounded bg-primary/10 px-1.5 py-0.5 text-xs text-primary" title={e.title}>
+    <button type="button" onClick={() => onOpen(e)} aria-label={tr('collab.openEvent', { title: e.title })}
+      className={cn('items-center gap-1 truncate rounded bg-primary/10 px-1.5 py-0.5 text-left text-xs text-primary hover:bg-primary/20', compact ? 'flex w-full' : 'inline-flex max-w-full')} title={e.title}>
       {!e.allDay && <span className="tabular">{fmt(parseISO(e.startsAt), 'HH:mm')}</span>}<span className="truncate">{e.title}</span>
-    </span>
+    </button>
   );
 }
 
-export default function CalendarPage() {
+/** `?date=yyyy-MM-dd` opens that day; `&event=id` also opens the event (links from notifications and the audit log). */
+function CalendarPage() {
   const { slug, can } = useOrg();
   const { t, locale } = useT();
-  const [month, setMonth] = useState(() => startOfMonth(new Date()));
+  const params = useSearchParams();
+  const router = useRouter();
+  const linked = /^\d{4}-\d{2}-\d{2}$/.test(params.get('date') ?? '') ? parseISO(params.get('date')!) : null;
+  const [month, setMonth] = useState(() => startOfMonth(linked ?? new Date()));
   const [view, setView] = useState<'month' | 'agenda'>('month');
   const [mine, setMine] = useState(false);
-  const [selected, setSelected] = useState(() => new Date());
+  const [selected, setSelected] = useState(() => linked ?? startOfDay(new Date()));
   const [creating, setCreating] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(() => params.get('event'));
+  const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const gridStart = startOfWeek(month, { weekStartsOn: 1 });
   const gridEnd = endOfWeek(endOfMonth(month), { weekStartsOn: 1 });
   const { data, error, isPending, refetch } = useCalendar(slug, iso(gridStart), iso(gridEnd), mine);
-  const remove = useOrgMutation(slug, (id: string) => orgApi.deleteEvent(slug, id));
   const days = useMemo(() => eachDayOfInterval({ start: gridStart, end: gridEnd }), [gridStart.getTime(), gridEnd.getTime()]); // eslint-disable-line react-hooks/exhaustive-deps
   const events = data?.events ?? [];
   const deadlines = data?.deadlines ?? [];
   const agenda = days.filter((d) => isSameMonth(d, month)).map((d) => ({ d, items: itemsOn(d, events, deadlines) })).filter((x) => x.items.length);
   const dayItems = itemsOn(selected, events, deadlines);
   const canCreate = can('calendar.create');
+  const opened = openId ? events.find((e) => e.id === openId) : undefined;
+  const open = (e: CalendarEvent) => setOpenId(e.id);
+  const close = () => {
+    setOpenId(null);
+    if (params.get('event')) router.replace(`/${slug}/calendar`, { scroll: false });
+  };
+  // A linked event that isn't there (deleted, or no longer visible) says so once.
+  useEffect(() => {
+    if (openId && data && !data.events.some((e) => e.id === openId)) {
+      toast.error(tr('collab.eventGone'));
+      setOpenId(null);
+    }
+  }, [openId, data]);
 
   return (
     <>
@@ -80,7 +101,7 @@ export default function CalendarPage() {
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-1">
           <Button variant="outline" size="icon" aria-label={t('calendar.prevMonth')} onClick={() => setMonth((m) => addMonths(m, -1))}><ChevronLeft className="size-4" /></Button>
-          <Button variant="outline" size="sm" onClick={() => { setMonth(startOfMonth(new Date())); setSelected(new Date()); }}>{t('common.today')}</Button>
+          <Button variant="outline" size="sm" onClick={() => { setMonth(startOfMonth(new Date())); setSelected(startOfDay(new Date())); }}>{t('common.today')}</Button>
           <Button variant="outline" size="icon" aria-label={t('calendar.nextMonth')} onClick={() => setMonth((m) => addMonths(m, 1))}><ChevronRight className="size-4" /></Button>
         </div>
         <h2 className="min-w-36 text-base font-semibold" aria-live="polite">{fmt(month, 'MMMM yyyy')}</h2>
@@ -102,7 +123,7 @@ export default function CalendarPage() {
                     <div className="text-xs uppercase text-muted-foreground">{fmt(d, locale === 'km' ? 'EEEE' : 'EEE')}</div>
                     <div className="text-xl font-semibold tabular">{fmt(d, 'd')}</div>
                   </div>
-                  <ul className="min-w-0 flex-1 space-y-1">{items.map((it) => <li key={it.kind === 'event' ? it.e.id : it.d.id}><Chip org={slug} item={it} /></li>)}</ul>
+                  <ul className="min-w-0 flex-1 space-y-1">{items.map((it) => <li key={it.kind === 'event' ? it.e.id : it.d.id}><Chip org={slug} item={it} onOpen={open} /></li>)}</ul>
                 </li>
               ))}
             </ol>
@@ -122,18 +143,21 @@ export default function CalendarPage() {
             <div className="grid grid-cols-7">
               {days.map((d) => {
                 const items = itemsOn(d, events, deadlines);
+                // The whole cell selects the day; its chips sit above that button and open what they show.
                 return (
-                  <button key={iso(d)} type="button" onClick={() => setSelected(d)} aria-pressed={isSameDay(d, selected)}
-                    aria-label={t('calendar.dayItems', { date: fmt(d, 'EEEE d MMMM'), count: items.length })}
-                    className={cn('min-h-14 border-b border-r p-1 text-left align-top last:border-r-0 hover:bg-muted/50 sm:min-h-24 [&:nth-child(7n)]:border-r-0',
+                  <div key={iso(d)}
+                    className={cn('relative min-h-14 border-b border-r p-1 text-left align-top hover:bg-muted/50 sm:min-h-24 [&:nth-child(7n)]:border-r-0',
                       !isSameMonth(d, month) && 'bg-muted/30 text-muted-foreground', isSameDay(d, selected) && 'ring-2 ring-inset ring-primary')}>
-                    <span className={cn('inline-grid size-6 place-items-center rounded-full text-xs tabular', isToday(d) && 'bg-primary font-semibold text-primary-foreground')}>{fmt(d, 'd')}</span>
-                    <span className="mt-0.5 hidden space-y-0.5 sm:block">
-                      {items.slice(0, 3).map((it) => <span key={it.kind === 'event' ? it.e.id : it.d.id} className="block"><Chip org={slug} item={it} compact /></span>)}
-                      {items.length > 3 && <span className="block px-1.5 text-[11px] text-muted-foreground">{t('calendar.more', { count: items.length - 3 })}</span>}
+                    <button type="button" onClick={() => setSelected(d)} aria-pressed={isSameDay(d, selected)}
+                      aria-label={t('calendar.dayItems', { date: fmt(d, 'EEEE d MMMM'), count: items.length })}
+                      className="absolute inset-0 focus-visible:outline-2 focus-visible:outline-ring" />
+                    <span className={cn('pointer-events-none relative inline-grid size-6 place-items-center rounded-full text-xs tabular', isToday(d) && 'bg-primary font-semibold text-primary-foreground')}>{fmt(d, 'd')}</span>
+                    <span className="relative mt-0.5 hidden space-y-0.5 sm:block">
+                      {items.slice(0, 3).map((it) => <span key={it.kind === 'event' ? it.e.id : it.d.id} className="block"><Chip org={slug} item={it} compact onOpen={open} /></span>)}
+                      {items.length > 3 && <span className="pointer-events-none block px-1.5 text-[11px] text-muted-foreground">{t('calendar.more', { count: items.length - 3 })}</span>}
                     </span>
-                    {items.length > 0 && <span className="mx-auto mt-1 block size-1.5 rounded-full bg-primary sm:hidden" aria-hidden />}
-                  </button>
+                    {items.length > 0 && <span className="pointer-events-none relative mx-auto mt-1 block size-1.5 rounded-full bg-primary sm:hidden" aria-hidden />}
+                  </div>
                 );
               })}
             </div>
@@ -146,22 +170,20 @@ export default function CalendarPage() {
             {dayItems.length === 0 ? <p className="text-sm text-muted-foreground">{t('calendar.nothingOnDay')}</p> : (
               <ul className="space-y-3">
                 {dayItems.map((it) => it.kind === 'deadline' ? (
-                  <li key={it.d.id}><Chip org={slug} item={it} /></li>
+                  <li key={it.d.id}><Chip org={slug} item={it} onOpen={open} /></li>
                 ) : (
-                  <li key={it.e.id} className="group rounded-md border p-2.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-sm font-medium">{it.e.title}</p>
-                      {it.e.canEdit && (
-                        <Button variant="ghost" size="icon" className="-m-1 size-7" aria-label={t('calendar.deleteEvent', { title: it.e.title })}
-                          onClick={() => remove.mutateAsync(it.e.id).then(() => toast.success(t('calendar.eventDeleted'))).catch((e) => toast.error(errorMessage(e)))}>
-                          <Trash2 className="size-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Clock className="size-3" />
-                      {it.e.allDay ? t('calendar.allDay') : `${fmt(parseISO(it.e.startsAt), 'HH:mm')} – ${fmt(parseISO(it.e.endsAt), 'HH:mm')}`}</p>
-                    {it.e.location && <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3" />{it.e.location}</p>}
-                    {it.e.description && <p className="mt-1 whitespace-pre-wrap text-xs">{it.e.description}</p>}
+                  <li key={it.e.id}>
+                    <button type="button" onClick={() => open(it.e)} aria-label={t('collab.openEvent', { title: it.e.title })}
+                      className="w-full rounded-md border p-2.5 text-left hover:bg-muted/50 focus-visible:outline-2 focus-visible:outline-ring">
+                      <span className="block text-sm font-medium">{it.e.title}</span>
+                      <span className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Clock className="size-3" />
+                        {it.e.allDay ? t('calendar.allDay') : `${fmt(parseISO(it.e.startsAt), 'HH:mm')} – ${fmt(parseISO(it.e.endsAt), 'HH:mm')}`}</span>
+                      {it.e.location && <span className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="size-3" />{it.e.location}</span>}
+                      <span className="mt-0.5 flex items-center gap-3 text-xs text-muted-foreground">
+                        {it.e.attendeeIds.length > 0 && <span className="flex items-center gap-1"><Users className="size-3" />{it.e.attendeeIds.length}</span>}
+                        {it.e.projectId && <FolderKanban className="size-3" aria-label={t('collab.project')} />}
+                      </span>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -170,9 +192,15 @@ export default function CalendarPage() {
         </div>
       )}
       {creating && <NewEventDialog org={slug} date={creating} open onOpenChange={(v) => !v && setCreating(null)} />}
+      {opened && !editing && <EventDetail event={opened} open onOpenChange={(v) => !v && close()} onEdit={() => setEditing(opened)} />}
+      {editing && <NewEventDialog org={slug} date={iso(parseISO(editing.startsAt))} event={editing} open onOpenChange={(v) => !v && setEditing(null)} />}
       {!isPending && !error && events.length === 0 && deadlines.length === 0 && view === 'month' && (
         <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><CalendarDays className="size-4" />{t('calendar.noEventsMonth')}</p>
       )}
     </>
   );
+}
+
+export default function Page() {
+  return <Suspense><CalendarPage /></Suspense>;
 }

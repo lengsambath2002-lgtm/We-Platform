@@ -13,6 +13,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.businessplatform.activity.ActivityService;
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
 import com.businessplatform.common.persistence.Ids;
@@ -37,6 +38,9 @@ import lombok.RequiredArgsConstructor;
 public class CalendarService {
 
     public static final ZoneId ZONE = ZoneId.of("Asia/Phnom_Penh");
+    /** How events appear in the activity log. */
+    public static final String MODULE = "calendar";
+    public static final String RECORD = "event";
     static final Duration MAX_RANGE = Duration.ofDays(62);
 
     private final OrgAccess access;
@@ -44,6 +48,7 @@ public class CalendarService {
     private final MembershipRepository memberships;
     private final List<DeadlineSource> sources;
     private final NotificationService notifications;
+    private final ActivityService activity;
     private final Clock clock;
 
     public record EventRequest(@NotBlank @Size(max = 200) String title, @Size(max = 5000) String description,
@@ -51,8 +56,10 @@ public class CalendarService {
             UUID projectId, List<UUID> attendeeIds) {
     }
 
+    /** {@code canEdit}: the owner; {@code canDelete}: the owner or an Owner / Admin. */
     public record EventView(UUID id, String title, String description, String location, Instant startsAt,
-            Instant endsAt, boolean allDay, UUID projectId, UUID ownerId, List<UUID> attendeeIds, boolean canEdit) {
+            Instant endsAt, boolean allDay, UUID projectId, UUID ownerId, List<UUID> attendeeIds, boolean canEdit,
+            boolean canDelete) {
     }
 
     public record CalendarView(List<EventView> events, List<DeadlineSource.Deadline> deadlines) {
@@ -93,7 +100,8 @@ public class CalendarService {
         events.saveAndFlush(e);
         List<UUID> att = setAttendees(ctx, e, in.attendeeIds());
         notifications.send(ctx.orgId(), att, ctx.userId(), "event.invited", "Invitation: " + e.getTitle(), null,
-                "/" + ctx.slug() + "/calendar?date=" + e.getStartsAt().atZone(ZONE).toLocalDate());
+                link(ctx, e));
+        record(ctx, e, "event.created");
         return view(ctx, e, att);
     }
 
@@ -101,21 +109,43 @@ public class CalendarService {
     public EventView update(String slug, UUID id, EventRequest in) {
         OrgContext ctx = access.require(slug);
         CalendarEvent e = events.findByIdAndOrgId(id, ctx.orgId()).orElseThrow(BusinessException::notFound);
+        List<UUID> before = events.attendees(e.getId());
+        if (!canSee(ctx, e, before)) {
+            throw BusinessException.notFound();
+        }
         if (!canEdit(ctx, e)) {
             throw BusinessException.forbidden();
         }
         apply(ctx, e, in);
-        return view(ctx, e, setAttendees(ctx, e, in.attendeeIds()));
+        List<UUID> att = setAttendees(ctx, e, in.attendeeIds());
+        notifications.send(ctx.orgId(), att.stream().filter(u -> !before.contains(u)).toList(), ctx.userId(),
+                "event.invited", "Invitation: " + e.getTitle(), null, link(ctx, e));
+        record(ctx, e, "event.updated");
+        return view(ctx, e, att);
     }
 
     @Transactional
     public void delete(String slug, UUID id) {
         OrgContext ctx = access.require(slug);
         CalendarEvent e = events.findByIdAndOrgId(id, ctx.orgId()).orElseThrow(BusinessException::notFound);
-        if (!canEdit(ctx, e)) {
+        if (!canSee(ctx, e, events.attendees(e.getId()))) {
+            throw BusinessException.notFound();
+        }
+        if (!canDelete(ctx, e)) {
             throw BusinessException.forbidden();
         }
         events.delete(e);
+        record(ctx, e, "event.deleted");
+    }
+
+    /** Opens the calendar on the event's day with the event shown. */
+    static String link(OrgContext ctx, CalendarEvent e) {
+        return "/" + ctx.slug() + "/calendar?date=" + e.getStartsAt().atZone(ZONE).toLocalDate() + "&event=" + e.getId();
+    }
+
+    private void record(OrgContext ctx, CalendarEvent e, String verb) {
+        activity.record(ctx.orgId(), MODULE, RECORD, e.getId(), ctx.userId(), verb,
+                Map.of("title", e.getTitle(), "date", e.getStartsAt().atZone(ZONE).toLocalDate().toString()));
     }
 
     /** Upcoming events for the Overview (next {@code days} days, mine or org-wide visible). */
@@ -171,12 +201,18 @@ public class CalendarService {
         return !ctx.isGuest();
     }
 
+    /** Only the owner changes an event; attendees and others see it read-only. */
     private static boolean canEdit(OrgContext ctx, CalendarEvent e) {
+        return e.getOwnerId().equals(ctx.userId());
+    }
+
+    /** The owner, or an Owner / Admin (to tidy the calendar), may delete an event. */
+    private static boolean canDelete(OrgContext ctx, CalendarEvent e) {
         return ctx.isAdmin() || e.getOwnerId().equals(ctx.userId());
     }
 
     private static EventView view(OrgContext ctx, CalendarEvent e, List<UUID> att) {
         return new EventView(e.getId(), e.getTitle(), e.getDescription(), e.getLocation(), e.getStartsAt(),
-                e.getEndsAt(), e.isAllDay(), e.getProjectId(), e.getOwnerId(), att, canEdit(ctx, e));
+                e.getEndsAt(), e.isAllDay(), e.getProjectId(), e.getOwnerId(), att, canEdit(ctx, e), canDelete(ctx, e));
     }
 }

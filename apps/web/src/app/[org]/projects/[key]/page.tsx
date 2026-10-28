@@ -8,6 +8,7 @@ import { Suspense, useMemo, useState } from 'react';
 import { PRIORITIES, PRIORITY_LABEL } from '@/components/common/badges';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
 import { Board } from '@/components/projects/board';
+import { ArchivedBanner, ProjectDangerZone } from '@/components/projects/project-lifecycle';
 import { ProjectMembers } from '@/components/projects/project-members';
 import { ProjectSettings } from '@/components/projects/project-settings';
 import { NewTaskDialog } from '@/components/tasks/new-task-dialog';
@@ -73,6 +74,7 @@ function ProjectPage() {
         {p.canEdit && <Button size="sm" onClick={() => setNewIn('TODO')}><Plus className="size-4" />{t('tasks.newTask')}</Button>}
       </div>
 
+      <ArchivedBanner org={slug} project={p} />
       <Tabs value={view} onValueChange={setView}>
         <TabsList className="mb-4">
           <TabsTrigger value="board"><Columns3 className="size-4" />{t('projects.board')}</TabsTrigger>
@@ -120,7 +122,7 @@ function ProjectPage() {
           )}
         </TabsContent>
         <TabsContent value="members"><ProjectMembers org={slug} project={p} /></TabsContent>
-        <TabsContent value="settings"><ProjectSettings org={slug} project={p} /></TabsContent>
+        <TabsContent value="settings" className="space-y-6"><ProjectSettings org={slug} project={p} /><ProjectDangerZone org={slug} project={p} /></TabsContent>
       </Tabs>
       {newIn && <NewTaskDialog org={slug} project={p} open onOpenChange={(v) => !v && setNewIn(null)} status={newIn} />}
     </>

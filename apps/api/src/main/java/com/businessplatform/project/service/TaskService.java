@@ -67,6 +67,7 @@ public class TaskService {
     private final People people;
     private final ActivityService activity;
     private final NotificationService notifications;
+    private final TaskCleanup cleanup;
     private final Clock clock;
 
     // ── Read ─────────────────────────────────────────────────────────────────────────
@@ -89,7 +90,8 @@ public class TaskService {
                 .map(f -> new FileRef(f.getId(), f.getName(), f.getContentType(), f.getSizeBytes(), f.getCreatedAt()))
                 .toList();
         return new TaskDetailResponse(toResponses(List.of(t), ps).get(0),
-                toResponses(tasks.findByParentIdOrderByNumber(t.getId()), ps), attachments, a.canEdit());
+                toResponses(tasks.findByParentIdOrderByNumber(t.getId()), ps), attachments, a.canEdit(),
+                !ProjectAccess.archived(a.project()));
     }
 
     /** Tasks assigned to me in projects I can see, open first, soonest due first. */
@@ -263,6 +265,7 @@ public class TaskService {
         if (!a.canManage() && !ctx.userId().equals(t.getReporterId())) {
             throw BusinessException.forbidden();
         }
+        cleanup.task(ctx.orgId(), t.getId());
         tasks.delete(t);
         activity.record(ctx.orgId(), Module.PROJECTS, "project", a.project().getId(), ctx.userId(), "task.deleted",
                 Map.of("key", a.project().getKey() + "-" + t.getNumber(), "title", t.getTitle()));
@@ -274,11 +277,10 @@ public class TaskService {
     public List<CommentResponse> comments(String slug, UUID taskId) {
         OrgContext ctx = access.org(slug);
         Task t = load(ctx, taskId);
-        access.view(ctx, t.getProjectId());
+        ProjectAccess.Access a = access.view(ctx, t.getProjectId());
         List<TaskComment> cs = comments.findByTaskIdOrderByCreatedAt(t.getId());
         Map<UUID, PersonRef> ps = people.of(cs.stream().map(TaskComment::getAuthorId).toList());
-        return cs.stream().map(c -> new CommentResponse(c.getId(), ps.get(c.getAuthorId()), c.getBody(),
-                c.getCreatedAt(), c.getEditedAt())).toList();
+        return cs.stream().map(c -> commentResponse(ctx, a, c, ps.get(c.getAuthorId()))).toList();
     }
 
     /** Anyone who can see the project may comment (viewers included); mentions must be able to see it too. */
@@ -286,7 +288,9 @@ public class TaskService {
     public CommentResponse comment(String slug, UUID taskId, CommentRequest in) {
         OrgContext ctx = access.org(slug);
         Task t = load(ctx, taskId);
-        Project p = access.view(ctx, t.getProjectId()).project();
+        ProjectAccess.Access a = access.view(ctx, t.getProjectId());
+        Project p = a.project();
+        ProjectAccess.requireOpen(p);
         TaskComment c = new TaskComment();
         c.setId(Ids.next());
         c.setOrgId(ctx.orgId());
@@ -298,14 +302,7 @@ public class TaskService {
         activity.record(ctx.orgId(), Module.PROJECTS, RECORD, t.getId(), ctx.userId(), "task.commented",
                 Map.of("excerpt", excerpt(c.getBody())));
         String key = p.getKey() + "-" + t.getNumber();
-        Set<UUID> mentioned = new LinkedHashSet<>();
-        if (in.mentionIds() != null) {
-            for (UUID u : in.mentionIds()) {
-                if (canSee(ctx, p, u)) {
-                    mentioned.add(u);
-                }
-            }
-        }
+        Set<UUID> mentioned = mentions(ctx, p, in.mentionIds(), null);
         notifications.send(ctx.orgId(), mentioned, ctx.userId(), "task.mentioned", key + " " + t.getTitle(),
                 "Mentioned you: " + excerpt(c.getBody()), link(ctx, t));
         Set<UUID> watchers = new LinkedHashSet<>(List.of(t.getReporterId()));
@@ -315,8 +312,80 @@ public class TaskService {
         watchers.removeAll(mentioned);
         notifications.send(ctx.orgId(), watchers, ctx.userId(), "task.commented", key + " " + t.getTitle(),
                 "New comment: " + excerpt(c.getBody()), link(ctx, t));
-        return new CommentResponse(c.getId(), people.of(List.of(ctx.userId())).get(ctx.userId()), c.getBody(),
-                c.getCreatedAt(), null);
+        return commentResponse(ctx, a, c, people.of(List.of(ctx.userId())).get(ctx.userId()));
+    }
+
+    /** Only the author edits a comment; people mentioned for the first time by the edit are notified. */
+    @Transactional
+    public CommentResponse editComment(String slug, UUID taskId, UUID commentId, CommentRequest in) {
+        OrgContext ctx = access.org(slug);
+        Task t = load(ctx, taskId);
+        ProjectAccess.Access a = access.view(ctx, t.getProjectId());
+        TaskComment c = comments.findByIdAndTaskIdAndOrgId(commentId, t.getId(), ctx.orgId())
+                .orElseThrow(BusinessException::notFound);
+        if (!c.getAuthorId().equals(ctx.userId())) {
+            throw BusinessException.forbidden();
+        }
+        ProjectAccess.requireOpen(a.project());
+        String before = c.getBody();
+        String body = in.body().strip();
+        if (!body.equals(before)) {
+            c.setBody(body);
+            c.setEditedAt(clock.instant());
+            activity.record(ctx.orgId(), Module.PROJECTS, RECORD, t.getId(), ctx.userId(), "task.comment.edited",
+                    Map.of("excerpt", excerpt(body), "commentId", c.getId().toString()));
+            Set<UUID> fresh = mentions(ctx, a.project(), in.mentionIds(), before);
+            notifications.send(ctx.orgId(), fresh, ctx.userId(), "task.mentioned",
+                    a.project().getKey() + "-" + t.getNumber() + " " + t.getTitle(), "Mentioned you: " + excerpt(body),
+                    link(ctx, t));
+        }
+        return commentResponse(ctx, a, c, people.of(List.of(ctx.userId())).get(ctx.userId()));
+    }
+
+    /** The author, the project's Lead or an organisation Owner / Admin may delete a comment. */
+    @Transactional
+    public void deleteComment(String slug, UUID taskId, UUID commentId) {
+        OrgContext ctx = access.org(slug);
+        Task t = load(ctx, taskId);
+        ProjectAccess.Access a = access.view(ctx, t.getProjectId());
+        TaskComment c = comments.findByIdAndTaskIdAndOrgId(commentId, t.getId(), ctx.orgId())
+                .orElseThrow(BusinessException::notFound);
+        if (!c.getAuthorId().equals(ctx.userId()) && !a.canManage()) {
+            throw BusinessException.forbidden();
+        }
+        ProjectAccess.requireOpen(a.project());
+        comments.delete(c);
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("excerpt", excerpt(c.getBody()));
+        data.put("authorId", c.getAuthorId().toString());
+        activity.record(ctx.orgId(), Module.PROJECTS, RECORD, t.getId(), ctx.userId(), "task.comment.deleted", data);
+    }
+
+    private static CommentResponse commentResponse(OrgContext ctx, ProjectAccess.Access a, TaskComment c, PersonRef author) {
+        boolean mine = c.getAuthorId().equals(ctx.userId());
+        boolean open = !ProjectAccess.archived(a.project());
+        return new CommentResponse(c.getId(), author, c.getBody(), c.getCreatedAt(), c.getEditedAt(), open && mine,
+                open && (mine || a.canManage()));
+    }
+
+    /**
+     * The people of {@code ids} who can see the project; with {@code previousBody}, only those it did not
+     * already mention by name (an edit notifies the newly mentioned only).
+     */
+    private Set<UUID> mentions(OrgContext ctx, Project p, List<UUID> ids, String previousBody) {
+        Set<UUID> out = new LinkedHashSet<>();
+        if (ids == null) {
+            return out;
+        }
+        Map<UUID, PersonRef> names = previousBody == null ? Map.of() : people.of(ids);
+        for (UUID u : ids) {
+            PersonRef who = names.get(u);
+            boolean already = who != null && previousBody.contains("@" + who.name());
+            if (!already && canSee(ctx, p, u)) {
+                out.add(u);
+            }
+        }
+        return out;
     }
 
     // ── Attachments ──────────────────────────────────────────────────────────────────

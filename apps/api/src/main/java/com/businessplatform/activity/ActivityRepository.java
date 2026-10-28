@@ -5,8 +5,9 @@ import java.util.UUID;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface ActivityRepository extends JpaRepository<Activity, UUID> {
+public interface ActivityRepository extends JpaRepository<Activity, UUID>, JpaSpecificationExecutor<Activity> {
 
     List<Activity> findByOrgIdAndRecordTypeAndRecordIdOrderByCreatedAtAsc(UUID orgId, String recordType, UUID recordId);
 

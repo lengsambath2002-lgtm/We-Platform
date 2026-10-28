@@ -70,14 +70,17 @@ public final class ProjectPayloads {
     public record FileRef(UUID id, String name, String contentType, long size, Instant createdAt) {
     }
 
+    /** {@code canComment}: false while the project is archived. */
     public record TaskDetailResponse(TaskResponse task, List<TaskResponse> subtasks, List<FileRef> attachments,
-            boolean canEdit) {
+            boolean canEdit, boolean canComment) {
     }
 
     public record CommentRequest(@NotBlank @Size(max = 10000) String body, List<UUID> mentionIds) {
     }
 
-    public record CommentResponse(UUID id, PersonRef author, String body, Instant createdAt, Instant editedAt) {
+    /** {@code canEdit}: the author; {@code canDelete}: the author, a project Lead or an Owner / Admin. */
+    public record CommentResponse(UUID id, PersonRef author, String body, Instant createdAt, Instant editedAt,
+            boolean canEdit, boolean canDelete) {
     }
 
     public record ActivityResponse(UUID id, PersonRef actor, String verb, Map<String, Object> data, Instant at) {

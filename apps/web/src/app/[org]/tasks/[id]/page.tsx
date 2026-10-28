@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, ListChecks, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Archive, ChevronRight, ListChecks, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -48,6 +48,7 @@ export default function TaskPage() {
   if (error) return <ErrorState error={error} retry={() => refetch()} />;
   if (isPending) return <ListSkeleton />;
   const { task, subtasks, attachments, canEdit } = data;
+  const archived = project.data?.status === 'ARCHIVED';
 
   const saveText = async () => {
     const field = editing!;
@@ -69,6 +70,7 @@ export default function TaskPage() {
         <span className="font-mono text-xs">{task.key}</span>
       </nav>
 
+      {archived && <p role="status" className="mb-4 flex items-center gap-2 rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground"><Archive className="size-4 shrink-0" />{t('collab.archivedTask')}</p>}
       <div className="mb-6 flex items-start gap-3">
         <div className="min-w-0 flex-1">
           {editing === 'title' ? (
@@ -133,7 +135,7 @@ export default function TaskPage() {
 
           <Tabs defaultValue="comments">
             <TabsList><TabsTrigger value="comments">{t('tasks.commentsTab', { count: task.comments })}</TabsTrigger><TabsTrigger value="activity">{t('tasks.activity')}</TabsTrigger></TabsList>
-            <TabsContent value="comments" className="pt-3"><Comments org={slug} taskId={task.id} canComment hideHeading /></TabsContent>
+            <TabsContent value="comments" className="pt-3"><Comments org={slug} taskId={task.id} canComment={data.canComment !== false} hideHeading /></TabsContent>
             <TabsContent value="activity" className="pt-3">
               {activity.error ? <ErrorState error={activity.error} retry={() => activity.refetch()} /> : activity.isPending ? <ListSkeleton rows={3} /> : <ActivityTimeline items={activity.data} />}
             </TabsContent>
