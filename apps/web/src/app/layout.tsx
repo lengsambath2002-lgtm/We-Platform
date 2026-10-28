@@ -15,7 +15,8 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${khmer.variable} font-sans`}>
+      {/* Browser extensions add attributes to <body> before hydration; this ignores those on <body> only. */}
+      <body className={`${inter.variable} ${khmer.variable} font-sans`} suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
