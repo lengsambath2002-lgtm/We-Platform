@@ -44,6 +44,18 @@ export function describe(a: ActivityItem, moduleName: (key: string) => string = 
     case 'project.deleted': return tr('collab.actProjectDeleted', { key: s(d.key), name: s(d.name) });
     case 'task.comment.edited': return tr('collab.actCommentEdited', { excerpt: s(d.excerpt) });
     case 'task.comment.deleted': return tr('collab.actCommentDeleted');
+    case 'document.uploaded': return tr('documents.actUploaded');
+    case 'document.versioned': return tr('documents.actVersioned', { version: String(d.version ?? '') });
+    case 'document.renamed': return tr('documents.actRenamed', { from: s(d.from), to: s(d.to) });
+    case 'document.described': return tr('documents.actDescribed');
+    case 'document.moved': return tr('documents.actMoved', { folder: s(d.to) || tr('documents.topLevel') });
+    case 'document.deleted': return tr('documents.actDeleted');
+    case 'document.restored': return tr('documents.actRestored');
+    case 'folder.created': return tr('documents.actFolderCreated');
+    case 'folder.renamed': return tr('documents.actFolderRenamed', { from: s(d.from), to: s(d.to) });
+    case 'folder.moved': return tr('documents.actFolderMoved', { folder: s(d.to) || tr('documents.topLevel') });
+    case 'folder.deleted': return tr('documents.actFolderDeleted');
+    case 'folder.restored': return tr('documents.actFolderRestored');
     case 'event.created': return tr('collab.actEventCreated', { title: s(d.title) });
     case 'event.updated': return tr('collab.actEventUpdated', { title: s(d.title) });
     case 'event.deleted': return tr('collab.actEventDeleted', { title: s(d.title) });
