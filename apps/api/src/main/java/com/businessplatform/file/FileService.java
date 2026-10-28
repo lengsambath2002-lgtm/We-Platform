@@ -5,22 +5,29 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
 import com.businessplatform.common.persistence.Ids;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Stores uploads on disk under {@code platform.files.dir} (an S3-compatible store can replace it).
  * Only common document and image types; the name is kept for downloads, never used as a path.
  */
+@Slf4j
 @Service
 public class FileService {
 
@@ -68,6 +75,37 @@ public class FileService {
             throw new UncheckedIOException(e);
         }
         return files.save(f);
+    }
+
+    /**
+     * Deletes stored files for good (their records are gone). The rows go now; the bytes on disk only
+     * once the transaction commits, so a rollback never leaves a row without its file.
+     */
+    @Transactional
+    public void discard(UUID orgId, Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return;
+        }
+        List<StoredFile> found = files.findByIdInAndOrgId(ids, orgId);
+        files.deleteAll(found);
+        List<Path> paths = found.stream().map(f -> root.resolve(f.getStorageKey()).normalize()).toList();
+        Runnable unlink = () -> paths.forEach(p -> {
+            try {
+                Files.deleteIfExists(p);
+            } catch (IOException e) {
+                log.warn("Could not delete {}", p, e);
+            }
+        });
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    unlink.run();
+                }
+            });
+        } else {
+            unlink.run();
+        }
     }
 
     public byte[] read(StoredFile f) {

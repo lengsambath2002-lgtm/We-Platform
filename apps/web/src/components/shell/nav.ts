@@ -9,6 +9,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   type LucideIcon,
+  ScrollText,
   ShoppingCart,
   UserCog,
   Users,
@@ -44,6 +45,7 @@ export function adminNav(ctx: OrgContext): NavItem[] {
     { href: 'admin/modules', label: tr('shell.modules'), icon: Blocks },
     { href: 'admin/workflows', label: tr('shell.workflows'), icon: GitBranch },
     { href: 'admin/members', label: tr('shell.membersRoles'), icon: UserCog },
+    ...(ctx.permissions.includes('activity.view') ? [{ href: 'admin/audit', label: tr('collab.auditNav'), icon: ScrollText }] : []),
   ];
 }
 

@@ -134,6 +134,8 @@ export interface TaskDetail {
   subtasks: Task[];
   attachments: FileRef[];
   canEdit: boolean;
+  /** False while the project is archived. */
+  canComment: boolean;
 }
 
 export interface Comment {
@@ -142,6 +144,8 @@ export interface Comment {
   body: string;
   createdAt: string;
   editedAt: string | null;
+  canEdit: boolean;
+  canDelete: boolean;
 }
 
 export interface ActivityItem {
@@ -198,6 +202,7 @@ export interface CalendarEvent {
   ownerId: string;
   attendeeIds: string[];
   canEdit: boolean;
+  canDelete: boolean;
 }
 
 export interface Deadline {

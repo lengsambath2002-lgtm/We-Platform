@@ -46,6 +46,7 @@ public class ProjectService {
     private final People people;
     private final ActivityService activity;
     private final NotificationService notifications;
+    private final TaskCleanup cleanup;
     private final Clock clock;
 
     @Transactional
@@ -134,18 +135,24 @@ public class ProjectService {
             changed.put("dates", true);
         }
         if (!changed.isEmpty()) {
+            changed.put("key", p.getKey());
             activity.record(ctx.orgId(), Module.PROJECTS, "project", p.getId(), ctx.userId(), "project.updated", changed);
         }
         return toResponse(ctx, access.check(ctx, p).orElseThrow());
     }
 
+    /**
+     * Deletes the project for good (its Lead or an Owner / Admin): its tasks, comments, attachments and the
+     * approval requests about its tasks go with it; events tied to it stay, without the project.
+     */
     @Transactional
     public void delete(String slug, String key) {
         OrgContext ctx = access.org(slug);
-        if (!ctx.isAdmin()) {
-            throw BusinessException.forbidden();
-        }
-        projects.delete(access.view(ctx, key).project());
+        Project p = access.requireManage(ctx, key).project();
+        cleanup.project(ctx.orgId(), p.getId());
+        projects.delete(p);
+        activity.record(ctx.orgId(), Module.PROJECTS, "project", p.getId(), ctx.userId(), "project.deleted",
+                Map.of("key", p.getKey(), "name", p.getName()));
     }
 
     @Transactional(readOnly = true)
@@ -181,7 +188,7 @@ public class ProjectService {
         notifications.send(ctx.orgId(), added, ctx.userId(), "project.added", "You were added to " + p.getName(), null,
                 "/" + ctx.slug() + "/projects/" + p.getKey());
         activity.record(ctx.orgId(), Module.PROJECTS, "project", p.getId(), ctx.userId(), "project.members",
-                Map.of("count", wanted.size()));
+                Map.of("count", wanted.size(), "key", p.getKey()));
         return members(slug, key);
     }
 

@@ -7,9 +7,16 @@ import { ago, day } from '@/lib/format';
 const s = (v: unknown) => (typeof v === 'string' ? v : '');
 const status = (v: unknown) => STATUS_LABEL[v as TaskStatus] ?? s(v);
 const priority = (v: unknown) => (PRIORITY_LABEL[v as Priority] ?? s(v)).toLowerCase();
+const PROJECT_STATUS = ['ACTIVE', 'ON_HOLD', 'DONE', 'ARCHIVED'] as const;
+const projectStatus = (v: unknown) => (PROJECT_STATUS.includes(v as never) ? tr(`projects.${v as (typeof PROJECT_STATUS)[number]}`) : s(v));
+const ORG_ROLES = ['OWNER', 'ADMIN', 'MEMBER', 'GUEST'] as const;
+const role = (v: unknown) => (ORG_ROLES.includes(v as never) ? tr(`org.role_${v as (typeof ORG_ROLES)[number]}`) : s(v));
 
-/** A plain sentence for an activity entry, in the current language. */
-export function describe(a: ActivityItem): string {
+/**
+ * A plain sentence for an activity entry, in the current language (task history, Overview, audit log).
+ * `moduleName` names a module key for organisation entries.
+ */
+export function describe(a: ActivityItem, moduleName: (key: string) => string = (k) => k): string {
   const d = a.data;
   switch (a.verb) {
     case 'task.created': return tr('tasks.actCreated', { key: s(d.key), title: s(d.title) });
@@ -30,7 +37,30 @@ export function describe(a: ActivityItem): string {
       return parts.join(', ') || tr('tasks.actUpdated');
     }
     case 'project.created': return tr('tasks.actProjectCreated', { name: s(d.name) });
-    case 'project.updated': return tr('tasks.actProjectUpdated');
+    case 'project.updated':
+      if (d.status === 'ARCHIVED') return tr('collab.actProjectArchived');
+      if (d.status) return tr('collab.actProjectStatus', { status: projectStatus(d.status) });
+      return tr('tasks.actProjectUpdated');
+    case 'project.deleted': return tr('collab.actProjectDeleted', { key: s(d.key), name: s(d.name) });
+    case 'task.comment.edited': return tr('collab.actCommentEdited', { excerpt: s(d.excerpt) });
+    case 'task.comment.deleted': return tr('collab.actCommentDeleted');
+    case 'event.created': return tr('collab.actEventCreated', { title: s(d.title) });
+    case 'event.updated': return tr('collab.actEventUpdated', { title: s(d.title) });
+    case 'event.deleted': return tr('collab.actEventDeleted', { title: s(d.title) });
+    case 'org.updated': return tr('collab.actOrgUpdated', { name: s(d.name) });
+    case 'org.module.enabled': return tr('collab.actModuleOn', { module: moduleName(s(d.module)) });
+    case 'org.module.disabled': return tr('collab.actModuleOff', { module: moduleName(s(d.module)) });
+    case 'org.member.updated':
+      if (d.role) return tr('collab.actMemberRole', { name: s(d.name), role: role(d.role) });
+      if (d.status === 'SUSPENDED') return tr('collab.actMemberSuspended', { name: s(d.name) });
+      if (d.status === 'ACTIVE') return tr('collab.actMemberReactivated', { name: s(d.name) });
+      return tr('collab.actMemberUpdated', { name: s(d.name) });
+    case 'org.member.invited': return tr('collab.actMemberInvited', { email: s(d.email), role: role(d.role) });
+    case 'org.invitation.revoked': return tr('collab.actInvitationRevoked', { email: s(d.email) });
+    case 'org.member.joined': return tr('collab.actMemberJoined', { role: role(d.role) });
+    case 'org.team.created': return tr('collab.actTeamCreated', { name: s(d.name) });
+    case 'org.team.updated': return tr('collab.actTeamUpdated', { name: s(d.name) });
+    case 'org.team.deleted': return tr('collab.actTeamDeleted', { name: s(d.name) });
     case 'project.members': return tr('tasks.actProjectMembers');
     case 'approval.requested': return tr('tasks.actApprovalRequested', { workflow: s(d.workflow) });
     case 'approval.step.approved': return tr('tasks.actStepApproved');

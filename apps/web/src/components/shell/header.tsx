@@ -196,12 +196,13 @@ function Notifications({ org }: { org: string }) {
   const qc = useQueryClient();
   const router = useRouter();
   const unread = data?.unread ?? 0;
+  const [open, setOpen] = useState(false);
   const read = async (id?: string) => {
     await orgApi.readNotifications(org, id);
     qc.invalidateQueries({ queryKey: ['org', org, 'notifications'] });
   };
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative" aria-label={unread ? t('shell.notificationsUnread', { count: unread }) : t('shell.notifications')}>
           <Bell className="size-[18px]" />
@@ -221,7 +222,7 @@ function Notifications({ org }: { org: string }) {
           {(data?.items ?? []).length === 0 && <li className="px-3 py-8 text-center text-sm text-muted-foreground">{t('shell.allCaughtUp')}</li>}
           {(data?.items ?? []).map((n) => (
             <li key={n.id}>
-              <button type="button" onClick={() => { void read(n.id); if (n.link) router.push(n.link); }}
+              <button type="button" onClick={() => { void read(n.id); if (n.link) { setOpen(false); router.push(n.link); } }}
                 className={cn('flex w-full gap-2 px-3 py-2.5 text-left hover:bg-muted', !n.readAt && 'bg-accent/40')}>
                 <span className={cn('mt-1.5 size-2 shrink-0 rounded-full', n.readAt ? 'bg-transparent' : 'bg-primary')} />
                 <span className="min-w-0 flex-1">
@@ -233,6 +234,11 @@ function Notifications({ org }: { org: string }) {
             </li>
           ))}
         </ul>
+        <div className="border-t p-1">
+          <Button asChild variant="ghost" size="sm" className="w-full">
+            <Link href={`/${org}/notifications`} onClick={() => setOpen(false)}>{t('collab.seeAll')}</Link>
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

@@ -11,12 +11,13 @@ import * as projects from './projects';
 import * as shell from './shell';
 import * as status from './status';
 import * as tasks from './tasks';
+import * as collab from './collab';
 
 /**
  * One file per area (namespace), each exporting `en` and `km` with the same keys
  * (`km` is typed from `en`, so a missing Khmer key fails the typecheck). Keys are used as `t('<namespace>.<key>')`.
  */
-export const namespaces = { account, admin, approvals, auth, calendar, common, modules, org, overview, projects, shell, status, tasks };
+export const namespaces = { account, admin, approvals, auth, calendar, common, modules, org, overview, projects, shell, status, tasks, collab };
 
 type NS = typeof namespaces;
 export type MessageKey = { [N in keyof NS]: `${N & string}.${keyof NS[N]['en'] & string}` }[keyof NS];

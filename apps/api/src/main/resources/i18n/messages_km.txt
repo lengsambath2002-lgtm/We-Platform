@@ -94,3 +94,8 @@ Only a request with changes requested can be resubmitted = អាចដាក់
 This request is already closed = សំណើនេះបានបិទរួចហើយ
 This kind of record can't be approved = មិនអាចអនុម័តកំណត់ត្រាប្រភេទនេះបានទេ
 Say why = សូមប្រាប់មូលហេតុ
+
+# Collaboration: archived projects, notifications, audit log
+This project is archived = គម្រោងនេះត្រូវបានរក្សាទុកក្នុងបណ្ណសារ
+Unknown kind of notification = រកមិនឃើញប្រភេទការជូនដំណឹងនេះទេ
+The end is before the start = ថ្ងៃបញ្ចប់នៅមុនថ្ងៃចាប់ផ្ដើម

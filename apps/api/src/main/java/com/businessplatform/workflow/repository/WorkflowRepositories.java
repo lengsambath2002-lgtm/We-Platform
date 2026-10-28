@@ -63,6 +63,12 @@ public final class WorkflowRepositories {
                 + " AND r.status = 'PENDING' AND s.stepOrder = r.currentStep AND s.status = 'PENDING'"
                 + " AND (s.approverId = :userId OR s.approverRole IN :roles) ORDER BY r.updatedAt ASC")
         List<ApprovalRequest> inbox(UUID orgId, UUID userId, List<String> roles);
+
+        /** Removes the requests about records that are gone (their steps and actions go with them). */
+        @Modifying
+        @Query("DELETE FROM ApprovalRequest r WHERE r.orgId = :orgId AND r.moduleKey = :moduleKey"
+                + " AND r.recordType = :recordType AND r.recordId IN :recordIds")
+        int deleteForRecords(UUID orgId, String moduleKey, String recordType, java.util.Collection<UUID> recordIds);
     }
 
     public interface Steps extends JpaRepository<ApprovalStep, UUID> {
