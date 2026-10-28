@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { ConnectedAppsSection } from '@/components/account/connected-apps-section';
 import { DevicesSection } from '@/components/account/devices-section';
 import { OrgsSection } from '@/components/account/orgs-section';
 import { PasswordSection } from '@/components/account/password-section';
@@ -65,6 +66,7 @@ function Account() {
 
       <PasswordSection />
       <DevicesSection />
+      <ConnectedAppsSection />
       <OrgsSection />
 
       <section className="mt-4 rounded-lg border bg-card p-4 sm:p-6">

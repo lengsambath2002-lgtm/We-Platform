@@ -17,8 +17,9 @@ class ArchitectureTest {
     @Test
     void the_core_does_not_depend_on_modules() {
         noClasses().that().resideInAnyPackage("..common..", "..identity..", "..org..", "..module..", "..workflow..",
-                "..calendar..", "..activity..", "..notification..", "..file..", "..document..")
-                .should().dependOnClassesThat().resideInAnyPackage("..project..", "..overview..", "..report..", "..hr..")
+                "..calendar..", "..activity..", "..notification..", "..file..", "..document..", "..oidc..")
+                .should().dependOnClassesThat().resideInAnyPackage("..project..", "..overview..", "..report..", "..hr..",
+                        "..retail..")
                 .check(CLASSES);
     }
 
@@ -28,7 +29,13 @@ class ArchitectureTest {
                 .should().dependOnClassesThat().resideInAnyPackage("..project..", "..overview..", "..report..")
                 .check(CLASSES);
         noClasses().that().resideInAPackage("..project..")
-                .should().dependOnClassesThat().resideInAPackage("..hr..")
+                .should().dependOnClassesThat().resideInAnyPackage("..hr..", "..retail..")
+                .check(CLASSES);
+        noClasses().that().resideInAPackage("..hr..")
+                .should().dependOnClassesThat().resideInAPackage("..retail..")
+                .check(CLASSES);
+        noClasses().that().resideInAPackage("..retail..")
+                .should().dependOnClassesThat().resideInAnyPackage("..project..", "..hr..", "..overview..", "..report..")
                 .check(CLASSES);
     }
 

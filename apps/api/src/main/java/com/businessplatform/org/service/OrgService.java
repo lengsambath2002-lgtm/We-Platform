@@ -62,7 +62,7 @@ public class OrgService {
 
     /** Addresses the web app uses for its own pages (/{slug} would shadow them). */
     private static final Set<String> RESERVED_SLUGS = Set.of("account", "onboarding", "invite", "sign-in", "sign-up",
-            "api", "admin", "settings", "help", "login", "logout", "static", "_next");
+            "api", "admin", "settings", "help", "login", "logout", "static", "_next", "oauth");
 
     @Transactional
     public OrgSummary create(CreateOrgRequest in) {
@@ -98,7 +98,7 @@ public class OrgService {
         OrgContext ctx = access.require(slug);
         Set<String> on = modules.enabled(ctx.orgId());
         List<ModuleState> states = modules.registry().stream()
-                .map(m -> new ModuleState(m.getKey(), m.getNameEn(), m.getNameKm(), m.getKind(), m.available(),
+                .map(m -> new ModuleState(m.getKey(), m.getNameEn(), m.getNameKm(), m.getKind(), modules.available(m),
                         on.contains(m.getKey())))
                 .toList();
         return new OrgContextResponse(new OrgSummary(ctx.orgId(), ctx.slug(), ctx.orgName(), ctx.role()),

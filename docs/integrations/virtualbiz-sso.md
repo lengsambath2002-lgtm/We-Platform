@@ -97,7 +97,14 @@ several shops. Authenticated with HTTP Basic `client_id:client_secret`.
   `200 {"orgId", "businessId", "businessName", "linkedAt"}`. The platform checks the organisation
   exists and `linkedBy` is an **active OWNER or ADMIN** of it (else `403 {"error":"forbidden"}`);
   re-linking the same shop to another organisation moves it. Recorded in the platform audit log.
-- `DELETE {PLATFORM}/api/integrations/virtualbiz/links/{businessId}` → `204`.
+- `DELETE {PLATFORM}/api/integrations/virtualbiz/links/{businessId}` → `204`. Idempotent.
+- `GET {PLATFORM}/api/integrations/virtualbiz/links/{businessId}` → `200 {"orgId", "businessId",
+  "businessName", "linkedAt"}` or `404 {"error":"not_found"}` (also when the organisation was deleted).
+  A platform admin can unlink a shop on the platform, and the platform never calls VirtualBiz, so
+  **VirtualBiz must confirm the link with this call before granting any access through it** (see §6).
+
+Errors on these endpoints are `{"error", "error_description"}`: 400 `invalid_request`, 401
+`invalid_client`, 403 `forbidden` (also for an unknown or deleted organisation), 404 `not_found`.
 
 ## 5. On the platform: the Retail & Commerce module
 
@@ -128,6 +135,10 @@ several shops. Authenticated with HTTP Basic `client_id:client_secret`.
   OWNER/ADMIN → MANAGER, MEMBER → STAFF, GUEST → no access. Rows created this way are marked as
   platform-managed; they are updated on every SSO sign-in and deactivated when the person is no
   longer in that organisation. A shop's real OWNER row and manually added staff are never changed.
+  Before syncing a shop, VirtualBiz confirms its link (`GET …/links/{businessId}`): on 404 or a
+  different organisation it clears `business.platform_org_id` and deactivates that shop's
+  platform-managed rows; on a network error or 5xx it grants no new access for that shop in this
+  sign-in (fails closed) and keeps existing rows. The `orgs` claim alone never grants shop access.
 - **Connect** (`intent=connect`): after SSO, the person picks one of the shops they **own** in
   VirtualBiz and an organisation from the token where they are OWNER/ADMIN; VirtualBiz stores
   `business.platform_org_id` and calls the link API. **Disconnect** clears it and calls DELETE.

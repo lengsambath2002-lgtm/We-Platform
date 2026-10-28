@@ -30,6 +30,13 @@ public final class Permissions {
                 p.add("hr.manage");
             }
         }
+        // Retail & Commerce: everyone but guests sees the linked shops; admins connect and unlink them.
+        if (modules.contains(Module.RETAIL) && !ctx.isGuest()) {
+            p.add("retail.view");
+            if (ctx.isAdmin()) {
+                p.add("retail.manage");
+            }
+        }
         if (!ctx.isGuest()) {
             p.add("calendar.create");
             p.add("reports.view");
