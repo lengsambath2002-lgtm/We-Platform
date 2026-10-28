@@ -4,6 +4,7 @@ import {
   Briefcase,
   CalendarDays,
   CheckSquare,
+  FileText,
   FolderKanban,
   GitBranch,
   GraduationCap,
@@ -34,6 +35,7 @@ export function globalNav(ctx: OrgContext): NavItem[] {
     { href: 'calendar', label: tr('shell.calendar'), icon: CalendarDays, need: 'calendar.view' },
     { href: 'teams', label: tr('shell.teams'), icon: Users, need: 'teams.view' },
     { href: 'approvals', label: tr('shell.approvals'), icon: BadgeCheck, need: 'approvals.view' },
+    { href: 'documents', label: tr('documents.title'), icon: FileText, need: 'documents.view' },
   ];
   return items.filter((i) => !i.need || can(i.need));
 }

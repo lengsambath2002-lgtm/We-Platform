@@ -30,6 +30,13 @@ public final class Permissions {
             p.addAll(List.of("org.settings.manage", "org.members.manage", "org.modules.manage",
                     "teams.manage", "workflows.manage", "activity.view"));
         }
+        // Documents: the shared library for everyone but guests; admins manage anyone's files.
+        if (!ctx.isGuest()) {
+            p.addAll(List.of("documents.view", "documents.upload"));
+        }
+        if (ctx.isAdmin()) {
+            p.add("documents.manage");
+        }
         return p;
     }
 }
