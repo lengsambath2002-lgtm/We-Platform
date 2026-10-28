@@ -4,23 +4,25 @@ import { BadgeCheck, CalendarDays, CheckSquare, LayoutDashboard } from 'lucide-r
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { useT } from '@/i18n/provider';
 import { useApprovals } from '@/lib/api/queries';
 import type { OrgContext } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 
 /** Phones: the four places people go most, one thumb away. The rest is in the menu. */
 export function BottomNav({ ctx }: { ctx: OrgContext }) {
+  const { t } = useT();
   const org = ctx.org.slug;
   const path = usePathname();
   const inbox = useApprovals(org, 'inbox');
   const items = [
-    { href: 'overview', label: 'Overview', icon: LayoutDashboard },
-    ...(ctx.permissions.includes('projects.view') ? [{ href: 'my-tasks', label: 'My Tasks', icon: CheckSquare }] : []),
-    { href: 'approvals', label: 'Approvals', icon: BadgeCheck, badge: inbox.data?.length ?? 0 },
-    { href: 'calendar', label: 'Calendar', icon: CalendarDays },
+    { href: 'overview', label: t('shell.overview'), icon: LayoutDashboard },
+    ...(ctx.permissions.includes('projects.view') ? [{ href: 'my-tasks', label: t('shell.myTasks'), icon: CheckSquare }] : []),
+    { href: 'approvals', label: t('shell.approvals'), icon: BadgeCheck, badge: inbox.data?.length ?? 0 },
+    { href: 'calendar', label: t('shell.calendar'), icon: CalendarDays },
   ];
   return (
-    <nav aria-label="Quick" className="fixed inset-x-0 bottom-0 z-30 grid border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
+    <nav aria-label={t('shell.quickNav')} className="fixed inset-x-0 bottom-0 z-30 grid border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
       {items.map((i) => {
         const href = `/${org}/${i.href}`;

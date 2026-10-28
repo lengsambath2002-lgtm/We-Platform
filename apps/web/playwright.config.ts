@@ -6,7 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
-  timeout: 60_000,
+  timeout: 120_000, // the dev server compiles each page on first visit
   fullyParallel: false,
   reporter: [['list']],
   use: { baseURL: process.env.WEB_URL ?? 'http://localhost:3300', trace: 'retain-on-failure' },

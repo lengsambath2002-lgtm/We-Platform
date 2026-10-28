@@ -5,6 +5,7 @@ import { ThemeProvider } from 'next-themes';
 import { useState, type ReactNode } from 'react';
 
 import { Toaster } from '@/components/ui/sonner';
+import { I18nProvider, LocaleBoundary } from '@/i18n/provider';
 import { ApiError } from '@/lib/api/client';
 import { SessionProvider } from '@/lib/auth/session';
 
@@ -24,10 +25,12 @@ export function Providers({ children }: { children: ReactNode }) {
   );
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <QueryClientProvider client={client}>
-        <SessionProvider>{children}</SessionProvider>
-        <Toaster richColors position="top-right" />
-      </QueryClientProvider>
+      <I18nProvider>
+        <QueryClientProvider client={client}>
+          <SessionProvider><LocaleBoundary>{children}</LocaleBoundary></SessionProvider>
+          <Toaster richColors position="top-right" />
+        </QueryClientProvider>
+      </I18nProvider>
     </ThemeProvider>
   );
 }

@@ -1,0 +1,96 @@
+# Khmer for the API's error messages (UTF-8).
+# One entry per line: the exact English text from the code, " = ", then the Khmer.
+# {name} placeholders are filled in after translating; keep them as they are.
+# MessageCoverageTest fails when an English message in src/main/java has no line here.
+
+# Generic: request and server errors
+Validation failed = ទិន្នន័យមិនត្រឹមត្រូវ
+Malformed request = សំណើមិនត្រឹមត្រូវ
+File too large = ឯកសារធំពេក
+At most 20 MB = មិនលើសពី 20 MB
+Forbidden = អ្នកមិនមានសិទ្ធិធ្វើការនេះទេ
+Not found = រកមិនឃើញ
+Unexpected error = មានបញ្ហាមិនបានរំពឹងទុក។ សូមព្យាយាមម្ដងទៀត
+
+# Error codes (the message when a refusal has no text of its own)
+VALIDATION_FAILED = ទិន្នន័យមិនត្រឹមត្រូវ
+UNAUTHORIZED = សូមចូលគណនីជាមុនសិន
+INVALID_CREDENTIALS = អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ
+ACCOUNT_LOCKED = គណនីត្រូវបានចាក់សោបណ្ដោះអាសន្ន។ សូមព្យាយាមម្ដងទៀតនៅពេលក្រោយ
+FORBIDDEN = អ្នកមិនមានសិទ្ធិធ្វើការនេះទេ
+MODULE_DISABLED = ម៉ូឌុលនេះមិនទាន់បើកសម្រាប់ស្ថាប័នរបស់អ្នកទេ
+NOT_FOUND = រកមិនឃើញ
+CONFLICT = ទិន្នន័យនេះជាន់នឹងទិន្នន័យដែលមានស្រាប់
+INVALID_STATE = មិនអាចធ្វើការនេះបានក្នុងស្ថានភាពបច្ចុប្បន្នទេ
+INVALID_TOKEN = តំណ ឬវគ្គនេះមិនត្រឹមត្រូវ ឬផុតកំណត់ហើយ
+INTERNAL_ERROR = មានបញ្ហាមិនបានរំពឹងទុក។ សូមព្យាយាមម្ដងទៀត
+
+# Generic: Bean Validation constraints
+Required = ត្រូវតែបំពេញ
+{min}–{max} characters = ពី {min} ដល់ {max} តួអក្សរ
+At least {min} characters = យ៉ាងហោចណាស់ {min} តួអក្សរ
+At most {max} characters = មិនលើសពី {max} តួអក្សរ
+{min}–{max} items = ពី {min} ដល់ {max} ធាតុ
+At least {min} items = យ៉ាងហោចណាស់ {min} ធាតុ
+At most {max} items = មិនលើសពី {max} ធាតុ
+Not a valid email address = អ៊ីមែលមិនត្រឹមត្រូវ
+Not a valid value = តម្លៃមិនត្រឹមត្រូវ
+At least {value} = យ៉ាងហោចណាស់ {value}
+At most {value} = មិនលើសពី {value}
+Must be more than 0 = ត្រូវតែធំជាង 0
+Must be 0 or more = ត្រូវតែ 0 ឬច្រើនជាងនេះ
+Must be in the future = ត្រូវតែជាពេលខាងមុខ
+Must be in the past = ត្រូវតែជាពេលកន្លងមក
+
+# Identity
+An account already uses this email = មានគណនីប្រើអ៊ីមែលនេះរួចហើយ
+Weak password = ពាក្យសម្ងាត់ខ្សោយពេក
+Use 10 or more characters with letters and numbers, not your email name = សូមប្រើយ៉ាងហោចណាស់ 10 តួអក្សរ ដែលមានទាំងអក្សរ និងលេខ ហើយកុំប្រើឈ្មោះក្នុងអ៊ីមែលរបស់អ្នក
+en or km = en ឬ km
+
+# Organisations, members, invitations, teams
+3–40 lowercase letters, numbers or dashes = អក្សរតូច លេខ ឬសញ្ញា (-) ពី 3 ដល់ 40 តួ
+This address is taken = អាសយដ្ឋាននេះមានគេប្រើហើយ
+An organisation needs at least one owner = ស្ថាប័នត្រូវមានម្ចាស់យ៉ាងហោចណាស់ម្នាក់
+Invite as Admin, Member or Guest = សូមអញ្ជើញជាអ្នកគ្រប់គ្រង សមាជិក ឬភ្ញៀវ
+Already a member = ជាសមាជិករួចហើយ
+This invitation is for another email address = ការអញ្ជើញនេះសម្រាប់អ៊ីមែលផ្សេង
+Unknown member = រកមិនឃើញសមាជិកនេះទេ
+Not a member of the organisation = មិនមែនជាសមាជិកនៃស្ថាប័នទេ
+
+# Modules and files
+This module is not available yet = ម៉ូឌុលនេះមិនទាន់មានប្រើនៅឡើយទេ
+Unknown module = រកមិនឃើញម៉ូឌុលនេះទេ
+Choose a file = សូមជ្រើសរើសឯកសារ
+This file type is not allowed = មិនអនុញ្ញាតប្រភេទឯកសារនេះទេ
+
+# Calendar
+At most 62 days = មិនលើសពី 62 ថ្ងៃ
+Ends before it starts = ពេលបញ្ចប់នៅមុនពេលចាប់ផ្ដើម
+Unknown project = រកមិនឃើញគម្រោងនេះទេ
+
+# Projects and tasks
+2–10 capital letters or digits, starting with a letter = អក្សរធំ ឬលេខ ពី 2 ដល់ 10 តួ ដោយចាប់ផ្ដើមដោយអក្សរ
+Another project uses this key = មានគម្រោងផ្សេងប្រើកូដនេះរួចហើយ
+A project needs a lead = គម្រោងត្រូវមានអ្នកដឹកនាំគម្រោង
+A guest can't lead a project = ភ្ញៀវមិនអាចដឹកនាំគម្រោងបានទេ
+The due date is before the start = ថ្ងៃផុតកំណត់នៅមុនថ្ងៃចាប់ផ្ដើម
+A subtask belongs to a top-level task of the same project = ការងាររងត្រូវស្ថិតក្រោមការងារមេក្នុងគម្រោងតែមួយ
+Subtasks aren't on the board = ការងាររងមិនបង្ហាញលើក្ដារទេ
+This person can't see the project = អ្នកនេះមិនអាចមើលគម្រោងនេះបានទេ
+Viewers can't be assigned tasks = មិនអាចប្រគល់ការងារឱ្យអ្នកមើលបានទេ
+
+# Workflows and approvals
+Another workflow has this name = មានលំហូរការអនុម័តផ្សេងប្រើឈ្មោះនេះរួចហើយ
+Choose a member of the organisation = សូមជ្រើសរើសសមាជិកនៃស្ថាប័ន
+Choose Owner or Admin = សូមជ្រើសរើសម្ចាស់ ឬអ្នកគ្រប់គ្រង
+Choose an active workflow = សូមជ្រើសរើសលំហូរការអនុម័តដែលកំពុងប្រើ
+This already has an open approval request = មានសំណើសុំការអនុម័តកំពុងរង់ចាំរួចហើយ
+This record has no lead to approve it = កំណត់ត្រានេះគ្មានអ្នកដឹកនាំដើម្បីអនុម័តទេ
+You can't approve your own request — choose another workflow = អ្នកមិនអាចអនុម័តសំណើរបស់ខ្លួនឯងបានទេ — សូមជ្រើសរើសលំហូរការអនុម័តផ្សេង
+inbox, sent or all = inbox, sent ឬ all
+This request is not waiting for a decision = សំណើនេះមិនកំពុងរង់ចាំការសម្រេចទេ
+Only a request with changes requested can be resubmitted = អាចដាក់ស្នើម្ដងទៀតបានតែសំណើដែលត្រូវបានស្នើឱ្យកែប្រែប៉ុណ្ណោះ
+This request is already closed = សំណើនេះបានបិទរួចហើយ
+This kind of record can't be approved = មិនអាចអនុម័តកំណត់ត្រាប្រភេទនេះបានទេ
+Say why = សូមប្រាប់មូលហេតុ

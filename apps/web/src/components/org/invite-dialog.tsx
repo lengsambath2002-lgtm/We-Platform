@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Copy } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -12,18 +12,21 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { type Locale, tr, translate } from '@/i18n/core';
+import { useT } from '@/i18n/provider';
 import { orgApi, useOrgMutation } from '@/lib/api/queries';
 import type { Invitation } from '@/lib/api/types';
 
-const schema = z.object({ email: z.string().trim().email('Enter an email address'), role: z.enum(['ADMIN', 'MEMBER', 'GUEST']) });
-type Values = z.infer<typeof schema>;
+const makeSchema = (l: Locale) => z.object({ email: z.string().trim().email(translate(l, 'org.emailInvalid')), role: z.enum(['ADMIN', 'MEMBER', 'GUEST']) });
+type Values = z.infer<ReturnType<typeof makeSchema>>;
 
-export const ROLE_TEXT: Record<string, { label: string; hint: string }> = {
-  OWNER: { label: 'Owner', hint: 'Everything, including billing and deleting the organisation' },
-  ADMIN: { label: 'Admin', hint: 'Members, modules, workflows and every project' },
-  MEMBER: { label: 'Member', hint: 'Projects they can see, calendar, approvals' },
-  GUEST: { label: 'Guest', hint: 'Only projects they are added to' },
-};
+/** Role label and hint, read in the current language on each access. */
+export const ROLE_TEXT: Record<string, { label: string; hint: string }> = Object.fromEntries(
+  (['OWNER', 'ADMIN', 'MEMBER', 'GUEST'] as const).map((r) => [r, {
+    get label() { return tr(`org.role_${r}`); },
+    get hint() { return tr(`org.role_${r}_hint`); },
+  }]),
+);
 
 /**
  * Creates an invitation and shows its one-time link to copy. The platform does not send email yet,
@@ -33,6 +36,8 @@ export function InviteDialog({ org, open, onOpenChange }: { org: string; open: b
   const [created, setCreated] = useState<Invitation | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { t, locale } = useT();
+  const schema = useMemo(() => makeSchema(locale), [locale]);
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: '', role: 'MEMBER' } });
   const invite = useOrgMutation(org, (v: Values) => orgApi.invite(org, v.email, v.role));
   const close = (v: boolean) => { if (!v) { setCreated(null); setCopied(false); setError(null); form.reset(); } onOpenChange(v); };
@@ -41,22 +46,21 @@ export function InviteDialog({ org, open, onOpenChange }: { org: string; open: b
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{created ? 'Invitation ready' : 'Invite someone'}</DialogTitle>
+          <DialogTitle>{created ? t('org.inviteReadyTitle') : t('org.inviteTitle')}</DialogTitle>
           <DialogDescription>
-            {created ? `Send this link to ${created.email}. It works once, for that email address, until it expires.`
-              : 'They join with the role you choose. You can change it later.'}
+            {created ? t('org.inviteReadyBody', { email: created.email }) : t('org.inviteBody')}
           </DialogDescription>
         </DialogHeader>
         {created ? (
           <div className="space-y-3">
             <div className="flex gap-2">
-              <Input readOnly value={created.link ?? ''} aria-label="Invitation link" onFocus={(e) => e.target.select()} className="font-mono text-xs" />
+              <Input readOnly value={created.link ?? ''} aria-label={t('org.inviteLink')} onFocus={(e) => e.target.select()} className="font-mono text-xs" />
               <Button variant="outline" onClick={async () => { await navigator.clipboard.writeText(created.link ?? ''); setCopied(true); }}>
-                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}{copied ? 'Copied' : 'Copy'}
+                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}{copied ? t('org.copied') : t('org.copy')}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">The link is shown only now. If it&apos;s lost, revoke the invitation and invite again.</p>
-            <DialogFooter><Button onClick={() => close(false)}>Done</Button></DialogFooter>
+            <p className="text-xs text-muted-foreground">{t('org.linkShownOnce')}</p>
+            <DialogFooter><Button onClick={() => close(false)}>{t('common.done')}</Button></DialogFooter>
           </div>
         ) : (
           <Form {...form}>
@@ -66,11 +70,11 @@ export function InviteDialog({ org, open, onOpenChange }: { org: string; open: b
             })}>
               {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
               <FormField control={form.control} name="email" render={({ field }) => (
-                <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" autoFocus autoComplete="off" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t('org.email')}</FormLabel><FormControl><Input type="email" autoFocus autoComplete="off" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={form.control} name="role" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel>{t('org.role')}</FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
                     <SelectContent>{(['ADMIN', 'MEMBER', 'GUEST'] as const).map((r) => <SelectItem key={r} value={r}>{ROLE_TEXT[r]!.label}</SelectItem>)}</SelectContent>
@@ -79,8 +83,8 @@ export function InviteDialog({ org, open, onOpenChange }: { org: string; open: b
                 </FormItem>
               )} />
               <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => close(false)}>Cancel</Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting ? 'Creating…' : 'Create invitation'}</Button>
+                <Button type="button" variant="outline" onClick={() => close(false)}>{t('common.cancel')}</Button>
+                <Button type="submit" disabled={form.formState.isSubmitting}>{form.formState.isSubmitting ? t('common.creating') : t('org.createInvitation')}</Button>
               </DialogFooter>
             </form>
           </Form>

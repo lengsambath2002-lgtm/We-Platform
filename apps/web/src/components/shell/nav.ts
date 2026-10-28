@@ -15,6 +15,7 @@ import {
   Wrench,
 } from 'lucide-react';
 
+import { currentLocale, tr } from '@/i18n/core';
 import type { OrgContext } from '@/lib/api/types';
 
 export interface NavItem {
@@ -27,12 +28,12 @@ export interface NavItem {
 export function globalNav(ctx: OrgContext): NavItem[] {
   const can = (p: string) => ctx.permissions.includes(p);
   const items: (NavItem & { need?: string })[] = [
-    { href: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { href: 'my-tasks', label: 'My Tasks', icon: CheckSquare, need: 'projects.view' },
-    { href: 'projects', label: 'Projects', icon: FolderKanban, need: 'projects.view' },
-    { href: 'calendar', label: 'Calendar', icon: CalendarDays, need: 'calendar.view' },
-    { href: 'teams', label: 'Teams', icon: Users, need: 'teams.view' },
-    { href: 'approvals', label: 'Approvals', icon: BadgeCheck, need: 'approvals.view' },
+    { href: 'overview', label: tr('shell.overview'), icon: LayoutDashboard },
+    { href: 'my-tasks', label: tr('shell.myTasks'), icon: CheckSquare, need: 'projects.view' },
+    { href: 'projects', label: tr('shell.projects'), icon: FolderKanban, need: 'projects.view' },
+    { href: 'calendar', label: tr('shell.calendar'), icon: CalendarDays, need: 'calendar.view' },
+    { href: 'teams', label: tr('shell.teams'), icon: Users, need: 'teams.view' },
+    { href: 'approvals', label: tr('shell.approvals'), icon: BadgeCheck, need: 'approvals.view' },
   ];
   return items.filter((i) => !i.need || can(i.need));
 }
@@ -40,9 +41,9 @@ export function globalNav(ctx: OrgContext): NavItem[] {
 export function adminNav(ctx: OrgContext): NavItem[] {
   if (!ctx.permissions.includes('org.settings.manage')) return [];
   return [
-    { href: 'admin/modules', label: 'Modules', icon: Blocks },
-    { href: 'admin/workflows', label: 'Workflows', icon: GitBranch },
-    { href: 'admin/members', label: 'Members & roles', icon: UserCog },
+    { href: 'admin/modules', label: tr('shell.modules'), icon: Blocks },
+    { href: 'admin/workflows', label: tr('shell.workflows'), icon: GitBranch },
+    { href: 'admin/members', label: tr('shell.membersRoles'), icon: UserCog },
   ];
 }
 
@@ -54,3 +55,6 @@ export const MODULE_ICON: Record<string, LucideIcon> = {
   hr: Users,
   service: Wrench,
 };
+
+/** A module's name in the current language. */
+export const moduleName = (m: { nameEn: string; nameKm: string }) => (currentLocale() === 'km' && m.nameKm ? m.nameKm : m.nameEn);

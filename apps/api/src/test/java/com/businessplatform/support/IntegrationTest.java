@@ -51,10 +51,15 @@ public abstract class IntegrationTest {
     }
 
     protected User signUp(String name) throws Exception {
+        return signUpIn(null, name);
+    }
+
+    /** Signs up with {@code Accept-Language: language} (none when null). */
+    protected User signUpIn(String language, String name) throws Exception {
         String email = name.toLowerCase().replace(' ', '.') + "." + UUID.randomUUID().toString().substring(0, 8)
                 + "@example.com";
-        JsonNode r = call(null, HttpMethod.POST, "/api/auth/sign-up",
-                Map.of("name", name, "email", email, "password", "Bright2026xyz"), "mobile");
+        JsonNode r = ok(send(null, HttpMethod.POST, "/api/auth/sign-up",
+                Map.of("name", name, "email", email, "password", "Bright2026xyz"), "mobile", language));
         JsonNode d = r.path("data");
         return new User(UUID.fromString(d.path("user").path("id").asText()), d.path("accessToken").asText(), email);
     }
@@ -78,12 +83,25 @@ public abstract class IntegrationTest {
     }
 
     protected JsonNode call(User u, HttpMethod method, String path, Object body, String client) throws Exception {
+        return send(u, method, path, body, client, null);
+    }
+
+    /** Like {@link #call(User, HttpMethod, String, Object)} with {@code Accept-Language: language}. */
+    protected JsonNode callIn(String language, User u, HttpMethod method, String path, Object body) throws Exception {
+        return send(u, method, path, body, null, language);
+    }
+
+    private JsonNode send(User u, HttpMethod method, String path, Object body, String client, String language)
+            throws Exception {
         var req = request(method, path);
         if (u != null) {
             req.header("Authorization", "Bearer " + u.token());
         }
         if (client != null) {
             req.header("X-Client", client);
+        }
+        if (language != null) {
+            req.header("Accept-Language", language);
         }
         if (body != null) {
             req.contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(body));

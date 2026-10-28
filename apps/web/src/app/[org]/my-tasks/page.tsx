@@ -2,32 +2,36 @@
 
 import { CheckSquare } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useMemo } from 'react';
 import { differenceInCalendarDays, parseISO } from 'date-fns';
+import { Suspense, useMemo } from 'react';
 
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
 import { TaskRow } from '@/components/tasks/task-row';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useT } from '@/i18n/provider';
 import { useMyTasks } from '@/lib/api/queries';
 import type { Task } from '@/lib/api/types';
 import { useOrg } from '@/lib/org-context';
 
 type Filter = 'open' | 'overdue' | 'week' | 'done';
 
+type Group = 'groupOverdue' | 'groupToday' | 'groupWeek' | 'groupLater' | 'groupNoDue';
+
 function groups(tasks: Task[]) {
-  const g: Record<string, Task[]> = { Overdue: [], Today: [], 'This week': [], Later: [], 'No due date': [] };
+  const g: Record<Group, Task[]> = { groupOverdue: [], groupToday: [], groupWeek: [], groupLater: [], groupNoDue: [] };
   for (const t of tasks) {
-    if (!t.dueDate) g['No due date']!.push(t);
+    if (!t.dueDate) g.groupNoDue.push(t);
     else {
       const d = differenceInCalendarDays(parseISO(t.dueDate), new Date());
-      (d < 0 ? g.Overdue : d === 0 ? g.Today : d <= 7 ? g['This week'] : g.Later)!.push(t);
+      (d < 0 ? g.groupOverdue : d === 0 ? g.groupToday : d <= 7 ? g.groupWeek : g.groupLater).push(t);
     }
   }
-  return Object.entries(g).filter(([, v]) => v.length);
+  return (Object.entries(g) as [Group, Task[]][]).filter(([, v]) => v.length);
 }
 
 function MyTasks() {
+  const { t } = useT();
   const { slug } = useOrg();
   const router = useRouter();
   const filter = (useSearchParams().get('filter') as Filter) || 'open';
@@ -43,23 +47,23 @@ function MyTasks() {
 
   return (
     <>
-      <PageHeader title="My Tasks" subtitle={`${counts.open} open · ${counts.done} done`} />
+      <PageHeader title={t('tasks.myTasks')} subtitle={t('tasks.myTasksSubtitle', counts)} />
       <Tabs value={filter} onValueChange={(v) => router.replace(`/${slug}/my-tasks${v === 'open' ? '' : `?filter=${v}`}`)} className="mb-4">
         <TabsList>
-          <TabsTrigger value="open">Open</TabsTrigger>
-          <TabsTrigger value="overdue">Overdue</TabsTrigger>
-          <TabsTrigger value="week">This week</TabsTrigger>
-          <TabsTrigger value="done">Done</TabsTrigger>
+          <TabsTrigger value="open">{t('tasks.tabOpen')}</TabsTrigger>
+          <TabsTrigger value="overdue">{t('tasks.tabOverdue')}</TabsTrigger>
+          <TabsTrigger value="week">{t('tasks.tabWeek')}</TabsTrigger>
+          <TabsTrigger value="done">{t('tasks.tabDone')}</TabsTrigger>
         </TabsList>
       </Tabs>
       {error ? <ErrorState error={error} retry={() => refetch()} /> : isPending ? <ListSkeleton /> : shown.length === 0 ? (
-        <EmptyState icon={CheckSquare} title={filter === 'done' ? 'Nothing done yet' : 'Nothing here'}
-          body={filter === 'open' ? 'Tasks assigned to you in any project show up here.' : 'No tasks match this filter.'} />
+        <EmptyState icon={CheckSquare} title={filter === 'done' ? t('tasks.nothingDone') : t('tasks.nothingHere')}
+          body={filter === 'open' ? t('tasks.openEmptyBody') : t('tasks.filterEmptyBody')} />
       ) : filter === 'open' ? (
         <div className="space-y-5">
           {groups(shown).map(([name, list]) => (
-            <section key={name} aria-label={name}>
-              <h2 className={`mb-2 text-xs font-semibold uppercase tracking-wider ${name === 'Overdue' ? 'text-destructive' : 'text-muted-foreground'}`}>{name} · {list.length}</h2>
+            <section key={name} aria-label={t(`tasks.${name}`)}>
+              <h2 className={`mb-2 text-xs font-semibold uppercase tracking-wider ${name === 'groupOverdue' ? 'text-destructive' : 'text-muted-foreground'}`}>{t(`tasks.${name}`)} · {list.length}</h2>
               <div className="overflow-hidden rounded-lg border bg-card">{list.map((t) => <TaskRow key={t.id} org={slug} task={t} />)}</div>
             </section>
           ))}

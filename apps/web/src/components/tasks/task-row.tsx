@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { PriorityIcon, StatusBadge } from '@/components/common/badges';
 import { PersonAvatar } from '@/components/common/person';
+import { tr } from '@/i18n/core';
 import type { Task } from '@/lib/api/types';
 import { dueLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -13,7 +14,7 @@ export function DueDate({ date, done, className }: { date: string | null; done?:
   return (
     <span className={cn('inline-flex items-center gap-1 text-xs tabular', d.overdue ? 'font-medium text-destructive' : d.soon ? 'text-warning' : 'text-muted-foreground', className)}>
       <CalendarClock className="size-3.5" aria-hidden />
-      {d.overdue ? `Overdue · ${d.text}` : d.text}
+      {d.overdue ? tr('common.overdue', { date: d.text }) : d.text}
     </span>
   );
 }

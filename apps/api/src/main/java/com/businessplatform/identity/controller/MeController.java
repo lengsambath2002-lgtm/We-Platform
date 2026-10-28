@@ -1,7 +1,5 @@
 package com.businessplatform.identity.controller;
 
-import java.util.Set;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,9 +44,6 @@ public class MeController {
             u.setName(in.name().strip());
         }
         if (in.locale() != null) {
-            if (!Set.of("en", "km").contains(in.locale())) {
-                throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "locale", "en or km");
-            }
             u.setLocale(in.locale());
         }
         return ResponseEntity.ok(ApiResponse.ok(AuthService.toUser(users.save(u))));

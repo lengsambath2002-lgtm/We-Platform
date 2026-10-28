@@ -2,6 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
+import { toLocale } from '@/i18n/core';
+import { useT } from '@/i18n/provider';
 import { http, refreshSession, setAccessToken, setSignedOutHandler } from '@/lib/api/client';
 import type { Session, User } from '@/lib/api/types';
 
@@ -20,6 +22,10 @@ const Ctx = createContext<SessionState | null>(null);
 export function SessionProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
+  const { setLocale } = useT();
+
+  // The account's language wins once signed in.
+  useEffect(() => { if (user) setLocale(toLocale(user.locale)); }, [user, setLocale]);
 
   useEffect(() => {
     setSignedOutHandler(() => {

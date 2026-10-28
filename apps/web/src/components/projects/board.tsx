@@ -25,6 +25,7 @@ import { PersonAvatar } from '@/components/common/person';
 import { DueDate } from '@/components/tasks/task-row';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { tr } from '@/i18n/core';
 import { errorMessage } from '@/lib/api/client';
 import { keys, orgApi } from '@/lib/api/queries';
 import type { Project, Task, TaskStatus } from '@/lib/api/types';
@@ -40,12 +41,12 @@ function Card({ org, task, canEdit, onMove, overlay }: { org: string; task: Task
         {canEdit && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="-mr-1 -mt-1 size-7 opacity-60 group-hover:opacity-100" aria-label={`Move ${task.key}`} onPointerDown={(e) => e.stopPropagation()}>
+              <Button variant="ghost" size="icon" className="-mr-1 -mt-1 size-7 opacity-60 group-hover:opacity-100" aria-label={tr('projects.moveTask', { key: task.key })} onPointerDown={(e) => e.stopPropagation()}>
                 <MoreHorizontal className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel className="text-xs text-muted-foreground">Move to</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-xs text-muted-foreground">{tr('projects.moveTo')}</DropdownMenuLabel>
               {STATUSES.filter((s) => s !== task.status).map((s) => <DropdownMenuItem key={s} onSelect={() => onMove(task, s)}>{STATUS_LABEL[s]}</DropdownMenuItem>)}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -67,7 +68,7 @@ function Sortable({ org, task, canEdit, onMove }: { org: string; task: Task; can
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id, disabled: !canEdit, data: { status: task.status } });
   return (
     <li ref={setNodeRef} style={{ transform: CSS.Translate.toString(transform), transition }} className={cn(isDragging && 'opacity-40')}
-      {...attributes} {...listeners} aria-roledescription="Draggable task" aria-label={`${task.key} ${task.title}`}>
+      {...attributes} {...listeners} aria-roledescription={tr('projects.draggableTask')} aria-label={`${task.key} ${task.title}`}>
       <Card org={org} task={task} canEdit={canEdit} onMove={onMove} />
     </li>
   );
@@ -79,7 +80,7 @@ function Column({ status, children, count, onAdd }: { status: TaskStatus; childr
     <section aria-label={STATUS_LABEL[status]} className={cn('flex w-[280px] shrink-0 flex-col rounded-lg bg-muted/60 sm:w-auto sm:min-w-0', isOver && 'ring-2 ring-primary/40')}>
       <header className="flex items-center justify-between px-3 py-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{STATUS_LABEL[status]} <span className="ml-1 tabular">{count}</span></h3>
-        {onAdd && <Button variant="ghost" size="icon" className="size-7" onClick={onAdd} aria-label={`Add task to ${STATUS_LABEL[status]}`}><Plus className="size-4" /></Button>}
+        {onAdd && <Button variant="ghost" size="icon" className="size-7" onClick={onAdd} aria-label={tr('projects.addTaskTo', { status: STATUS_LABEL[status] })}><Plus className="size-4" /></Button>}
       </header>
       <ul ref={setNodeRef} className="flex min-h-24 flex-1 flex-col gap-2 px-2 pb-2">{children}</ul>
     </section>
@@ -136,7 +137,7 @@ export function Board({ org, project, tasks, onAdd }: { org: string; project: Pr
               <SortableContext items={col.map((t) => t.id)} strategy={verticalListSortingStrategy}>
                 {col.map((t) => <Sortable key={t.id} org={org} task={t} canEdit={project.canEdit} onMove={(task, st) => void move(task, st, byStatus(st).length)} />)}
               </SortableContext>
-              {col.length === 0 && <li className="rounded-md border border-dashed px-3 py-6 text-center text-xs text-muted-foreground">No tasks</li>}
+              {col.length === 0 && <li className="rounded-md border border-dashed px-3 py-6 text-center text-xs text-muted-foreground">{tr('projects.noTasks')}</li>}
             </Column>
           );
         })}

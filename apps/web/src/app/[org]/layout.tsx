@@ -8,12 +8,14 @@ import { ErrorState } from '@/components/common/states';
 import { AppShell } from '@/components/shell/app-shell';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useT } from '@/i18n/provider';
 import { ApiError } from '@/lib/api/client';
 import { useOrgContext } from '@/lib/api/queries';
 import { OrgProvider } from '@/lib/org-context';
 import { RequireUser } from '@/lib/require-user';
 
 function OrgFrame({ children }: { children: ReactNode }) {
+  const { t } = useT();
   const { org } = useParams<{ org: string }>();
   const ctx = useOrgContext(org);
 
@@ -39,9 +41,9 @@ function OrgFrame({ children }: { children: ReactNode }) {
       <div className="mx-auto max-w-md px-4 py-20 text-center">
         {missing ? (
           <>
-            <h1 className="text-lg font-semibold">Organisation not found</h1>
-            <p className="mt-2 text-sm text-muted-foreground">It doesn&apos;t exist, or you&apos;re not a member of it.</p>
-            <Button asChild className="mt-6"><Link href="/">Go to my organisations</Link></Button>
+            <h1 className="text-lg font-semibold">{t('shell.orgNotFound')}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{t('shell.orgNotFoundBody')}</p>
+            <Button asChild className="mt-6"><Link href="/">{t('shell.goToOrgs')}</Link></Button>
           </>
         ) : (
           <ErrorState error={ctx.error} retry={() => ctx.refetch()} />

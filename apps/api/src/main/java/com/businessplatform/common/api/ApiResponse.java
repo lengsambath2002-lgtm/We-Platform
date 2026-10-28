@@ -2,7 +2,7 @@ package com.businessplatform.common.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-/** Every answer: {@code {status: {code}, data, error}}. Clients translate codes; messages are for developers. */
+/** Every answer: {@code {status: {code}, data, error}}. Clients branch on codes; messages follow Accept-Language. */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ApiResponse<T>(Status status, T data, ApiError error) {
 

@@ -1,15 +1,11 @@
 import { ArrowDown, ArrowUp, ChevronsUp, Minus } from 'lucide-react';
 
+import { labels, tr } from '@/i18n/core';
 import type { ApprovalStatus, Priority, TaskStatus } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 
-export const STATUS_LABEL: Record<TaskStatus, string> = {
-  TODO: 'To do',
-  IN_PROGRESS: 'In progress',
-  IN_REVIEW: 'In review',
-  DONE: 'Done',
-};
 export const STATUSES: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE'];
+export const STATUS_LABEL = labels(STATUSES, (s) => `status.${s}`);
 
 const statusTone: Record<TaskStatus, string> = {
   TODO: 'bg-muted text-muted-foreground',
@@ -26,27 +22,21 @@ export function StatusBadge({ status, className }: { status: TaskStatus; classNa
   );
 }
 
-export const PRIORITY_LABEL: Record<Priority, string> = { LOW: 'Low', MEDIUM: 'Medium', HIGH: 'High', URGENT: 'Urgent' };
 export const PRIORITIES: Priority[] = ['URGENT', 'HIGH', 'MEDIUM', 'LOW'];
+export const PRIORITY_LABEL = labels(PRIORITIES, (p) => `status.${p}`);
 
 export function PriorityIcon({ priority, withLabel }: { priority: Priority; withLabel?: boolean }) {
   const Icon = priority === 'URGENT' ? ChevronsUp : priority === 'HIGH' ? ArrowUp : priority === 'LOW' ? ArrowDown : Minus;
   const tone = priority === 'URGENT' ? 'text-destructive' : priority === 'HIGH' ? 'text-warning' : 'text-muted-foreground';
   return (
-    <span className={cn('inline-flex items-center gap-1 text-xs', tone)} title={`${PRIORITY_LABEL[priority]} priority`}>
+    <span className={cn('inline-flex items-center gap-1 text-xs', tone)} title={tr('status.priorityOf', { priority: PRIORITY_LABEL[priority] })}>
       <Icon className="size-3.5" aria-hidden />
-      {withLabel ? PRIORITY_LABEL[priority] : <span className="sr-only">{PRIORITY_LABEL[priority]} priority</span>}
+      {withLabel ? PRIORITY_LABEL[priority] : <span className="sr-only">{tr('status.priorityOf', { priority: PRIORITY_LABEL[priority] })}</span>}
     </span>
   );
 }
 
-export const APPROVAL_LABEL: Record<ApprovalStatus, string> = {
-  PENDING: 'Pending',
-  CHANGES_REQUESTED: 'Changes requested',
-  APPROVED: 'Approved',
-  REJECTED: 'Rejected',
-  WITHDRAWN: 'Withdrawn',
-};
+export const APPROVAL_LABEL = labels(['PENDING', 'CHANGES_REQUESTED', 'APPROVED', 'REJECTED', 'WITHDRAWN'] as ApprovalStatus[], (a) => `status.${a}`);
 const approvalTone: Record<ApprovalStatus, string> = {
   PENDING: 'bg-primary/10 text-primary',
   CHANGES_REQUESTED: 'bg-warning/10 text-warning',

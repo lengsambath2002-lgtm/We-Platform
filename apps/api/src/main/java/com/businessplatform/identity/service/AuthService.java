@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.businessplatform.common.api.ApiError;
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
+import com.businessplatform.common.i18n.Messages;
 import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.common.security.AuthProperties;
 import com.businessplatform.common.security.Tokens;
@@ -28,7 +29,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * Sign-up, sign-in, refresh (rotating, reuse revokes every session) and sign-out. Five wrong
- * passwords lock the account for 15 minutes. Wrong email and wrong password answer the same.
+ * passwords lock the account for 15 minutes. Wrong email and wrong password answer the same. A new
+ * account takes the request language ({@code en} or {@code km}).
  */
 @Service
 @RequiredArgsConstructor
@@ -56,6 +58,7 @@ public class AuthService {
         u.setEmail(email);
         u.setName(name.strip());
         u.setPasswordHash(encoder.encode(password));
+        u.setLocale(Messages.requestLanguage());
         users.save(u);
         return start(u, userAgent, ip);
     }

@@ -1,3 +1,5 @@
+import { currentLocale, tr } from '@/i18n/core';
+
 // Calls the platform API (/api/**, same origin). The access token lives in memory only; the refresh
 // token is an HttpOnly cookie, so a reload or an expired token refreshes once, quietly.
 
@@ -61,6 +63,7 @@ export function refreshSession(): Promise<string | null> {
 async function send(path: string, init: RequestInit, token: string | null) {
   const headers = new Headers(init.headers);
   if (token) headers.set('Authorization', `Bearer ${token}`);
+  headers.set('Accept-Language', currentLocale());
   if (init.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json');
   return fetch(`/api${path}`, { ...init, headers, credentials: 'include' });
 }
@@ -111,21 +114,21 @@ export const http = {
 
 /** A short, human message for an error (the field messages show next to their fields). */
 export function errorMessage(e: unknown): string {
-  if (!(e instanceof ApiError)) return 'Something went wrong. Please try again.';
+  if (!(e instanceof ApiError)) return tr('common.errGeneric');
   switch (e.code) {
     case 'NETWORK_ERROR':
-      return "Can't reach the server. Check your connection and try again.";
+      return tr('common.errNetwork');
     case 'FORBIDDEN':
-      return "You don't have permission to do that.";
+      return tr('common.errForbidden');
     case 'NOT_FOUND':
-      return 'This no longer exists, or you no longer have access to it.';
+      return tr('common.errNotFound');
     case 'MODULE_DISABLED':
-      return 'This module is switched off for your organisation.';
+      return tr('common.errModuleOff');
     case 'INVALID_STATE':
     case 'CONFLICT':
     case 'VALIDATION_FAILED':
       return e.fields[0]?.message ?? e.message;
     default:
-      return 'Something went wrong. Please try again.';
+      return tr('common.errGeneric');
   }
 }

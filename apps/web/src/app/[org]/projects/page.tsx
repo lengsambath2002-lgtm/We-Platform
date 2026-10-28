@@ -15,12 +15,16 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { labels } from '@/i18n/core';
+import { useT } from '@/i18n/provider';
 import { useProjects } from '@/lib/api/queries';
 import { useOrg } from '@/lib/org-context';
 
-const STATUS: Record<string, string> = { ACTIVE: 'Active', ON_HOLD: 'On hold', DONE: 'Done', ARCHIVED: 'Archived' };
+const STATUSES = ['ACTIVE', 'ON_HOLD', 'DONE', 'ARCHIVED'] as const;
+const STATUS: Record<string, string> = labels(STATUSES, (s) => `projects.${s}`);
 
 function Projects() {
+  const { t } = useT();
   const { slug, can } = useOrg();
   const router = useRouter();
   const params = useSearchParams();
@@ -34,34 +38,34 @@ function Projects() {
 
   return (
     <>
-      <PageHeader title="Projects" subtitle={`${data.length} project${data.length === 1 ? '' : 's'} you can see`}
-        actions={can('projects.create') && <Button size="sm" onClick={() => setOpen(true)}><Plus className="size-4" />New project</Button>} />
+      <PageHeader title={t('projects.title')} subtitle={t('projects.countSubtitle', { count: data.length })}
+        actions={can('projects.create') && <Button size="sm" onClick={() => setOpen(true)}><Plus className="size-4" />{t('projects.newProject')}</Button>} />
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="relative w-full sm:w-72">
           <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search projects" className="pl-8" aria-label="Search projects" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('projects.searchProjects')} className="pl-8" aria-label={t('projects.searchProjects')} />
         </div>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-40" aria-label="Status"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-40" aria-label={t('projects.status')}><SelectValue /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">All statuses</SelectItem>
+            <SelectItem value="ALL">{t('projects.allStatuses')}</SelectItem>
             {Object.entries(STATUS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
       {error ? <ErrorState error={error} retry={() => refetch()} /> : isPending ? <ListSkeleton /> : data.length === 0 ? (
-        <EmptyState icon={FolderKanban} title="No projects yet" body="Projects hold your team's tasks, deadlines and approvals."
-          action={can('projects.create') ? <Button size="sm" onClick={() => setOpen(true)}>Create the first project</Button> : undefined} />
-      ) : shown.length === 0 ? <EmptyState icon={Search} title="No projects match" body="Try another search or status." /> : (
+        <EmptyState icon={FolderKanban} title={t('projects.emptyTitle')} body={t('projects.emptyBody')}
+          action={can('projects.create') ? <Button size="sm" onClick={() => setOpen(true)}>{t('projects.createFirst')}</Button> : undefined} />
+      ) : shown.length === 0 ? <EmptyState icon={Search} title={t('projects.noMatchTitle')} body={t('projects.noMatchBody')} /> : (
         <div className="overflow-hidden rounded-lg border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Project</TableHead>
-                <TableHead className="hidden md:table-cell">Lead</TableHead>
-                <TableHead className="hidden sm:table-cell w-48">Progress</TableHead>
-                <TableHead className="hidden lg:table-cell">Due</TableHead>
-                <TableHead className="hidden lg:table-cell">Status</TableHead>
+                <TableHead>{t('projects.colProject')}</TableHead>
+                <TableHead className="hidden md:table-cell">{t('projects.colLead')}</TableHead>
+                <TableHead className="hidden sm:table-cell w-48">{t('projects.colProgress')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('projects.colDue')}</TableHead>
+                <TableHead className="hidden lg:table-cell">{t('projects.status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -71,7 +75,7 @@ function Projects() {
                     <Link href={`/${slug}/projects/${p.key}`} className="flex items-center gap-2 font-medium hover:underline" onClick={(e) => e.stopPropagation()}>
                       <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">{p.key}</span>
                       <span className="truncate">{p.name}</span>
-                      {p.visibility === 'PRIVATE' && <Lock className="size-3.5 text-muted-foreground" aria-label="Private" />}
+                      {p.visibility === 'PRIVATE' && <Lock className="size-3.5 text-muted-foreground" aria-label={t('projects.private')} />}
                     </Link>
                   </TableCell>
                   <TableCell className="hidden md:table-cell"><span className="flex items-center gap-2"><PersonAvatar person={p.lead} /><span className="truncate text-sm">{p.lead?.name}</span></span></TableCell>

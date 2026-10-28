@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useT } from '@/i18n/provider';
 import { errorMessage } from '@/lib/api/client';
 import { orgApi, useMembers, useOrgMutation, useTeams } from '@/lib/api/queries';
 import type { Member, Team } from '@/lib/api/types';
@@ -22,15 +23,16 @@ import { useOrg } from '@/lib/org-context';
 function TeamDialog({ org, team, members, onClose }: { org: string; team: Team | 'new'; members: Member[]; onClose: () => void }) {
   const [name, setName] = useState(team === 'new' ? '' : team.name);
   const [ids, setIds] = useState<string[]>(team === 'new' ? [] : team.membershipIds);
+  const { t } = useT();
   const save = useOrgMutation(org, () => orgApi.saveTeam(org, team === 'new' ? null : team.id, { name: name.trim(), membershipIds: ids }));
   return (
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>{team === 'new' ? 'New team' : `Edit ${team.name}`}</DialogTitle><DialogDescription>Teams group people, e.g. by department.</DialogDescription></DialogHeader>
+        <DialogHeader><DialogTitle>{team === 'new' ? t('org.newTeam') : t('org.editName', { name: team.name })}</DialogTitle><DialogDescription>{t('org.teamDialogBody')}</DialogDescription></DialogHeader>
         <div className="space-y-4">
-          <div className="space-y-2"><Label htmlFor="team-name">Name</Label><Input id="team-name" autoFocus value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></div>
+          <div className="space-y-2"><Label htmlFor="team-name">{t('org.teamName')}</Label><Input id="team-name" autoFocus value={name} onChange={(e) => setName(e.target.value)} maxLength={80} /></div>
           <div className="space-y-2">
-            <Label>People</Label>
+            <Label>{t('org.people')}</Label>
             <div className="max-h-56 space-y-1 overflow-y-auto rounded-md border p-2">
               {members.map((m) => (
                 <label key={m.membershipId} className="flex items-center gap-2 text-sm">
@@ -42,10 +44,10 @@ function TeamDialog({ org, team, members, onClose }: { org: string; team: Team |
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
           <Button disabled={name.trim().length < 2 || save.isPending} onClick={async () => {
-            try { await save.mutateAsync(undefined); toast.success('Team saved'); onClose(); } catch (e) { toast.error(errorMessage(e)); }
-          }}>{save.isPending ? 'Saving…' : 'Save'}</Button>
+            try { await save.mutateAsync(undefined); toast.success(t('org.teamSaved')); onClose(); } catch (e) { toast.error(errorMessage(e)); }
+          }}>{save.isPending ? t('common.saving') : t('common.save')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -54,6 +56,7 @@ function TeamDialog({ org, team, members, onClose }: { org: string; team: Team |
 
 export default function TeamsPage() {
   const { slug, can } = useOrg();
+  const { t } = useT();
   const members = useMembers(slug);
   const teams = useTeams(slug);
   const [q, setQ] = useState('');
@@ -65,17 +68,17 @@ export default function TeamsPage() {
 
   return (
     <>
-      <PageHeader title="Teams" subtitle={`${active.length} people in this organisation`}
-        actions={can('org.members.manage') && <Button size="sm" onClick={() => setInviting(true)}><UserPlus className="size-4" />Invite</Button>} />
+      <PageHeader title={t('org.teamsTitle')} subtitle={t('org.teamsSubtitle', { count: active.length })}
+        actions={can('org.members.manage') && <Button size="sm" onClick={() => setInviting(true)}><UserPlus className="size-4" />{t('org.invite')}</Button>} />
       <Tabs defaultValue="people">
-        <TabsList className="mb-4"><TabsTrigger value="people">People</TabsTrigger><TabsTrigger value="teams">Teams</TabsTrigger></TabsList>
+        <TabsList className="mb-4"><TabsTrigger value="people">{t('org.tabPeople')}</TabsTrigger><TabsTrigger value="teams">{t('org.tabTeams')}</TabsTrigger></TabsList>
         <TabsContent value="people">
           <div className="relative mb-4 w-full sm:w-72">
             <Search className="pointer-events-none absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search people" className="pl-8" aria-label="Search people" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('org.searchPeople')} className="pl-8" aria-label={t('org.searchPeople')} />
           </div>
           {members.error ? <ErrorState error={members.error} retry={() => members.refetch()} /> : members.isPending ? <ListSkeleton /> : shown.length === 0 ? (
-            <EmptyState icon={Search} title="Nobody matches" body="Try another name or email." />
+            <EmptyState icon={Search} title={t('org.noMatchTitle')} body={t('org.noMatchBody')} />
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {shown.map((m) => (
@@ -92,21 +95,21 @@ export default function TeamsPage() {
           )}
         </TabsContent>
         <TabsContent value="teams">
-          {can('teams.manage') && <Button size="sm" variant="outline" className="mb-4" onClick={() => setEditing('new')}><Plus className="size-4" />New team</Button>}
+          {can('teams.manage') && <Button size="sm" variant="outline" className="mb-4" onClick={() => setEditing('new')}><Plus className="size-4" />{t('org.newTeam')}</Button>}
           {teams.error ? <ErrorState error={teams.error} retry={() => teams.refetch()} /> : teams.isPending ? <ListSkeleton rows={3} /> : (teams.data ?? []).length === 0 ? (
-            <EmptyState icon={Users} title="No teams yet" body="Teams group people, for example by department or location."
-              action={can('teams.manage') ? <Button size="sm" onClick={() => setEditing('new')}>Create a team</Button> : undefined} />
+            <EmptyState icon={Users} title={t('org.noTeamsTitle')} body={t('org.noTeamsBody')}
+              action={can('teams.manage') ? <Button size="sm" onClick={() => setEditing('new')}>{t('org.createTeam')}</Button> : undefined} />
           ) : (
             <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {teams.data!.map((t) => (
-                <li key={t.id} className="rounded-lg border bg-card p-4">
+              {teams.data!.map((team) => (
+                <li key={team.id} className="rounded-lg border bg-card p-4">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="font-medium">{t.name}</p>
-                    {can('teams.manage') && <Button variant="ghost" size="icon" className="size-7" aria-label={`Edit ${t.name}`} onClick={() => setEditing(t)}><Pencil className="size-3.5" /></Button>}
+                    <p className="font-medium">{team.name}</p>
+                    {can('teams.manage') && <Button variant="ghost" size="icon" className="size-7" aria-label={t('org.editName', { name: team.name })} onClick={() => setEditing(team)}><Pencil className="size-3.5" /></Button>}
                   </div>
-                  <p className="mb-2 text-xs text-muted-foreground">{t.membershipIds.length} {t.membershipIds.length === 1 ? 'person' : 'people'}</p>
+                  <p className="mb-2 text-xs text-muted-foreground">{t('org.peopleCount', { count: team.membershipIds.length })}</p>
                   <div className="flex -space-x-1.5">
-                    {t.membershipIds.slice(0, 8).map((id) => byId.get(id)).filter(Boolean).map((m) => <PersonAvatar key={m!.membershipId} person={m!} className="size-7 ring-2 ring-card" />)}
+                    {team.membershipIds.slice(0, 8).map((id) => byId.get(id)).filter(Boolean).map((m) => <PersonAvatar key={m!.membershipId} person={m!} className="size-7 ring-2 ring-card" />)}
                   </div>
                 </li>
               ))}

@@ -6,10 +6,11 @@ import { usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useT } from '@/i18n/provider';
 import type { OrgContext } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 
-import { adminNav, globalNav, MODULE_ICON, type NavItem } from './nav';
+import { adminNav, globalNav, MODULE_ICON, moduleName, type NavItem } from './nav';
 
 function Item({ org, item, collapsed, onNavigate }: { org: string; item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
   const path = usePathname();
@@ -50,24 +51,25 @@ function Section({ title, collapsed, children }: { title: string; collapsed: boo
 
 /** The navigation column; also used inside the phone menu (never collapsed there). */
 export function SidebarNav({ ctx, collapsed = false, onNavigate }: { ctx: OrgContext; collapsed?: boolean; onNavigate?: () => void }) {
+  const { t } = useT();
   const org = ctx.org.slug;
   const modules = ctx.modules.filter((m) => m.kind === 'INDUSTRY' && m.enabled);
   const admin = adminNav(ctx);
   return (
-    <nav aria-label="Main" className="flex-1 overflow-y-auto px-2 py-3">
+    <nav aria-label={t('shell.mainNav')} className="flex-1 overflow-y-auto px-2 py-3">
       <div className="space-y-0.5">
         {globalNav(ctx).map((i) => <Item key={i.href} org={org} item={i} collapsed={collapsed} onNavigate={onNavigate} />)}
       </div>
       {modules.length > 0 && (
-        <Section title="Modules" collapsed={collapsed}>
+        <Section title={t('shell.modules')} collapsed={collapsed}>
           {modules.map((m) => (
             <Item key={m.key} org={org} collapsed={collapsed} onNavigate={onNavigate}
-              item={{ href: `m/${m.key}`, label: m.nameEn, icon: MODULE_ICON[m.key] ?? MODULE_ICON.business }} />
+              item={{ href: `m/${m.key}`, label: moduleName(m), icon: MODULE_ICON[m.key] ?? MODULE_ICON.business }} />
           ))}
         </Section>
       )}
       {admin.length > 0 && (
-        <Section title="Administration" collapsed={collapsed}>
+        <Section title={t('shell.administration')} collapsed={collapsed}>
           {admin.map((i) => <Item key={i.href} org={org} item={i} collapsed={collapsed} onNavigate={onNavigate} />)}
         </Section>
       )}
@@ -76,6 +78,7 @@ export function SidebarNav({ ctx, collapsed = false, onNavigate }: { ctx: OrgCon
 }
 
 export function Sidebar({ ctx, collapsed, setCollapsed }: { ctx: OrgContext; collapsed: boolean; setCollapsed: (v: boolean) => void }) {
+  const { t } = useT();
   return (
     <aside
       className={cn('sticky top-0 hidden h-dvh shrink-0 flex-col border-r bg-sidebar transition-[width] duration-200 lg:flex', collapsed ? 'w-16' : 'w-62')}
@@ -87,8 +90,8 @@ export function Sidebar({ ctx, collapsed, setCollapsed }: { ctx: OrgContext; col
       <SidebarNav ctx={ctx} collapsed={collapsed} />
       <div className="border-t p-2">
         <Button variant="ghost" size="sm" className={cn('w-full justify-start gap-2 text-muted-foreground', collapsed && 'justify-center')}
-          onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
-          {collapsed ? <ChevronsRight className="size-4" /> : <><ChevronsLeft className="size-4" /> Collapse</>}
+          onClick={() => setCollapsed(!collapsed)} aria-label={t(collapsed ? 'shell.expandSidebar' : 'shell.collapseSidebar')}>
+          {collapsed ? <ChevronsRight className="size-4" /> : <><ChevronsLeft className="size-4" /> {t('shell.collapse')}</>}
         </Button>
       </div>
     </aside>

@@ -1,16 +1,19 @@
 import { Check, Circle, RotateCcw, X } from 'lucide-react';
 
+import type { MessageKey } from '@/i18n/messages';
+import { useT } from '@/i18n/provider';
 import type { ApprovalDetail } from '@/lib/api/types';
 import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
-const ACTION: Record<string, string> = {
-  SUBMIT: 'requested approval', APPROVE: 'approved', REJECT: 'rejected', REQUEST_CHANGES: 'requested changes',
-  RESUBMIT: 'resubmitted', WITHDRAW: 'withdrew the request',
+const ACTION: Record<string, MessageKey> = {
+  SUBMIT: 'approvals.actSubmit', APPROVE: 'approvals.actApprove', REJECT: 'approvals.actReject', REQUEST_CHANGES: 'approvals.actRequestChanges',
+  RESUBMIT: 'approvals.actResubmit', WITHDRAW: 'approvals.actWithdraw',
 };
 
 /** Steps in order with who decided, then the request's history. */
 export function ApprovalSteps({ detail }: { detail: ApprovalDetail }) {
+  const { t } = useT();
   return (
     <div className="space-y-5">
       <ol className="space-y-3">
@@ -27,10 +30,11 @@ export function ApprovalSteps({ detail }: { detail: ApprovalDetail }) {
                 <Icon className="size-3.5" aria-hidden />
               </span>
               <div className="text-sm">
-                <p className="font-medium">Step {s.order}: {s.approver?.name ?? (s.role === 'OWNER' ? 'An owner' : s.role === 'ADMIN' ? 'An admin' : 'Approver')}</p>
+                <p className="font-medium">{t('approvals.stepTitle', { n: s.order, who: s.approver?.name ?? t(s.role === 'OWNER' ? 'approvals.anOwner' : s.role === 'ADMIN' ? 'approvals.anAdmin' : 'approvals.approver') })}</p>
                 <p className="text-xs text-muted-foreground">
-                  {s.decidedBy && s.decidedAt ? `${s.status === 'APPROVED' ? 'Approved' : s.status === 'REJECTED' ? 'Rejected' : 'Changes requested'} by ${s.decidedBy.name} ${ago(s.decidedAt)}`
-                    : current ? 'Waiting for a decision' : 'Not reached yet'}
+                  {s.decidedBy && s.decidedAt
+                    ? t(s.status === 'APPROVED' ? 'approvals.approvedBy' : s.status === 'REJECTED' ? 'approvals.rejectedBy' : 'approvals.changesRequestedBy', { name: s.decidedBy.name, ago: ago(s.decidedAt) })
+                    : t(current ? 'approvals.waitingDecision' : 'approvals.notReached')}
                 </p>
               </div>
             </li>
@@ -39,12 +43,12 @@ export function ApprovalSteps({ detail }: { detail: ApprovalDetail }) {
       </ol>
       {detail.history.length > 0 && (
         <div>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">History</h3>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('approvals.history')}</h3>
           <ol className="space-y-2">
             {detail.history.map((h, i) => (
               <li key={i} className="text-sm">
-                <span className="font-medium">{h.actor.name}</span> {ACTION[h.action] ?? h.action.toLowerCase()}
-                {h.step && h.action !== 'SUBMIT' ? ` (step ${h.step})` : ''} <span className="text-xs text-muted-foreground">{ago(h.at)}</span>
+                <span className="font-medium">{h.actor.name}</span> {ACTION[h.action] ? t(ACTION[h.action]) : h.action.toLowerCase()}
+                {h.step && h.action !== 'SUBMIT' ? t('approvals.inStep', { n: h.step }) : ''} <span className="text-xs text-muted-foreground">{ago(h.at)}</span>
                 {h.comment && <p className="mt-0.5 whitespace-pre-wrap rounded-md bg-muted px-2 py-1 text-sm">{h.comment}</p>}
               </li>
             ))}
