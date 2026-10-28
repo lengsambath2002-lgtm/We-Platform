@@ -43,13 +43,10 @@ export default function ModulesAdmin() {
                     {!m.available && <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-normal text-muted-foreground">{t('admin.comingSoon')}</span>}
                   </p>
                   {m.available && (
-                    <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                      <span className={m.enabled ? 'font-medium text-success' : undefined}>{m.enabled ? t('admin.on') : t('admin.off')}</span>
-                      <Switch checked={m.enabled} disabled={toggle.isPending} aria-label={t('admin.toggleModule', { name })}
-                        onCheckedChange={(on) => toggle.mutateAsync({ key: m.key, on })
-                          .then(() => toast.success(t(on ? 'admin.switchedOn' : 'admin.switchedOff', { name })))
-                          .catch((e) => toast.error(errorMessage(e)))} />
-                    </label>
+                    <Switch className="shrink-0" checked={m.enabled} disabled={toggle.isPending} aria-label={t('admin.toggleModule', { name })}
+                      onCheckedChange={(on) => toggle.mutateAsync({ key: m.key, on })
+                        .then(() => toast.success(t(on ? 'admin.switchedOn' : 'admin.switchedOff', { name })))
+                        .catch((e) => toast.error(errorMessage(e)))} />
                   )}
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">{about ? t(about) : ''}</p>

@@ -25,8 +25,6 @@ export const en = {
   switchedOn: '{name} switched on',
   switchedOff: '{name} switched off',
   whatsPlanned: "What's planned",
-  on: 'On',
-  off: 'Off',
   toggleModule: 'Use {name}',
   // workflows
   workflowsTitle: 'Workflows',
@@ -77,8 +75,6 @@ export const km: Record<keyof typeof en, string> = {
   switchedOn: 'បានបើក {name}',
   switchedOff: 'បានបិទ {name}',
   whatsPlanned: 'អ្វីដែលគ្រោងនឹងមាន',
-  on: 'បើក',
-  off: 'បិទ',
   toggleModule: 'ប្រើ {name}',
   workflowsTitle: 'លំហូរការអនុម័ត',
   workflowsSubtitle: 'ផ្លូវអនុម័តដែលមនុស្សជ្រើសរើស ពេលស្នើសុំការអនុម័ត។',
