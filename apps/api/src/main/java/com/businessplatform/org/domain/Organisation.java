@@ -39,6 +39,17 @@ public class Organisation {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /** Set when an owner deletes the organisation: it disappears for everyone; data and slug are kept. */
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    @Column(name = "deleted_by")
+    private UUID deletedBy;
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
     @PrePersist
     void created() {
         createdAt = updatedAt = Instant.now();

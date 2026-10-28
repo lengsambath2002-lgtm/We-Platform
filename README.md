@@ -39,6 +39,15 @@ Images: `apps/api/Dockerfile` (JRE, non-root, uploads in the `/data/files` volum
 **Production**: set `PLATFORM_ENV=production`. The API then refuses to start unless
 `PLATFORM_JWT_SECRET` is your own, `PLATFORM_COOKIE_SECURE=true` and `PLATFORM_APP_URL` is `https://…`.
 
+**Email** (invitations, "forgot password", "password changed"): set `PLATFORM_MAIL_HOST`,
+`PLATFORM_MAIL_PORT` (default 587, or 465 with `ssl`), `PLATFORM_MAIL_USERNAME`,
+`PLATFORM_MAIL_PASSWORD`, `PLATFORM_MAIL_FROM` (e.g. `Business Platform <no-reply@your-domain>`) and
+`PLATFORM_MAIL_SECURITY` (`starttls` default, `ssl` or `none`). Emails go out in the background after
+the request commits, in the recipient's language; a failure is logged and never fails the request.
+Without a host, emails are only logged (with their link only when `PLATFORM_ENV=local`); production
+then starts with a warning, since invitation links can still be copied but password resets can't
+reach anyone.
+
 ## CI
 
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request: API tests against

@@ -30,6 +30,9 @@ public final class Permissions {
             p.addAll(List.of("org.settings.manage", "org.members.manage", "org.modules.manage",
                     "teams.manage", "workflows.manage", "activity.view"));
         }
+        if (ctx.role() == com.businessplatform.org.domain.OrgRole.OWNER) {
+            p.add("org.delete");
+        }
         return p;
     }
 }

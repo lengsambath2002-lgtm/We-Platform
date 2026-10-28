@@ -17,11 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
+import com.businessplatform.common.i18n.Messages;
 import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.common.security.CurrentUser;
 import com.businessplatform.common.security.Tokens;
 import com.businessplatform.identity.domain.AppUser;
 import com.businessplatform.identity.repository.UserRepository;
+import com.businessplatform.mail.MailService;
 import com.businessplatform.module.domain.Module;
 import com.businessplatform.module.service.ModuleService;
 import com.businessplatform.org.domain.Invitation;
@@ -53,6 +55,8 @@ public class OrgService {
     private final OrgAccess access;
     private final Clock clock;
     private final org.springframework.core.env.Environment env;
+    private final MailService mail;
+    private final Messages messages;
 
     /** Addresses the web app uses for its own pages (/{slug} would shadow them). */
     private static final Set<String> RESERVED_SLUGS = Set.of("account", "onboarding", "invite", "sign-in", "sign-up",
@@ -81,7 +85,7 @@ public class OrgService {
         List<Membership> ms = memberships.findByUserIdAndStatus(me, Membership.ACTIVE);
         Map<UUID, Organisation> byId = orgs.findAllById(ms.stream().map(Membership::getOrgId).toList()).stream()
                 .collect(Collectors.toMap(Organisation::getId, Function.identity()));
-        return ms.stream().map(m -> {
+        return ms.stream().filter(m -> byId.containsKey(m.getOrgId()) && !byId.get(m.getOrgId()).isDeleted()).map(m -> {
             Organisation o = byId.get(m.getOrgId());
             return new OrgSummary(o.getId(), o.getSlug(), o.getName(), m.getRole());
         }).sorted(Comparator.comparing(OrgSummary::name, String.CASE_INSENSITIVE_ORDER)).toList();
@@ -105,6 +109,40 @@ public class OrgService {
         Organisation o = orgs.findById(ctx.orgId()).orElseThrow();
         o.setName(in.name().strip());
         return new OrgSummary(o.getId(), o.getSlug(), o.getName(), ctx.role());
+    }
+
+    /** Leaves the organisation (any member); the last owner must hand over or delete it first. */
+    @Transactional
+    public void leave(String slug) {
+        OrgContext ctx = access.require(slug);
+        if (ctx.role() == OrgRole.OWNER
+                && memberships.countByOrgIdAndRoleAndStatus(ctx.orgId(), OrgRole.OWNER, Membership.ACTIVE) <= 1) {
+            throw new BusinessException(ErrorCode.INVALID_STATE,
+                    "You are the only owner. Make another member an owner first, or delete the organisation", List.of());
+        }
+        memberships.deleteById(ctx.membershipId());
+    }
+
+    /**
+     * Owners only, with the name typed as confirmation. A soft delete: the organisation disappears for
+     * everyone at once (NOT_FOUND), pending invitations stop working, the data stays in the database
+     * (recoverable by an operator) and the web address stays taken, so old links never reach someone else.
+     */
+    @Transactional
+    public void delete(String slug, DeleteOrgRequest in) {
+        OrgContext ctx = access.require(slug);
+        if (ctx.role() != OrgRole.OWNER) {
+            throw BusinessException.forbidden();
+        }
+        Organisation o = orgs.findById(ctx.orgId()).orElseThrow();
+        if (!o.getName().strip().equals(in.name().strip())) {
+            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "name", "Type the organisation's name exactly");
+        }
+        Instant now = clock.instant();
+        o.setDeletedAt(now);
+        o.setDeletedBy(ctx.userId());
+        invitations.findByOrgIdAndAcceptedAtIsNullAndRevokedAtIsNullOrderByCreatedAtDesc(ctx.orgId())
+                .forEach(i -> i.setRevokedAt(now));
     }
 
     @Transactional
@@ -177,14 +215,49 @@ public class OrgService {
         i.setCreatedAt(clock.instant());
         i.setExpiresAt(clock.instant().plus(INVITE_TTL));
         invitations.save(i);
-        return new InvitationResponse(i.getId(), email, i.getRole(), i.getExpiresAt(), link(token));
+        sendInvitation(ctx, i, token);
+        return new InvitationResponse(i.getId(), email, i.getRole(), i.getExpiresAt(), link(token), mail.delivers());
+    }
+
+    /** A new link (the old one stops working), valid 7 days from now, emailed again. */
+    @Transactional
+    public InvitationResponse resendInvitation(String slug, UUID id) {
+        OrgContext ctx = access.requireAdmin(slug);
+        Invitation i = invitations.findById(id).filter(x -> x.getOrgId().equals(ctx.orgId()))
+                .filter(x -> x.getAcceptedAt() == null && x.getRevokedAt() == null)
+                .orElseThrow(BusinessException::notFound);
+        String token = Tokens.random();
+        i.setTokenHash(Tokens.sha256(token));
+        i.setExpiresAt(clock.instant().plus(INVITE_TTL));
+        sendInvitation(ctx, i, token);
+        return new InvitationResponse(i.getId(), i.getEmail(), i.getRole(), i.getExpiresAt(), link(token),
+                mail.delivers());
+    }
+
+    /** In the invitee's language when they have an account, otherwise the inviter's (request) language. */
+    private void sendInvitation(OrgContext ctx, Invitation i, String token) {
+        String lang = users.findByEmail(i.getEmail()).map(AppUser::getLocale).orElse(Messages.requestLanguage());
+        String inviter = users.findById(ctx.userId()).map(AppUser::getName).orElse("");
+        String role = switch (i.getRole()) {
+            case ADMIN -> messages.in(lang, "an admin", Map.of());
+            case GUEST -> messages.in(lang, "a guest", Map.of());
+            default -> messages.in(lang, "a member", Map.of());
+        };
+        Map<String, String> args = Map.of("inviter", inviter, "org", ctx.orgName(), "role", role, "email", i.getEmail());
+        mail.queue(MailService.compose(i.getEmail(),
+                messages.in(lang, "{inviter} invited you to {org} on Business Platform", args),
+                List.of(messages.in(lang, "{inviter} invited you to join {org} as {role}.", args),
+                        messages.in(lang, "Sign in or create an account with {email} to accept. The link works for 7 days.", args)),
+                messages.in(lang, "Accept the invitation", Map.of()), link(token),
+                messages.in(lang, "If you weren't expecting this, you can ignore this email.", Map.of())));
     }
 
     @Transactional(readOnly = true)
     public List<InvitationResponse> pendingInvitations(String slug) {
         OrgContext ctx = access.requireAdmin(slug);
         return invitations.findByOrgIdAndAcceptedAtIsNullAndRevokedAtIsNullOrderByCreatedAtDesc(ctx.orgId()).stream()
-                .map(i -> new InvitationResponse(i.getId(), i.getEmail(), i.getRole(), i.getExpiresAt(), null)).toList();
+                .map(i -> new InvitationResponse(i.getId(), i.getEmail(), i.getRole(), i.getExpiresAt(), null, false))
+                .toList();
     }
 
     @Transactional
@@ -198,7 +271,8 @@ public class OrgService {
     @Transactional(readOnly = true)
     public InvitationPreview preview(String token) {
         Invitation i = live(token, false);
-        Organisation o = orgs.findById(i.getOrgId()).orElseThrow();
+        Organisation o = orgs.findById(i.getOrgId()).filter(x -> !x.isDeleted())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
         return new InvitationPreview(o.getName(), i.getEmail(), i.getRole(), !i.getExpiresAt().isAfter(clock.instant()));
     }
 
@@ -206,6 +280,8 @@ public class OrgService {
     @Transactional
     public OrgSummary accept(String token) {
         Invitation i = live(token, true);
+        orgs.findById(i.getOrgId()).filter(x -> !x.isDeleted())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
         AppUser me = users.findById(CurrentUser.id()).orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
         if (!me.getEmail().equalsIgnoreCase(i.getEmail())) {
             throw BusinessException.field(ErrorCode.FORBIDDEN, "email", "This invitation is for another email address");

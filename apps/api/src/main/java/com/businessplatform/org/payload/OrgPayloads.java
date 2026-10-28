@@ -48,8 +48,16 @@ public final class OrgPayloads {
     public record InviteRequest(@NotBlank @Email @Size(max = 254) String email, @NotNull OrgRole role) {
     }
 
-    /** {@code link} is shown to the inviter to copy: it only works for an account signed in with {@code email}. */
-    public record InvitationResponse(UUID id, String email, OrgRole role, Instant expiresAt, String link) {
+    /**
+     * {@code link} is shown to the inviter to copy: it only works for an account signed in with
+     * {@code email}. {@code emailed}: the invitation was also sent by email (mail is configured).
+     */
+    public record InvitationResponse(UUID id, String email, OrgRole role, Instant expiresAt, String link,
+            boolean emailed) {
+    }
+
+    /** Deleting needs the organisation's name typed exactly, as a confirmation. */
+    public record DeleteOrgRequest(@NotBlank @Size(max = 120) String name) {
     }
 
     public record InvitationPreview(String orgName, String email, OrgRole role, boolean expired) {

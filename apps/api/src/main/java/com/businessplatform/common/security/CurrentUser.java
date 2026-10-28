@@ -22,4 +22,13 @@ public final class CurrentUser {
         }
         throw new BusinessException(ErrorCode.UNAUTHORIZED);
     }
+
+    /** The session (device) the access token was issued to, from its {@code sid} claim; null if none. */
+    public static UUID sessionId() {
+        Authentication a = SecurityContextHolder.getContext().getAuthentication();
+        if (a != null && a.getPrincipal() instanceof Jwt jwt && jwt.getClaimAsString("sid") != null) {
+            return UUID.fromString(jwt.getClaimAsString("sid"));
+        }
+        return null;
+    }
 }

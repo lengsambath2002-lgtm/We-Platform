@@ -9,6 +9,9 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { DevicesSection } from '@/components/account/devices-section';
+import { OrgsSection } from '@/components/account/orgs-section';
+import { PasswordSection } from '@/components/account/password-section';
 import { PersonAvatar } from '@/components/common/person';
 import { applyServerErrors } from '@/components/forms/server-errors';
 import { LanguageSwitch } from '@/components/shell/language-switch';
@@ -59,6 +62,10 @@ function Account() {
           </form>
         </Form>
       </section>
+
+      <PasswordSection />
+      <DevicesSection />
+      <OrgsSection />
 
       <section className="mt-4 rounded-lg border bg-card p-4 sm:p-6">
         <h2 className="mb-1 text-base font-semibold">{t('common.language')}</h2>
