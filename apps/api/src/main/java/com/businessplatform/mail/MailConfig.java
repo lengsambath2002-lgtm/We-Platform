@@ -24,8 +24,8 @@ public class MailConfig {
             if (props.restricted()) {
                 log.info("Mail: only {} addresses in PLATFORM_MAIL_ONLY_TO get real email; others are logged",
                         AllowListMailer.parse(props.onlyTo()).size());
-                return new AllowListMailer(new SmtpMailer(props), new LoggingMailer("local".equalsIgnoreCase(environment)),
-                        props.onlyTo());
+                return new AllowListMailer(new SmtpMailer(props), new LoggingMailer("local".equalsIgnoreCase(environment),
+                        "Not in PLATFORM_MAIL_ONLY_TO"), props.onlyTo());
             }
             return new SmtpMailer(props);
         }

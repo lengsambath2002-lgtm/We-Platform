@@ -10,17 +10,24 @@ import lombok.extern.slf4j.Slf4j;
 public class LoggingMailer implements Mailer {
 
     private final boolean local;
+    private final String reason;
 
     public LoggingMailer(boolean local) {
+        this(local, "Mail not configured");
+    }
+
+    /** {@code reason} starts the log line, e.g. why this address gets no real email. */
+    public LoggingMailer(boolean local, String reason) {
         this.local = local;
+        this.reason = reason;
     }
 
     @Override
     public void send(MailMessage m) {
         if (local) {
-            log.info("Mail not configured; would send to {} subject \"{}\":\n{}", m.to(), m.subject(), m.text());
+            log.info("{}; would send to {} subject \"{}\":\n{}", reason, m.to(), m.subject(), m.text());
         } else {
-            log.info("Mail not configured; would send to {} subject \"{}\"", m.to(), m.subject());
+            log.info("{}; would send to {} subject \"{}\"", reason, m.to(), m.subject());
         }
     }
 
