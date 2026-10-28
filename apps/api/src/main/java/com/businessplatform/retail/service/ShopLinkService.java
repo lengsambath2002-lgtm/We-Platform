@@ -103,6 +103,19 @@ public class ShopLinkService {
         return new LinkResponse(link.getOrgId(), businessId, link.getBusinessName(), link.getLinkedAt());
     }
 
+    /**
+     * The shop's current link, so VirtualBiz can confirm it before granting access through it (an admin may
+     * have unlinked it here). A link to a deleted organisation counts as gone.
+     */
+    @Transactional(readOnly = true)
+    public LinkResponse get(UUID businessId) {
+        ShopLink link = links.findById(businessId).orElseThrow(() -> ClientApiException.notFound("This shop is not linked"));
+        if (orgs.findById(link.getOrgId()).filter(o -> !o.isDeleted()).isEmpty()) {
+            throw ClientApiException.notFound("This shop is not linked");
+        }
+        return new LinkResponse(link.getOrgId(), businessId, link.getBusinessName(), link.getLinkedAt());
+    }
+
     /** Idempotent: unlinking a shop that is not linked is fine. */
     @Transactional
     public void unlink(String clientId, UUID businessId) {

@@ -34,6 +34,10 @@ public class ClientApiException extends RuntimeException {
         return new ClientApiException(HttpStatus.BAD_REQUEST, "invalid_grant", description);
     }
 
+    public static ClientApiException notFound(String description) {
+        return new ClientApiException(HttpStatus.NOT_FOUND, "not_found", description);
+    }
+
     public static ClientApiException forbidden(String description) {
         return new ClientApiException(HttpStatus.FORBIDDEN, "forbidden", description);
     }

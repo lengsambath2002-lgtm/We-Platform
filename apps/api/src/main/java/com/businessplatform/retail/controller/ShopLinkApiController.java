@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,7 +25,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * VirtualBiz reports shop links (contract §4), authenticated with HTTP Basic client credentials. Errors are
- * {@code {"error": "...", "error_description": "..."}}: 400 invalid_request, 401 invalid_client, 403 forbidden.
+ * {@code {"error": "...", "error_description": "..."}}: 400 invalid_request, 401 invalid_client, 403 forbidden,
+ * 404 not_found.
  */
 @Tag(name = "Integrations: VirtualBiz")
 @ClientApi
@@ -35,6 +37,14 @@ public class ShopLinkApiController {
 
     private final ClientAuthenticator authenticator;
     private final ShopLinkService links;
+
+    /** Whether the shop is still linked (VirtualBiz checks before granting staff access through the link). */
+    @GetMapping
+    public ResponseEntity<LinkResponse> get(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String auth,
+            @PathVariable String businessId) {
+        authenticator.basic(auth);
+        return ResponseEntity.ok(links.get(id(businessId)));
+    }
 
     @PutMapping
     public ResponseEntity<LinkResponse> link(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String auth,

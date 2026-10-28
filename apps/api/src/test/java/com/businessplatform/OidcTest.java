@@ -564,6 +564,11 @@ class OidcTest extends IntegrationTest {
                 "linkedBy", owner.id().toString()), HttpMethod.PUT).status()).isEqualTo(200);
         assertThat(ok(call(owner, HttpMethod.GET, "/api/orgs/" + a + "/retail/shops", null)).path("data").path("shops")).isEmpty();
         assertThat(ok(call(owner, HttpMethod.GET, "/api/orgs/" + b + "/retail/shops", null)).path("data").path("shops")).hasSize(1);
+        // VirtualBiz can confirm the current link before granting access through it.
+        Res current = link(CLIENT, SECRET, shop, null, HttpMethod.GET);
+        assertThat(current.status()).isEqualTo(200);
+        assertThat(current.body().path("orgId").asText()).isEqualTo(orgId(owner, b));
+        assertThat(link(CLIENT, "wrong-secret", shop, null, HttpMethod.GET).status()).isEqualTo(401);
         JsonNode auditA = ok(call(owner, HttpMethod.GET, "/api/orgs/" + a + "/activity?module=retail", null)).path("data").path("items");
         assertThat(auditA.get(0).path("verb").asText()).isEqualTo("retail.shop.unlinked");
         assertThat(auditA.get(0).path("data").path("reason").asText()).isEqualTo("moved");
@@ -572,6 +577,9 @@ class OidcTest extends IntegrationTest {
         assertThat(del.status()).isEqualTo(204);
         assertThat(ok(call(owner, HttpMethod.GET, "/api/orgs/" + b + "/retail/shops", null)).path("data").path("shops")).isEmpty();
         assertThat(link(CLIENT, SECRET, shop, null, HttpMethod.DELETE).status()).as("idempotent").isEqualTo(204);
+        Res gone = link(CLIENT, SECRET, shop, null, HttpMethod.GET);
+        assertThat(gone.status()).isEqualTo(404);
+        assertThat(gone.body().path("error").asText()).isEqualTo("not_found");
         JsonNode auditB = ok(call(owner, HttpMethod.GET, "/api/orgs/" + b + "/activity?module=retail", null)).path("data").path("items");
         assertThat(auditB.get(0).path("verb").asText()).isEqualTo("retail.shop.unlinked");
         assertThat(auditB.get(0).path("data").path("name").asText()).isEqualTo("Riverside Café");
