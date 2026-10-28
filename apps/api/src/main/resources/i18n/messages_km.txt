@@ -94,3 +94,10 @@ Only a request with changes requested can be resubmitted = អាចដាក់
 This request is already closed = សំណើនេះបានបិទរួចហើយ
 This kind of record can't be approved = មិនអាចអនុម័តកំណត់ត្រាប្រភេទនេះបានទេ
 Say why = សូមប្រាប់មូលហេតុ
+
+# Documents
+A folder with this name is already here = មានថតដែលមានឈ្មោះនេះនៅទីនេះរួចហើយ
+A folder can't be moved into itself = មិនអាចផ្លាស់ទីថតចូលទៅក្នុងខ្លួនវាបានទេ
+This folder holds other people's files; ask an admin to delete it = ថតនេះមានឯកសាររបស់អ្នកផ្សេង។ សូមស្នើអ្នកគ្រប់គ្រងឱ្យលុបវា
+Keep the note under 500 characters = កំណត់សម្គាល់មិនត្រូវលើសពី 500 តួអក្សរទេ
+Keep the description under 2000 characters = ការពិពណ៌នាមិនត្រូវលើសពី 2000 តួអក្សរទេ
