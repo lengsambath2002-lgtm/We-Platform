@@ -1,0 +1,49 @@
+/*
+ * Report chart colours. Status-coloured series use the design system's status meanings (done = success,
+ * overdue / rejected = destructive, changes requested = warning, to do / withdrawn = neutral); dark mode has its own
+ * steps, chosen with the dataviz palette validator (lightness band, colour-blind separation of neighbouring
+ * series, 3:1 against the card) — stacked series are ordered so that neighbours stay distinguishable.
+ */
+.report-viz {
+  --rv-created: #2563eb;
+  --rv-completed: #16a34a;
+  --rv-todo: #64748b;
+  --rv-in-progress: #2563eb;
+  --rv-in-review: #0891b2;
+  --rv-not-overdue: #2563eb;
+  --rv-overdue: #dc2626;
+  --rv-approved: #16a34a;
+  --rv-pending: #2563eb;
+  --rv-changes: #d97706;
+  --rv-withdrawn: #64748b;
+  --rv-rejected: #dc2626;
+  --rv-grid: #e2e8f0;
+  --rv-axis: #cbd5e1;
+}
+
+.dark .report-viz {
+  --rv-created: #3b82f6;
+  --rv-completed: #16a34a;
+  --rv-todo: #64748b;
+  --rv-in-progress: #3b82f6;
+  --rv-in-review: #0d9488;
+  --rv-not-overdue: #3b82f6;
+  --rv-overdue: #ef4444;
+  --rv-approved: #16a34a;
+  --rv-pending: #3b82f6;
+  --rv-changes: #d97706;
+  --rv-withdrawn: #64748b;
+  --rv-rejected: #ef4444;
+  --rv-grid: #1f2937;
+  --rv-axis: #374151;
+}
+
+/* Recharts draws a focus ring on the chart surface for keyboard users; keep it in the design's focus colour. */
+.report-viz .recharts-surface:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.report-viz .recharts-wrapper:focus,
+.report-viz .recharts-surface:focus {
+  outline: none;
+}

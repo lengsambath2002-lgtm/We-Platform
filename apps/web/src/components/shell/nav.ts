@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  BarChart3,
   Blocks,
   Briefcase,
   CalendarDays,
@@ -36,6 +37,7 @@ export function globalNav(ctx: OrgContext): NavItem[] {
     { href: 'teams', label: tr('shell.teams'), icon: Users, need: 'teams.view' },
     { href: 'approvals', label: tr('shell.approvals'), icon: BadgeCheck, need: 'approvals.view' },
     { href: 'documents', label: tr('documents.title'), icon: FileText, need: 'documents.view' },
+    { href: 'reports', label: tr('shell.reports'), icon: BarChart3, need: 'reports.view' },
   ];
   return items.filter((i) => !i.need || can(i.need));
 }

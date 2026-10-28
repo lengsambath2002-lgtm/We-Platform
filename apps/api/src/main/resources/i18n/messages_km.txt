@@ -101,3 +101,8 @@ A folder can't be moved into itself = មិនអាចផ្លាស់ទី
 This folder holds other people's files; ask an admin to delete it = ថតនេះមានឯកសាររបស់អ្នកផ្សេង។ សូមស្នើអ្នកគ្រប់គ្រងឱ្យលុបវា
 Keep the note under 500 characters = កំណត់សម្គាល់មិនត្រូវលើសពី 500 តួអក្សរទេ
 Keep the description under 2000 characters = ការពិពណ៌នាមិនត្រូវលើសពី 2000 តួអក្សរទេ
+
+# Reports
+The start date must be on or before the end date = ថ្ងៃចាប់ផ្ដើមត្រូវតែនៅមុន ឬត្រូវនឹងថ្ងៃបញ្ចប់
+Choose at most 366 days = សូមជ្រើសរើសមិនលើសពី 366 ថ្ងៃ
+Between 1 and 365 days = ចន្លោះពី 1 ដល់ 365 ថ្ងៃ
