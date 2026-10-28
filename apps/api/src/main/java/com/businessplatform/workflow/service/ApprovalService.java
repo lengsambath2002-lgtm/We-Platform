@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.businessplatform.activity.ActivityService;
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
+import com.businessplatform.common.i18n.Text;
 import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.identity.domain.AppUser;
 import com.businessplatform.identity.repository.UserRepository;
@@ -129,7 +130,7 @@ public class ApprovalService {
         }
         log(r, ctx.userId(), "SUBMIT", (short) 1, r.getSummary());
         recordActivity(ctx, r, "approval.requested", Map.of("workflow", w.getName()));
-        notifyApprovers(ctx, r, "approval.requested", "Approval requested: " + r.getTitle(), record.link());
+        notifyApprovers(ctx, r, "approval.requested", Text.of("Approval requested: {title}", Map.of("title", r.getTitle())), record.link());
         return detail(ctx, r);
     }
 
@@ -240,16 +241,17 @@ public class ApprovalService {
         log(r, ctx.userId(), action, step.getStepOrder(), comment);
         recordActivity(ctx, r, verb, comment == null ? Map.of("step", step.getStepOrder())
                 : Map.of("step", step.getStepOrder(), "comment", comment));
-        String outcome = switch (verb) {
-            case "approval.approved" -> "Approved: ";
-            case "approval.rejected" -> "Rejected: ";
-            case "approval.changes_requested" -> "Changes requested: ";
-            default -> "Step " + step.getStepOrder() + " approved: ";
+        Map<String, Object> about = Map.of("title", r.getTitle(), "step", step.getStepOrder());
+        Text outcome = switch (verb) {
+            case "approval.approved" -> Text.of("Approved: {title}", about);
+            case "approval.rejected" -> Text.of("Rejected: {title}", about);
+            case "approval.changes_requested" -> Text.of("Changes requested: {title}", about);
+            default -> Text.of("Step {step} approved: {title}", about);
         };
-        notifications.send(ctx.orgId(), List.of(r.getRequesterId()), ctx.userId(), verb, outcome + r.getTitle(),
-                comment, view.link());
+        notifications.send(ctx.orgId(), List.of(r.getRequesterId()), ctx.userId(), verb, outcome, Text.raw(comment),
+                view.link());
         if ("approval.step.approved".equals(verb)) {
-            notifyApprovers(ctx, r, "approval.requested", "Approval requested: " + r.getTitle(), view.link());
+            notifyApprovers(ctx, r, "approval.requested", Text.of("Approval requested: {title}", Map.of("title", r.getTitle())), view.link());
         }
         return detail(ctx, r);
     }
@@ -273,7 +275,8 @@ public class ApprovalService {
         String comment = in == null || in.comment() == null || in.comment().isBlank() ? null : in.comment().strip();
         log(r, ctx.userId(), "RESUBMIT", step.getStepOrder(), comment);
         recordActivity(ctx, r, "approval.resubmitted", comment == null ? Map.of() : Map.of("comment", comment));
-        notifyApprovers(ctx, r, "approval.resubmitted", "Resubmitted for approval: " + r.getTitle(), view.link());
+        notifyApprovers(ctx, r, "approval.resubmitted",
+                Text.of("Resubmitted for approval: {title}", Map.of("title", r.getTitle())), view.link());
         return detail(ctx, r);
     }
 
@@ -352,7 +355,7 @@ public class ApprovalService {
         };
     }
 
-    private void notifyApprovers(OrgContext ctx, ApprovalRequest r, String type, String title, String link) {
+    private void notifyApprovers(OrgContext ctx, ApprovalRequest r, String type, Text title, String link) {
         ApprovalStep step = current(r);
         Collection<UUID> to;
         if (step.getApproverId() != null) {
@@ -364,7 +367,7 @@ public class ApprovalService {
                     .filter(m -> Membership.ACTIVE.equals(m.getStatus()) && roles.contains(m.getRole()))
                     .map(Membership::getUserId).filter(u -> !u.equals(r.getRequesterId())).collect(Collectors.toCollection(HashSet::new));
         }
-        notifications.send(ctx.orgId(), to, ctx.userId(), type, title, r.getSummary(), link);
+        notifications.send(ctx.orgId(), to, ctx.userId(), type, title, Text.raw(r.getSummary()), link);
     }
 
     private void recordActivity(OrgContext ctx, ApprovalRequest r, String verb, Map<String, Object> data) {

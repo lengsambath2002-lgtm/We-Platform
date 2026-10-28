@@ -83,4 +83,27 @@ class LocaleTest extends IntegrationTest {
         });
         return out;
     }
+
+    @Test
+    void notifications_are_written_in_each_recipients_language() throws Exception {
+        User lead = signUp("Notify Lead");
+        User khmer = signUpIn("km", "Khmer Member");
+        User english = signUp("English Member");
+        String org = newOrg(lead);
+        join(lead, org, khmer, "MEMBER");
+        join(lead, org, english, "MEMBER");
+        ok(call(lead, HttpMethod.POST, "/api/orgs/" + org + "/projects", Map.of("name", "Notify", "key", "NTF")));
+        String km = ok(call(lead, HttpMethod.POST, "/api/orgs/" + org + "/projects/NTF/tasks",
+                Map.of("title", "Translate me", "assigneeId", khmer.id()))).path("data").path("id").asText();
+        ok(call(lead, HttpMethod.POST, "/api/orgs/" + org + "/projects/NTF/tasks",
+                Map.of("title", "Leave me", "assigneeId", english.id())));
+        ok(call(lead, HttpMethod.POST, "/api/orgs/" + org + "/tasks/" + km + "/move", Map.of("status", "IN_REVIEW", "index", 0)));
+
+        JsonNode toKhmer = ok(call(khmer, HttpMethod.GET, "/api/orgs/" + org + "/notifications", null)).path("data").path("items");
+        assertThat(toKhmer.findValuesAsText("body")).contains("បានចាត់តាំងឱ្យអ្នក", "បានផ្លាស់ទៅ កំពុងពិនិត្យ");
+        // The task's own title is the user's text and stays as written.
+        assertThat(toKhmer.findValuesAsText("title")).contains("NTF-1 Translate me");
+        JsonNode toEnglish = ok(call(english, HttpMethod.GET, "/api/orgs/" + org + "/notifications", null)).path("data").path("items");
+        assertThat(toEnglish.findValuesAsText("body")).contains("Assigned to you");
+    }
 }

@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.businessplatform.activity.ActivityService;
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
+import com.businessplatform.common.i18n.Text;
 import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.module.domain.Module;
 import com.businessplatform.notification.NotificationService;
@@ -80,7 +81,7 @@ public class ProjectService {
         activity.record(ctx.orgId(), Module.PROJECTS, "project", p.getId(), ctx.userId(), "project.created",
                 Map.of("name", p.getName(), "key", p.getKey()));
         notifications.send(ctx.orgId(), wanted.keySet(), ctx.userId(), "project.added",
-                "You were added to " + p.getName(), null, "/" + ctx.slug() + "/projects/" + p.getKey());
+                Text.of("You were added to {project}", Map.of("project", p.getName())), null, "/" + ctx.slug() + "/projects/" + p.getKey());
         return toResponse(ctx, access.check(ctx, p).orElseThrow());
     }
 
@@ -185,7 +186,7 @@ public class ProjectService {
                     .orElseThrow().getKey());
         }
         List<UUID> added = wanted.keySet().stream().filter(u -> !before.contains(u)).toList();
-        notifications.send(ctx.orgId(), added, ctx.userId(), "project.added", "You were added to " + p.getName(), null,
+        notifications.send(ctx.orgId(), added, ctx.userId(), "project.added", Text.of("You were added to {project}", Map.of("project", p.getName())), null,
                 "/" + ctx.slug() + "/projects/" + p.getKey());
         activity.record(ctx.orgId(), Module.PROJECTS, "project", p.getId(), ctx.userId(), "project.members",
                 Map.of("count", wanted.size(), "key", p.getKey()));

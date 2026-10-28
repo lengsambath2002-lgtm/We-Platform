@@ -39,7 +39,8 @@ class MessageCoverageTest {
             "\\brespond\\(\\s*ErrorCode\\.\\w+,\\s*" + STR,
             "\\bmessages\\.text\\(\\s*" + STR,
             "\\bmessages\\.in\\(\\s*\\w+,\\s*" + STR,
-            "\\bmessages\\.text\\(\\s*\\w+\\s*\\?\\s*" + STR + "\\s*:\\s*" + STR)
+            "\\bmessages\\.text\\(\\s*\\w+\\s*\\?\\s*" + STR + "\\s*:\\s*" + STR,
+            "\\bText\\.of\\(\\s*" + STR)
             .map(p -> Pattern.compile(p, Pattern.DOTALL)).toList();
 
     @Test
@@ -49,7 +50,8 @@ class MessageCoverageTest {
                 .contains("This address is taken",
                         "Use 10 or more characters with letters and numbers, not your email name", "A subtask belongs to a top-level task of the same project",
                         "2–10 capital letters or digits, starting with a letter", "Required", "{min}–{max} characters",
-                        "At most {max} items", "Validation failed", "Accept the invitation")
+                        "At most {max} items", "Validation failed", "Accept the invitation", "Approved: {title}",
+                        "Moved to {status}")
                 .hasSizeGreaterThan(50);
         Messages messages = new Messages();
         List<String> missing = found.stream().filter(m -> !messages.has("km", m)).toList();

@@ -60,6 +60,19 @@ public class Messages {
         return out;
     }
 
+    /** {@code text} in {@code lang}; arguments that are themselves {@link Text} are translated too. */
+    public String in(String lang, Text text) {
+        if (text == null) {
+            return null;
+        }
+        if (!text.translate()) {
+            return text.english();
+        }
+        Map<String, Object> args = new HashMap<>();
+        text.args().forEach((k, v) -> args.put(k, v instanceof Text t ? in(lang, t) : v));
+        return in(lang, text.english(), args);
+    }
+
     /** Whether {@code english} has a translation in {@code lang}. */
     public boolean has(String lang, String english) {
         return byLanguage.getOrDefault(lang, Map.of()).containsKey(english);

@@ -137,3 +137,21 @@ If you weren't expecting this, you can ignore this email. = ប្រសិន�
 This project is archived = គម្រោងនេះត្រូវបានរក្សាទុកក្នុងបណ្ណសារ
 Unknown kind of notification = រកមិនឃើញប្រភេទការជូនដំណឹងនេះទេ
 The end is before the start = ថ្ងៃបញ្ចប់នៅមុនថ្ងៃចាប់ផ្ដើម
+
+# Notifications (translated per recipient when sent)
+Invitation: {title} = ការអញ្ជើញ៖ {title}
+You were added to {project} = អ្នកត្រូវបានបន្ថែមទៅក្នុងគម្រោង {project}
+Assigned to you = បានចាត់តាំងឱ្យអ្នក
+Mentioned you: {excerpt} = បានលើកឈ្មោះអ្នក៖ {excerpt}
+New comment: {excerpt} = មតិយោបល់ថ្មី៖ {excerpt}
+Moved to {status} = បានផ្លាស់ទៅ {status}
+To do = ត្រូវធ្វើ
+In progress = កំពុងធ្វើ
+In review = កំពុងពិនិត្យ
+Done = រួចរាល់
+Approval requested: {title} = សំណើសុំការអនុម័ត៖ {title}
+Resubmitted for approval: {title} = បានដាក់ស្នើម្ដងទៀតសម្រាប់ការអនុម័ត៖ {title}
+Approved: {title} = បានអនុម័ត៖ {title}
+Rejected: {title} = បានបដិសេធ៖ {title}
+Changes requested: {title} = បានស្នើឱ្យកែប្រែ៖ {title}
+Step {step} approved: {title} = ជំហានទី {step} បានអនុម័ត៖ {title}

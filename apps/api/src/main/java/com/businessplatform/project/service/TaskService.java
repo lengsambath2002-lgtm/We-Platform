@@ -23,6 +23,7 @@ import com.businessplatform.activity.Activity;
 import com.businessplatform.activity.ActivityService;
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
+import com.businessplatform.common.i18n.Text;
 import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.file.FileService;
 import com.businessplatform.file.StoredFile;
@@ -170,7 +171,7 @@ public class TaskService {
         }
         if (t.getAssigneeId() != null) {
             notifications.send(ctx.orgId(), List.of(t.getAssigneeId()), ctx.userId(), "task.assigned",
-                    key + " " + t.getTitle(), "Assigned to you", link(ctx, t));
+                    Text.raw(key + " " + t.getTitle()), Text.of("Assigned to you"), link(ctx, t));
         }
         return toResponses(List.of(t), Map.of(p.getId(), p)).get(0);
     }
@@ -303,15 +304,15 @@ public class TaskService {
                 Map.of("excerpt", excerpt(c.getBody())));
         String key = p.getKey() + "-" + t.getNumber();
         Set<UUID> mentioned = mentions(ctx, p, in.mentionIds(), null);
-        notifications.send(ctx.orgId(), mentioned, ctx.userId(), "task.mentioned", key + " " + t.getTitle(),
-                "Mentioned you: " + excerpt(c.getBody()), link(ctx, t));
+        notifications.send(ctx.orgId(), mentioned, ctx.userId(), "task.mentioned", Text.raw(key + " " + t.getTitle()),
+                Text.of("Mentioned you: {excerpt}", Map.of("excerpt", excerpt(c.getBody()))), link(ctx, t));
         Set<UUID> watchers = new LinkedHashSet<>(List.of(t.getReporterId()));
         if (t.getAssigneeId() != null) {
             watchers.add(t.getAssigneeId());
         }
         watchers.removeAll(mentioned);
-        notifications.send(ctx.orgId(), watchers, ctx.userId(), "task.commented", key + " " + t.getTitle(),
-                "New comment: " + excerpt(c.getBody()), link(ctx, t));
+        notifications.send(ctx.orgId(), watchers, ctx.userId(), "task.commented", Text.raw(key + " " + t.getTitle()),
+                Text.of("New comment: {excerpt}", Map.of("excerpt", excerpt(c.getBody()))), link(ctx, t));
         return commentResponse(ctx, a, c, people.of(List.of(ctx.userId())).get(ctx.userId()));
     }
 
@@ -336,8 +337,8 @@ public class TaskService {
                     Map.of("excerpt", excerpt(body), "commentId", c.getId().toString()));
             Set<UUID> fresh = mentions(ctx, a.project(), in.mentionIds(), before);
             notifications.send(ctx.orgId(), fresh, ctx.userId(), "task.mentioned",
-                    a.project().getKey() + "-" + t.getNumber() + " " + t.getTitle(), "Mentioned you: " + excerpt(body),
-                    link(ctx, t));
+                    Text.raw(a.project().getKey() + "-" + t.getNumber() + " " + t.getTitle()),
+                    Text.of("Mentioned you: {excerpt}", Map.of("excerpt", excerpt(body))), link(ctx, t));
         }
         return commentResponse(ctx, a, c, people.of(List.of(ctx.userId())).get(ctx.userId()));
     }
@@ -488,20 +489,30 @@ public class TaskService {
         String key = p.getKey() + "-" + t.getNumber();
         if (changed.containsKey("assignee") && t.getAssigneeId() != null) {
             notifications.send(ctx.orgId(), List.of(t.getAssigneeId()), ctx.userId(), "task.assigned",
-                    key + " " + t.getTitle(), "Assigned to you", link(ctx, t));
+                    Text.raw(key + " " + t.getTitle()), Text.of("Assigned to you"), link(ctx, t));
         }
         if (changed.containsKey("status")) {
             Set<UUID> to = new LinkedHashSet<>(List.of(t.getReporterId()));
             if (previousAssignee != null) {
                 to.add(previousAssignee);
             }
-            notifications.send(ctx.orgId(), to, ctx.userId(), "task.status", key + " " + t.getTitle(),
-                    "Moved to " + t.getStatus().replace('_', ' ').toLowerCase(), link(ctx, t));
+            notifications.send(ctx.orgId(), to, ctx.userId(), "task.status", Text.raw(key + " " + t.getTitle()),
+                    Text.of("Moved to {status}", Map.of("status", statusName(t.getStatus()))), link(ctx, t));
         }
     }
 
     private static String link(OrgContext ctx, Task t) {
         return "/" + ctx.slug() + "/tasks/" + t.getId();
+    }
+
+    /** A task status's name, translated for each recipient. */
+    private static Text statusName(String status) {
+        return switch (status) {
+            case "IN_PROGRESS" -> Text.of("In progress");
+            case "IN_REVIEW" -> Text.of("In review");
+            case "DONE" -> Text.of("Done");
+            default -> Text.of("To do");
+        };
     }
 
     private static String excerpt(String s) {

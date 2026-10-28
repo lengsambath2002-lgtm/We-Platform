@@ -2,8 +2,11 @@ package com.businessplatform.notification;
 
 import java.time.Clock;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -15,7 +18,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
+import com.businessplatform.common.i18n.Messages;
+import com.businessplatform.common.i18n.Text;
 import com.businessplatform.common.persistence.Ids;
+import com.businessplatform.identity.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +39,8 @@ public class NotificationService {
     static final int MAX_PAGE = 100;
 
     private final NotificationRepository notifications;
+    private final UserRepository users;
+    private final Messages messages;
     private final Clock clock;
 
     /** The kind of a notification type (approvals group their steps). */
@@ -45,22 +53,28 @@ public class NotificationService {
         };
     }
 
+    /** Sends to each person in their own language (title and body are translated per recipient). */
     @Transactional
-    public void send(UUID orgId, Collection<UUID> to, UUID actorId, String type, String title, String body, String link) {
+    public void send(UUID orgId, Collection<UUID> to, UUID actorId, String type, Text title, Text body, String link) {
         List<UUID> wanted = to.stream().distinct().filter(u -> u != null && !u.equals(actorId)).toList();
         if (wanted.isEmpty()) {
             return;
         }
         Set<UUID> muting = new HashSet<>(notifications.muting(orgId, kindOf(type), wanted));
+        Map<UUID, String> language = new HashMap<>();
+        users.findAllById(wanted).forEach(u -> language.put(u.getId(), Messages.language(Locale.forLanguageTag(u.getLocale()))));
         wanted.stream().filter(u -> !muting.contains(u)).forEach(u -> {
+            String lang = language.getOrDefault(u, "en");
+            String heading = messages.in(lang, title);
+            String text = messages.in(lang, body);
             Notification n = new Notification();
             n.setId(Ids.next());
             n.setOrgId(orgId);
             n.setUserId(u);
             n.setActorId(actorId);
             n.setType(type);
-            n.setTitle(title.length() > 200 ? title.substring(0, 200) : title);
-            n.setBody(body == null ? null : body.length() > 500 ? body.substring(0, 500) : body);
+            n.setTitle(heading.length() > 200 ? heading.substring(0, 200) : heading);
+            n.setBody(text == null ? null : text.length() > 500 ? text.substring(0, 500) : text);
             n.setLink(link);
             n.setCreatedAt(clock.instant());
             notifications.save(n);

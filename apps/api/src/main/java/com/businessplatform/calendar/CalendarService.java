@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.businessplatform.activity.ActivityService;
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
+import com.businessplatform.common.i18n.Text;
 import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.notification.NotificationService;
 import com.businessplatform.org.domain.Membership;
@@ -99,7 +100,7 @@ public class CalendarService {
         apply(ctx, e, in);
         events.saveAndFlush(e);
         List<UUID> att = setAttendees(ctx, e, in.attendeeIds());
-        notifications.send(ctx.orgId(), att, ctx.userId(), "event.invited", "Invitation: " + e.getTitle(), null,
+        notifications.send(ctx.orgId(), att, ctx.userId(), "event.invited", Text.of("Invitation: {title}", Map.of("title", e.getTitle())), null,
                 link(ctx, e));
         record(ctx, e, "event.created");
         return view(ctx, e, att);
@@ -119,7 +120,7 @@ public class CalendarService {
         apply(ctx, e, in);
         List<UUID> att = setAttendees(ctx, e, in.attendeeIds());
         notifications.send(ctx.orgId(), att.stream().filter(u -> !before.contains(u)).toList(), ctx.userId(),
-                "event.invited", "Invitation: " + e.getTitle(), null, link(ctx, e));
+                "event.invited", Text.of("Invitation: {title}", Map.of("title", e.getTitle())), null, link(ctx, e));
         record(ctx, e, "event.updated");
         return view(ctx, e, att);
     }
