@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { PermissionDenied } from '@/components/common/states';
 import { MODULE_ICON } from '@/components/shell/nav';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import type { MessageKey } from '@/i18n/messages';
 import { en as moduleText } from '@/i18n/messages/modules';
 import { useT } from '@/i18n/provider';
@@ -36,20 +37,25 @@ export default function ModulesAdmin() {
             <li key={m.key} className="flex gap-4 rounded-lg border bg-card p-4">
               <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary"><Icon className="size-5" /></span>
               <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-center gap-2 font-medium">
-                  {name} <span className="text-sm font-normal text-muted-foreground" lang={locale === 'km' ? 'en' : 'km'}>{locale === 'km' ? m.nameEn : m.nameKm}</span>
-                  {!m.available && <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-normal text-muted-foreground">{t('admin.comingSoon')}</span>}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">{about ? t(about) : ''}</p>
-                <div className="mt-3 flex items-center gap-2">
-                  {m.available ? (
-                    <Button size="sm" variant={m.enabled ? 'outline' : 'default'} disabled={toggle.isPending}
-                      onClick={() => toggle.mutateAsync({ key: m.key, on: !m.enabled }).then(() => toast.success(t(m.enabled ? 'admin.switchedOff' : 'admin.switchedOn', { name }))).catch((e) => toast.error(errorMessage(e)))}>
-                      {m.enabled ? t('admin.switchOff') : t('admin.switchOn')}
-                    </Button>
-                  ) : <Button size="sm" variant="outline" asChild><Link href={`/${slug}/m/${m.key}`}>{t('admin.whatsPlanned')}</Link></Button>}
-                  {m.enabled && <span className="text-xs text-success">{t('admin.on')}</span>}
+                <div className="flex items-start justify-between gap-3">
+                  <p className="flex flex-wrap items-center gap-2 font-medium">
+                    {name} <span className="text-sm font-normal text-muted-foreground" lang={locale === 'km' ? 'en' : 'km'}>{locale === 'km' ? m.nameEn : m.nameKm}</span>
+                    {!m.available && <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-normal text-muted-foreground">{t('admin.comingSoon')}</span>}
+                  </p>
+                  {m.available && (
+                    <label className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                      <span className={m.enabled ? 'font-medium text-success' : undefined}>{m.enabled ? t('admin.on') : t('admin.off')}</span>
+                      <Switch checked={m.enabled} disabled={toggle.isPending} aria-label={t('admin.toggleModule', { name })}
+                        onCheckedChange={(on) => toggle.mutateAsync({ key: m.key, on })
+                          .then(() => toast.success(t(on ? 'admin.switchedOn' : 'admin.switchedOff', { name })))
+                          .catch((e) => toast.error(errorMessage(e)))} />
+                    </label>
+                  )}
                 </div>
+                <p className="mt-1 text-sm text-muted-foreground">{about ? t(about) : ''}</p>
+                {!m.available && (
+                  <Button size="sm" variant="outline" className="mt-3" asChild><Link href={`/${slug}/m/${m.key}`}>{t('admin.whatsPlanned')}</Link></Button>
+                )}
               </div>
             </li>
           );
