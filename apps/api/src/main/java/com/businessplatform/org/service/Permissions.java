@@ -38,6 +38,9 @@ public final class Permissions {
         if (ctx.isAdmin()) {
             p.add("documents.manage");
         }
+        if (ctx.role() == com.businessplatform.org.domain.OrgRole.OWNER) {
+            p.add("org.delete");
+        }
         return p;
     }
 }

@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Import(IntegrationTest.CleanDb.class)
+@Import({ IntegrationTest.CleanDb.class, TestMailer.Config.class })
 public abstract class IntegrationTest {
 
     @Autowired
@@ -35,6 +35,9 @@ public abstract class IntegrationTest {
 
     @Autowired
     protected ObjectMapper json;
+
+    @Autowired
+    protected TestMailer mails;
 
     @TestConfiguration
     static class CleanDb {
@@ -48,6 +51,11 @@ public abstract class IntegrationTest {
     }
 
     protected record User(UUID id, String token, String email) {
+
+        /** The same person with another access token (another device). */
+        public User withToken(String accessToken) {
+            return new User(id, accessToken, email);
+        }
     }
 
     protected User signUp(String name) throws Exception {

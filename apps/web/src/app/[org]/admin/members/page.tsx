@@ -1,6 +1,6 @@
 'use client';
 
-import { MailX, UserPlus } from 'lucide-react';
+import { MailX, Send, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useT } from '@/i18n/provider';
+import { accountApi, type SentInvitation } from '@/lib/api/account';
 import { errorMessage } from '@/lib/api/client';
 import { orgApi, useInvitations, useMembers, useOrgMutation } from '@/lib/api/queries';
 import type { OrgRole } from '@/lib/api/types';
@@ -31,6 +32,8 @@ export default function MembersAdmin() {
   const [inviting, setInviting] = useState(false);
   const update = useOrgMutation(slug, ({ id, body }: { id: string; body: Record<string, unknown> }) => orgApi.updateMember(slug, id, body));
   const revoke = useOrgMutation(slug, (id: string) => orgApi.revokeInvitation(slug, id));
+  const resend = useOrgMutation(slug, (id: string) => accountApi.resendInvitation(slug, id));
+  const [resent, setResent] = useState<SentInvitation | null>(null);
   if (!allowed) return <PermissionDenied />;
   const isOwner = org.role === 'OWNER';
   const change = (id: string, body: Record<string, unknown>, done: string) =>
@@ -91,6 +94,13 @@ export default function MembersAdmin() {
           {invitations.data.map((i) => (
             <li key={i.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
               <span className="min-w-0 flex-1"><span className="block truncate text-sm">{i.email}</span><span className="text-xs text-muted-foreground">{t('admin.invitationMeta', { role: ROLE_TEXT[i.role]?.label ?? i.role, date: day(i.expiresAt) })}</span></span>
+              <Button variant="ghost" size="sm" aria-label={t('settings.resendOf', { email: i.email })} disabled={resend.isPending}
+                onClick={() => resend.mutateAsync(i.id).then((r) => {
+                  // Without email the new link (the old one stopped working) must be copied from the dialog.
+                  if (r.emailed) toast.success(t('settings.resent', { email: r.email })); else setResent(r);
+                }).catch((e) => toast.error(errorMessage(e)))}>
+                <Send className="size-4" />{t('settings.resend')}
+              </Button>
               <Button variant="ghost" size="sm" onClick={() => revoke.mutateAsync(i.id).then(() => toast.success(t('admin.invitationRevoked'))).catch((e) => toast.error(errorMessage(e)))}>
                 <MailX className="size-4" />{t('admin.revoke')}
               </Button>
@@ -99,6 +109,7 @@ export default function MembersAdmin() {
         </ul>
       )}
       <InviteDialog org={slug} open={inviting} onOpenChange={setInviting} />
+      <InviteDialog org={slug} open={!!resent} onOpenChange={(v) => { if (!v) setResent(null); }} resent={resent} />
     </>
   );
 }

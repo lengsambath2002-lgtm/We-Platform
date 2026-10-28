@@ -46,6 +46,19 @@ public class OrgController {
         return ResponseEntity.ok(ApiResponse.ok(orgs.update(org, in)));
     }
 
+    /** Owners only; body {@code {"name": "<the organisation's name>"}} confirms. */
+    @DeleteMapping("/api/orgs/{org}")
+    public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String org, @Valid @RequestBody DeleteOrgRequest in) {
+        orgs.delete(org, in);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    @PostMapping("/api/orgs/{org}/leave")
+    public ResponseEntity<ApiResponse<Void>> leave(@PathVariable String org) {
+        orgs.leave(org);
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
     @GetMapping("/api/modules")
     public ResponseEntity<ApiResponse<List<Module>>> registry() {
         return ResponseEntity.ok(ApiResponse.ok(modules.registry()));
@@ -81,6 +94,11 @@ public class OrgController {
     public ResponseEntity<ApiResponse<InvitationResponse>> invite(@PathVariable String org,
             @Valid @RequestBody InviteRequest in) {
         return ResponseEntity.status(201).body(ApiResponse.ok(orgs.invite(org, in)));
+    }
+
+    @PostMapping("/api/orgs/{org}/invitations/{id}/resend")
+    public ResponseEntity<ApiResponse<InvitationResponse>> resend(@PathVariable String org, @PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(orgs.resendInvitation(org, id)));
     }
 
     @DeleteMapping("/api/orgs/{org}/invitations/{id}")

@@ -14,6 +14,8 @@ interface SessionState {
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setUser: (u: User) => void;
+  /** Adopts a session the API just issued (e.g. after resetting the password). */
+  startSession: (s: Session) => void;
 }
 
 const Ctx = createContext<SessionState | null>(null);
@@ -50,6 +52,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       user,
       ready,
       setUser,
+      startSession: start,
       signIn: async (email, password) => start(await http.post<Session>('/auth/sign-in', { email, password })),
       signUp: async (name, email, password) =>
         start(await http.post<Session>('/auth/sign-up', { name, email, password })),

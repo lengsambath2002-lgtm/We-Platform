@@ -14,7 +14,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * The single place that turns "organisation slug + signed-in user" into an {@link OrgContext}.
- * Someone without an active membership gets NOT_FOUND (an organisation's existence isn't revealed).
+ * Someone without an active membership gets NOT_FOUND (an organisation's existence isn't revealed);
+ * so does everyone for a deleted organisation.
  * Every org-scoped service starts here; queries then always filter by {@code ctx.orgId()}.
  */
 @Component
@@ -27,7 +28,7 @@ public class OrgAccess {
     @Transactional(readOnly = true)
     public OrgContext require(String slug) {
         var userId = CurrentUser.id();
-        Organisation o = orgs.findBySlug(slug).orElseThrow(BusinessException::notFound);
+        Organisation o = orgs.findBySlug(slug).filter(x -> !x.isDeleted()).orElseThrow(BusinessException::notFound);
         Membership m = memberships.findByOrgIdAndUserId(o.getId(), userId)
                 .filter(x -> Membership.ACTIVE.equals(x.getStatus()))
                 .orElseThrow(BusinessException::notFound);

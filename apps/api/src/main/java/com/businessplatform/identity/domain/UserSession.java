@@ -11,7 +11,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** A signed-in device: its refresh token (hashed), rotated on every refresh. */
+/**
+ * A signed-in device: its refresh token (hashed), rotated on every refresh into a new row of the same
+ * {@code familyId}. The family is what the account page lists and signs out.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -42,4 +45,13 @@ public class UserSession {
 
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
+
+    @Column(name = "family_id", nullable = false)
+    private UUID familyId;
+
+    @Column(name = "started_at", nullable = false)
+    private Instant startedAt;
+
+    @Column(name = "last_used_at", nullable = false)
+    private Instant lastUsedAt;
 }

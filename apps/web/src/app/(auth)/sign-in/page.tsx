@@ -66,7 +66,10 @@ function SignIn() {
             )} />
             <FormField control={form.control} name="password" render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('auth.password')}</FormLabel>
+                <div className="flex items-center justify-between gap-2">
+                  <FormLabel>{t('auth.password')}</FormLabel>
+                  <Link href="/forgot-password" className="text-xs font-medium text-primary hover:underline">{t('settings.forgotLink')}</Link>
+                </div>
                 <FormControl><Input type="password" autoComplete="current-password" {...field} /></FormControl>
                 <FormMessage />
               </FormItem>

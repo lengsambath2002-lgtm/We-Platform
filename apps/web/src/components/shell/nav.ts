@@ -10,6 +10,7 @@ import {
   GitBranch,
   GraduationCap,
   LayoutDashboard,
+  Settings,
   type LucideIcon,
   ShoppingCart,
   UserCog,
@@ -48,6 +49,7 @@ export function adminNav(ctx: OrgContext): NavItem[] {
     { href: 'admin/modules', label: tr('shell.modules'), icon: Blocks },
     { href: 'admin/workflows', label: tr('shell.workflows'), icon: GitBranch },
     { href: 'admin/members', label: tr('shell.membersRoles'), icon: UserCog },
+    { href: 'admin/settings', label: tr('settings.title'), icon: Settings },
   ];
 }
 

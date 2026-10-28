@@ -14,8 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { type Locale, tr, translate } from '@/i18n/core';
 import { useT } from '@/i18n/provider';
+import type { SentInvitation } from '@/lib/api/account';
 import { orgApi, useOrgMutation } from '@/lib/api/queries';
-import type { Invitation } from '@/lib/api/types';
 
 const makeSchema = (l: Locale) => z.object({ email: z.string().trim().email(translate(l, 'org.emailInvalid')), role: z.enum(['ADMIN', 'MEMBER', 'GUEST']) });
 type Values = z.infer<ReturnType<typeof makeSchema>>;
@@ -29,11 +29,15 @@ export const ROLE_TEXT: Record<string, { label: string; hint: string }> = Object
 );
 
 /**
- * Creates an invitation and shows its one-time link to copy. The platform does not send email yet,
- * so the link is how the person joins; it only works for the invited address.
+ * Creates an invitation, which the API also emails when mail is configured, and shows its one-time
+ * link to copy (how the person joins when mail isn't set up); it only works for the invited address.
+ * With `resent`, opens straight on the new link of a resent invitation.
  */
-export function InviteDialog({ org, open, onOpenChange }: { org: string; open: boolean; onOpenChange: (v: boolean) => void }) {
-  const [created, setCreated] = useState<Invitation | null>(null);
+export function InviteDialog({ org, open, onOpenChange, resent }: {
+  org: string; open: boolean; onOpenChange: (v: boolean) => void; resent?: SentInvitation | null;
+}) {
+  const [made, setCreated] = useState<SentInvitation | null>(null);
+  const created = made ?? resent ?? null;
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { t, locale } = useT();
@@ -46,9 +50,9 @@ export function InviteDialog({ org, open, onOpenChange }: { org: string; open: b
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{created ? t('org.inviteReadyTitle') : t('org.inviteTitle')}</DialogTitle>
+          <DialogTitle>{created ? t(made ? 'org.inviteReadyTitle' : 'settings.newLinkTitle') : t('org.inviteTitle')}</DialogTitle>
           <DialogDescription>
-            {created ? t('org.inviteReadyBody', { email: created.email }) : t('org.inviteBody')}
+            {!created ? t('org.inviteBody') : created.emailed ? t('settings.inviteEmailed', { email: created.email }) : t('org.inviteReadyBody', { email: created.email })}
           </DialogDescription>
         </DialogHeader>
         {created ? (
@@ -59,14 +63,14 @@ export function InviteDialog({ org, open, onOpenChange }: { org: string; open: b
                 {copied ? <Check className="size-4" /> : <Copy className="size-4" />}{copied ? t('org.copied') : t('org.copy')}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">{t('org.linkShownOnce')}</p>
+            <p className="text-xs text-muted-foreground">{t('settings.linkShownOnce')}</p>
             <DialogFooter><Button onClick={() => close(false)}>{t('common.done')}</Button></DialogFooter>
           </div>
         ) : (
           <Form {...form}>
             <form noValidate className="space-y-4" onSubmit={form.handleSubmit(async (v) => {
               setError(null);
-              try { setCreated(await invite.mutateAsync(v)); } catch (e) { setError(applyServerErrors(form, e)); }
+              try { setCreated(await invite.mutateAsync(v) as SentInvitation); } catch (e) { setError(applyServerErrors(form, e)); }
             })}>
               {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
               <FormField control={form.control} name="email" render={({ field }) => (

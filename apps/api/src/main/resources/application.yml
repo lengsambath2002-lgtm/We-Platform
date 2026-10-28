@@ -33,6 +33,15 @@ platform:
   files:
     dir: ${PLATFORM_FILES_DIR:./data/files}
   app-url: ${PLATFORM_APP_URL:http://localhost:3300}
+  # Email (invitations, password resets). Without a host, emails are only logged.
+  mail:
+    host: ${PLATFORM_MAIL_HOST:}
+    port: ${PLATFORM_MAIL_PORT:}
+    username: ${PLATFORM_MAIL_USERNAME:}
+    password: ${PLATFORM_MAIL_PASSWORD:}
+    from: ${PLATFORM_MAIL_FROM:Business Platform <no-reply@localhost>}
+    # starttls (587) | ssl (465) | none
+    security: ${PLATFORM_MAIL_SECURITY:starttls}
 
 springdoc:
   api-docs:

@@ -23,6 +23,7 @@ NOT_FOUND = រកមិនឃើញ
 CONFLICT = ទិន្នន័យនេះជាន់នឹងទិន្នន័យដែលមានស្រាប់
 INVALID_STATE = មិនអាចធ្វើការនេះបានក្នុងស្ថានភាពបច្ចុប្បន្នទេ
 INVALID_TOKEN = តំណ ឬវគ្គនេះមិនត្រឹមត្រូវ ឬផុតកំណត់ហើយ
+TOO_MANY_REQUESTS = សំណើច្រើនដងពេក។ សូមរង់ចាំបន្តិច រួចព្យាយាមម្ដងទៀត
 INTERNAL_ERROR = មានបញ្ហាមិនបានរំពឹងទុក។ សូមព្យាយាមម្ដងទៀត
 
 # Generic: Bean Validation constraints
@@ -106,3 +107,28 @@ Keep the description under 2000 characters = ការពិពណ៌នាម�
 The start date must be on or before the end date = ថ្ងៃចាប់ផ្ដើមត្រូវតែនៅមុន ឬត្រូវនឹងថ្ងៃបញ្ចប់
 Choose at most 366 days = សូមជ្រើសរើសមិនលើសពី 366 ថ្ងៃ
 Between 1 and 365 days = ចន្លោះពី 1 ដល់ 365 ថ្ងៃ
+
+# Account security: password change and reset, emails
+The current password is wrong = ពាក្យសម្ងាត់បច្ចុប្បន្នមិនត្រឹមត្រូវ
+Choose a password different from the current one = សូមជ្រើសរើសពាក្យសម្ងាត់ខុសពីពាក្យសម្ងាត់បច្ចុប្បន្ន
+Your Business Platform password was changed = ពាក្យសម្ងាត់ Business Platform របស់អ្នកត្រូវបានប្ដូរ
+The password of your account ({email}) was just changed, and your other devices were signed out. = ពាក្យសម្ងាត់នៃគណនីរបស់អ្នក ({email}) ទើបតែត្រូវបានប្ដូរ ហើយឧបករណ៍ផ្សេងទៀតរបស់អ្នកត្រូវបានចាកចេញ។
+Reset your password = កំណត់ពាក្យសម្ងាត់ឡើងវិញ
+If it wasn't you, reset your password now and tell your organisation's administrator. = ប្រសិនបើមិនមែនជាអ្នកទេ សូមកំណត់ពាក្យសម្ងាត់ឡើងវិញឥឡូវនេះ ហើយប្រាប់អ្នកគ្រប់គ្រងស្ថាប័នរបស់អ្នក។
+Reset your Business Platform password = កំណត់ពាក្យសម្ងាត់ Business Platform របស់អ្នកឡើងវិញ
+Someone asked to reset the password of your account ({email}). = មាននរណាម្នាក់បានស្នើសុំកំណត់ពាក្យសម្ងាត់នៃគណនីរបស់អ្នក ({email}) ឡើងវិញ។
+The link works once, within 30 minutes. = តំណនេះប្រើបានតែម្ដង ក្នុងរយៈពេល 30 នាទី។
+Choose a new password = ជ្រើសរើសពាក្យសម្ងាត់ថ្មី
+If it wasn't you, ignore this email: your password stays the same. = ប្រសិនបើមិនមែនជាអ្នកទេ សូមកុំខ្វល់នឹងអ៊ីមែលនេះ៖ ពាក្យសម្ងាត់របស់អ្នកនៅដដែល។
+
+# Organisation settings and invitation emails
+You are the only owner. Make another member an owner first, or delete the organisation = អ្នកជាម្ចាស់តែម្នាក់គត់។ សូមតែងតាំងសមាជិកម្នាក់ទៀតជាម្ចាស់ជាមុនសិន ឬលុបស្ថាប័ននេះ
+Type the organisation's name exactly = សូមវាយឈ្មោះស្ថាប័នឱ្យបានត្រឹមត្រូវ
+an admin = អ្នកគ្រប់គ្រង
+a member = សមាជិក
+a guest = ភ្ញៀវ
+{inviter} invited you to {org} on Business Platform = {inviter} បានអញ្ជើញអ្នកចូលរួមជាមួយ {org} នៅលើ Business Platform
+{inviter} invited you to join {org} as {role}. = {inviter} បានអញ្ជើញអ្នកឱ្យចូលរួមជាមួយ {org} ជា{role}។
+Sign in or create an account with {email} to accept. The link works for 7 days. = សូមចូលគណនី ឬបង្កើតគណនីដោយប្រើ {email} ដើម្បីទទួលយក។ តំណនេះប្រើបានរយៈពេល 7 ថ្ងៃ។
+Accept the invitation = ទទួលយកការអញ្ជើញ
+If you weren't expecting this, you can ignore this email. = ប្រសិនបើអ្នកមិនបានរំពឹងទុកការអញ្ជើញនេះទេ អ្នកអាចកុំខ្វល់នឹងអ៊ីមែលនេះបាន។

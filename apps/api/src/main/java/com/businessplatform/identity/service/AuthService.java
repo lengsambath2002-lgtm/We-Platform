@@ -104,7 +104,7 @@ public class AuthService {
         }
         s.setRevokedAt(now);
         AppUser u = users.findById(s.getUserId()).orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
-        return start(u, userAgent, ip);
+        return start(u, userAgent, ip, s);
     }
 
     @Transactional
@@ -123,16 +123,26 @@ public class AuthService {
         return new UserResponse(u.getId(), u.getName(), u.getEmail(), u.getLocale(), u.getAvatarUrl());
     }
 
-    private SessionResponse start(AppUser u, String userAgent, String ip) {
+    /** A new signed-in device. */
+    SessionResponse start(AppUser u, String userAgent, String ip) {
+        return start(u, userAgent, ip, null);
+    }
+
+    /** A new session row; {@code previous} is the row a refresh rotates from (same device), or null. */
+    private SessionResponse start(AppUser u, String userAgent, String ip, UserSession previous) {
         String refresh = Tokens.random();
+        Instant now = clock.instant();
         UserSession s = new UserSession();
         s.setId(Ids.next());
+        s.setFamilyId(previous == null ? s.getId() : previous.getFamilyId());
+        s.setStartedAt(previous == null ? now : previous.getStartedAt());
+        s.setLastUsedAt(now);
         s.setUserId(u.getId());
         s.setRefreshTokenHash(Tokens.sha256(refresh));
         s.setUserAgent(userAgent == null ? null : userAgent.substring(0, Math.min(300, userAgent.length())));
         s.setIp(ip);
-        s.setCreatedAt(clock.instant());
-        s.setExpiresAt(clock.instant().plus(props.refreshTtl()));
+        s.setCreatedAt(now);
+        s.setExpiresAt(now.plus(props.refreshTtl()));
         sessions.save(s);
         return new SessionResponse(tokens.accessToken(u.getId(), s.getId()), tokens.accessSeconds(), toUser(u), refresh);
     }

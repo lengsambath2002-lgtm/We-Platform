@@ -14,6 +14,7 @@ public enum ErrorCode {
     CONFLICT(HttpStatus.CONFLICT),
     INVALID_STATE(HttpStatus.CONFLICT),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED),
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final HttpStatus status;

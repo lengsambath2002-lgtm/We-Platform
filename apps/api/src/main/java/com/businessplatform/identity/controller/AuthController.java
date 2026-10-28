@@ -12,9 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.businessplatform.common.api.ApiResponse;
 import com.businessplatform.common.security.AuthProperties;
+import com.businessplatform.identity.payload.AccountPayloads.ForgotPasswordRequest;
+import com.businessplatform.identity.payload.AccountPayloads.ResetPasswordRequest;
+import com.businessplatform.identity.payload.AccountPayloads.ResetTokenRequest;
+import com.businessplatform.identity.payload.AccountPayloads.ResetTokenState;
 import com.businessplatform.identity.payload.AuthPayloads.SessionResponse;
 import com.businessplatform.identity.payload.AuthPayloads.SignInRequest;
 import com.businessplatform.identity.payload.AuthPayloads.SignUpRequest;
+import com.businessplatform.identity.service.AccountService;
 import com.businessplatform.identity.service.AuthService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +40,7 @@ public class AuthController {
     static final String COOKIE = "bp_refresh";
 
     private final AuthService auth;
+    private final AccountService account;
     private final AuthProperties props;
 
     @PostMapping("/sign-up")
@@ -66,6 +72,27 @@ public class AuthController {
                 .body(ApiResponse.ok(null));
     }
 
+    /** Always answers the same, whether or not an account uses the email (TOO_MANY_REQUESTS aside). */
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest in,
+            HttpServletRequest http) {
+        account.forgotPassword(in.email(), ip(http));
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    /** Whether a reset link still works (the token travels in the body, not the URL, to stay out of logs). */
+    @PostMapping("/reset-password/check")
+    public ResponseEntity<ApiResponse<ResetTokenState>> checkReset(@Valid @RequestBody ResetTokenRequest in) {
+        return ResponseEntity.ok(ApiResponse.ok(new ResetTokenState(account.resetTokenValid(in.token()))));
+    }
+
+    /** Sets the new password, signs out every device and signs in on this one. */
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<SessionResponse>> resetPassword(@Valid @RequestBody ResetPasswordRequest in,
+            HttpServletRequest http, @RequestHeader(value = "X-Client", required = false) String client) {
+        return session(account.resetPassword(in.token(), in.password(), ua(http), ip(http)), client);
+    }
+
     public record RefreshBody(String refreshToken) {
     }
 
@@ -84,11 +111,11 @@ public class AuthController {
                 .sameSite("Lax").path("/api/auth").maxAge(maxAge).build();
     }
 
-    private static String ua(HttpServletRequest http) {
+    static String ua(HttpServletRequest http) {
         return http.getHeader(HttpHeaders.USER_AGENT);
     }
 
-    private static String ip(HttpServletRequest http) {
+    static String ip(HttpServletRequest http) {
         String f = http.getHeader("X-Forwarded-For");
         return f != null && !f.isBlank() ? f.split(",")[0].trim() : http.getRemoteAddr();
     }
