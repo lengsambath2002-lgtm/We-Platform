@@ -18,6 +18,7 @@ import type {
   OrgContext,
   OrgSummary,
   Overview,
+  Period,
   Project,
   ProjectMember,
   Task,
@@ -41,7 +42,7 @@ export const keys = {
   task: (org: string, id: string) => ['org', org, 'task', id] as const,
   comments: (org: string, id: string) => ['org', org, 'task', id, 'comments'] as const,
   activity: (org: string, id: string) => ['org', org, 'task', id, 'activity'] as const,
-  recordApprovals: (org: string, id: string) => ['org', org, 'task', id, 'approvals'] as const,
+  recordApprovals: (org: string, id: string) => ['org', org, 'record', id, 'approvals'] as const,
   workflows: (org: string) => ['org', org, 'workflows'] as const,
   approvals: (org: string, box: string) => ['org', org, 'approvals', box] as const,
   approval: (org: string, id: string) => ['org', org, 'approval', id] as const,
@@ -78,10 +79,10 @@ export const useComments = (org: string, id: string) =>
   useQuery({ queryKey: keys.comments(org, id), queryFn: () => http.get<Comment[]>(`${o(org)}/tasks/${id}/comments`) });
 export const useTaskActivity = (org: string, id: string) =>
   useQuery({ queryKey: keys.activity(org, id), queryFn: () => http.get<ActivityItem[]>(`${o(org)}/tasks/${id}/activity`) });
-export const useRecordApprovals = (org: string, id: string) =>
+export const useRecordApprovals = (org: string, id: string, moduleKey = 'projects', recordType = 'task') =>
   useQuery({
     queryKey: keys.recordApprovals(org, id),
-    queryFn: () => http.get<ApprovalSummary[]>(`${o(org)}/approvals/record/projects/task/${id}`),
+    queryFn: () => http.get<ApprovalSummary[]>(`${o(org)}/approvals/record/${moduleKey}/${recordType}/${id}`),
   });
 export const useWorkflows = (org: string) =>
   useQuery({ queryKey: keys.workflows(org), queryFn: () => http.get<Workflow[]>(`${o(org)}/workflows`) });
@@ -92,7 +93,7 @@ export const useApproval = (org: string, id: string) =>
 export const useCalendar = (org: string, from: string, to: string, mine: boolean) =>
   useQuery({
     queryKey: keys.calendar(org, from, to, mine),
-    queryFn: () => http.get<{ events: CalendarEvent[]; deadlines: Deadline[] }>(`${o(org)}/calendar?from=${from}&to=${to}&mine=${mine}`),
+    queryFn: () => http.get<{ events: CalendarEvent[]; deadlines: Deadline[]; periods: Period[] }>(`${o(org)}/calendar?from=${from}&to=${to}&mine=${mine}`),
   });
 export const useNotifications = (org: string) =>
   useQuery({

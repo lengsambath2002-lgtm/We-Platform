@@ -31,6 +31,7 @@ const RECORDS: Record<string, { label: MessageKey; filter: AuditFilter }> = {
   approvals: { label: 'collab.recApprovals', filter: { verb: 'approval.' } },
   projects: { label: 'collab.recProjects', filter: { recordType: 'project' } },
   events: { label: 'collab.recEvents', filter: { module: 'calendar' } },
+  hr: { label: 'hr.auditRecords', filter: { module: 'hr' } },
   org: { label: 'collab.recOrg', filter: { module: 'org' } },
 };
 

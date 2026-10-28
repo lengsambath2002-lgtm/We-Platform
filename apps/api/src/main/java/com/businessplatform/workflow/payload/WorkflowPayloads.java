@@ -17,7 +17,7 @@ public final class WorkflowPayloads {
     private WorkflowPayloads() {
     }
 
-    public record StepInput(@NotNull @Pattern(regexp = "USER|ORG_ROLE|PROJECT_LEAD") String type, UUID userId,
+    public record StepInput(@NotNull @Pattern(regexp = "USER|ORG_ROLE|PROJECT_LEAD|MANAGER") String type, UUID userId,
             @Pattern(regexp = "OWNER|ADMIN") String role) {
     }
 

@@ -19,25 +19,33 @@ import { orgApi, useMembers, useOrgMutation, useWorkflows } from '@/lib/api/quer
 import type { Workflow } from '@/lib/api/types';
 import { useOrg } from '@/lib/org-context';
 
-type Step = { type: 'USER' | 'ORG_ROLE' | 'PROJECT_LEAD'; userId: string | null; role: string | null };
+type Step = { type: 'USER' | 'ORG_ROLE' | 'PROJECT_LEAD' | 'MANAGER'; userId: string | null; role: string | null };
 const STEP_KIND = [
   { v: 'PROJECT_LEAD', key: 'admin.stepKind_PROJECT_LEAD' },
+  { v: 'MANAGER', key: 'admin.stepKind_MANAGER' },
   { v: 'ORG_ROLE:ADMIN', key: 'admin.stepKind_ADMIN' },
   { v: 'ORG_ROLE:OWNER', key: 'admin.stepKind_OWNER' },
   { v: 'USER', key: 'admin.stepKind_USER' },
 ] as const;
 const kindOf = (s: Step) => (s.type === 'ORG_ROLE' ? `ORG_ROLE:${s.role}` : s.type);
+/** Step kinds that make sense for a module's records: the project lead for tasks, the manager for HR. */
+const kindsFor = (moduleKey: string) => STEP_KIND.filter((k) => (k.v !== 'PROJECT_LEAD' || moduleKey === 'projects') && (k.v !== 'MANAGER' || moduleKey === 'hr'));
+const fits = (moduleKey: string, s: Step) => kindsFor(moduleKey).some((k) => k.v === kindOf(s));
 
 function Editor({ org, wf, onClose }: { org: string; wf: Workflow | 'new'; onClose: () => void }) {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const { modules } = useOrg();
+  // Modules whose records go through approvals: Projects, and HR when it is switched on.
+  const usable = modules.filter((m) => (m.key === 'projects' || m.key === 'hr') && (m.enabled || (wf !== 'new' && wf.moduleKey === m.key)));
+  const [moduleKey, setModuleKey] = useState(wf === 'new' ? 'projects' : wf.moduleKey);
   const members = useMembers(org);
   const people = (members.data ?? []).filter((m) => m.status === 'ACTIVE' && m.role !== 'GUEST');
   const [name, setName] = useState(wf === 'new' ? '' : wf.name);
   const [active, setActive] = useState(wf === 'new' ? true : wf.active);
   const [steps, setSteps] = useState<Step[]>(wf === 'new' ? [{ type: 'PROJECT_LEAD', userId: null, role: null }]
     : wf.steps.map((s) => ({ type: s.type, userId: s.userId, role: s.role })));
-  const save = useOrgMutation(org, () => orgApi.saveWorkflow(org, wf === 'new' ? null : wf.id, { name: name.trim(), moduleKey: 'projects', steps, active }));
-  const valid = name.trim().length >= 2 && steps.length > 0 && steps.every((s) => s.type !== 'USER' || s.userId);
+  const save = useOrgMutation(org, () => orgApi.saveWorkflow(org, wf === 'new' ? null : wf.id, { name: name.trim(), moduleKey, steps, active }));
+  const valid = name.trim().length >= 2 && steps.length > 0 && steps.every((s) => (s.type !== 'USER' || s.userId) && fits(moduleKey, s));
   const set = (i: number, s: Step) => setSteps((x) => x.map((y, j) => (j === i ? s : y)));
 
   return (
@@ -49,6 +57,15 @@ function Editor({ org, wf, onClose }: { org: string; wf: Workflow | 'new'; onClo
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2"><Label htmlFor="wf-name">{t('admin.name')}</Label><Input id="wf-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={120} autoFocus /></div>
+          {usable.length > 1 && (
+            <div className="space-y-2">
+              <Label htmlFor="wf-module">{t('admin.workflowModule')}</Label>
+              <Select value={moduleKey} onValueChange={(v) => { setModuleKey(v); setSteps((x) => x.map((s) => (fits(v, s) ? s : { type: 'ORG_ROLE', role: 'ADMIN', userId: null }))); }}>
+                <SelectTrigger id="wf-module" className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>{usable.map((m) => <SelectItem key={m.key} value={m.key}>{locale === 'km' ? m.nameKm : m.nameEn}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+          )}
           <ol className="space-y-2">
             {steps.map((s, i) => (
               <li key={i}>
@@ -57,7 +74,7 @@ function Editor({ org, wf, onClose }: { org: string; wf: Workflow | 'new'; onClo
                   <span className="w-12 text-xs font-medium text-muted-foreground">{t('admin.step', { n: i + 1 })}</span>
                   <Select value={kindOf(s)} onValueChange={(v) => set(i, v.startsWith('ORG_ROLE') ? { type: 'ORG_ROLE', role: v.split(':')[1]!, userId: null } : { type: v as Step['type'], role: null, userId: null })}>
                     <SelectTrigger size="sm" className="w-52" aria-label={t('admin.stepApprover', { n: i + 1 })}><SelectValue /></SelectTrigger>
-                    <SelectContent>{STEP_KIND.map((k) => <SelectItem key={k.v} value={k.v}>{t(k.key)}</SelectItem>)}</SelectContent>
+                    <SelectContent>{kindsFor(moduleKey).map((k) => <SelectItem key={k.v} value={k.v}>{t(k.key)}</SelectItem>)}</SelectContent>
                   </Select>
                   {s.type === 'USER' && (
                     <Select value={s.userId ?? ''} onValueChange={(v) => set(i, { ...s, userId: v })}>

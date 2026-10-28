@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class Module {
 
     public static final String PROJECTS = "projects";
+    public static final String HR = "hr";
 
     @Id
     private String key;

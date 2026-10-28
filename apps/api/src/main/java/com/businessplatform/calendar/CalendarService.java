@@ -31,7 +31,7 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * The organisation calendar: events (organisation-wide, or tied to a project) plus every module's
- * deadlines. Who sees an event: its owner, attendees, Owners/Admins, and — when it is tied to a project —
+ * deadlines and periods (e.g. approved leave). Who sees an event: its owner, attendees, Owners/Admins, and — when it is tied to a project —
  * people who can see that project, otherwise every non-guest member.
  */
 @Service
@@ -48,6 +48,7 @@ public class CalendarService {
     private final CalendarEventRepository events;
     private final MembershipRepository memberships;
     private final List<DeadlineSource> sources;
+    private final List<PeriodSource> periodSources;
     private final NotificationService notifications;
     private final ActivityService activity;
     private final Clock clock;
@@ -63,7 +64,8 @@ public class CalendarService {
             boolean canDelete) {
     }
 
-    public record CalendarView(List<EventView> events, List<DeadlineSource.Deadline> deadlines) {
+    public record CalendarView(List<EventView> events, List<DeadlineSource.Deadline> deadlines,
+            List<PeriodSource.Period> periods) {
     }
 
     @Transactional(readOnly = true)
@@ -83,7 +85,9 @@ public class CalendarService {
         }
         List<DeadlineSource.Deadline> ds = new ArrayList<>();
         sources.forEach(s -> ds.addAll(s.deadlines(ctx, from, to, mineOnly)));
-        return new CalendarView(evs, ds);
+        List<PeriodSource.Period> ps = new ArrayList<>();
+        periodSources.forEach(s -> ps.addAll(s.periods(ctx, from, to, mineOnly)));
+        return new CalendarView(evs, ds, ps);
     }
 
     @Transactional

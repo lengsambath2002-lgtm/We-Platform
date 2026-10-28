@@ -17,10 +17,15 @@ import { RequestApprovalDialog } from './request-approval-dialog';
 
 const OPEN = ['PENDING', 'CHANGES_REQUESTED'];
 
-/** Approval state of one record: the open request with its steps and actions, earlier requests, and "Request approval". */
-export function RecordApprovals({ org, recordId, canRequest }: { org: string; recordId: string; canRequest: boolean }) {
+/**
+ * Approval state of one record: the open request with its steps and actions, earlier requests, and
+ * "Request approval" (tasks by default; records that are sent automatically, like leave, pass `canRequest` false).
+ */
+export function RecordApprovals({ org, recordId, canRequest, moduleKey = 'projects', recordType = 'task' }: {
+  org: string; recordId: string; canRequest: boolean; moduleKey?: string; recordType?: string;
+}) {
   const { t } = useT();
-  const { data = [], error, isPending, refetch } = useRecordApprovals(org, recordId);
+  const { data = [], error, isPending, refetch } = useRecordApprovals(org, recordId, moduleKey, recordType);
   const open = data.find((a) => OPEN.includes(a.status));
   const detail = useApproval(org, open?.id ?? '');
   const [asking, setAsking] = useState(false);
@@ -56,7 +61,7 @@ export function RecordApprovals({ org, recordId, canRequest }: { org: string; re
           )}
         </>
       )}
-      <RequestApprovalDialog org={org} moduleKey="projects" recordType="task" recordId={recordId} open={asking} onOpenChange={setAsking} />
+      <RequestApprovalDialog org={org} moduleKey={moduleKey} recordType={recordType} recordId={recordId} open={asking} onOpenChange={setAsking} />
     </section>
   );
 }

@@ -74,6 +74,9 @@ public class WorkflowService {
         definitions.saveAndFlush(w);
         stepDefs.deleteByWorkflowId(w.getId());
         stepDefs.flush();
+        if (!Module.PROJECTS.equals(in.moduleKey()) && in.steps().stream().anyMatch(s -> "PROJECT_LEAD".equals(s.type()))) {
+            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "steps", "Only project workflows can ask the project lead");
+        }
         short order = 1;
         for (StepInput s : in.steps()) {
             stepDefs.save(step(ctx, w.getId(), order++, s));
@@ -107,24 +110,42 @@ public class WorkflowService {
         return d;
     }
 
+    /**
+     * The workflow a module sends its records through without asking (e.g. leave requests): the active
+     * one of {@code module} named {@code name}, else any active one of {@code module}, else {@code name}
+     * created with one {@code step} (Admins may change it later in Admin → Workflows).
+     */
+    @Transactional
+    public UUID ensure(OrgContext ctx, String module, String name, StepInput step) {
+        ensureDefaults(ctx);
+        List<WorkflowDefinition> mine = definitions.findByOrgIdOrderByName(ctx.orgId()).stream()
+                .filter(w -> w.isActive() && w.getModuleKey().equals(module)).toList();
+        return mine.stream().filter(w -> w.getName().equals(name)).findFirst().or(() -> mine.stream().findFirst())
+                .map(WorkflowDefinition::getId).orElseGet(() -> {
+                    String free = definitions.existsByOrgIdAndName(ctx.orgId(), name) ? name + " (" + module + ")" : name;
+                    return create(ctx, module, free, step);
+                });
+    }
+
     private void ensureDefaults(OrgContext ctx) {
         if (definitions.countByOrgId(ctx.orgId()) > 0) {
             return;
         }
-        create(ctx, "Project lead sign-off", new StepInput("PROJECT_LEAD", null, null));
-        create(ctx, "Admin sign-off", new StepInput("ORG_ROLE", null, "ADMIN"));
+        create(ctx, Module.PROJECTS, "Project lead sign-off", new StepInput("PROJECT_LEAD", null, null));
+        create(ctx, Module.PROJECTS, "Admin sign-off", new StepInput("ORG_ROLE", null, "ADMIN"));
     }
 
-    private void create(OrgContext ctx, String name, StepInput step) {
+    private UUID create(OrgContext ctx, String module, String name, StepInput step) {
         WorkflowDefinition w = new WorkflowDefinition();
         w.setId(Ids.next());
         w.setOrgId(ctx.orgId());
-        w.setModuleKey(Module.PROJECTS);
+        w.setModuleKey(module);
         w.setName(name);
         w.setCreatedBy(ctx.userId());
         w.setCreatedAt(clock.instant());
         definitions.saveAndFlush(w);
         stepDefs.save(step(ctx, w.getId(), (short) 1, step));
+        return w.getId();
     }
 
     WorkflowResponse toResponse(WorkflowDefinition w) {

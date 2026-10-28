@@ -161,7 +161,7 @@ export interface Workflow {
   name: string;
   moduleKey: string;
   active: boolean;
-  steps: { order: number; type: 'USER' | 'ORG_ROLE' | 'PROJECT_LEAD'; userId: string | null; userName: string | null; role: string | null }[];
+  steps: { order: number; type: 'USER' | 'ORG_ROLE' | 'PROJECT_LEAD' | 'MANAGER'; userId: string | null; userName: string | null; role: string | null }[];
 }
 
 export interface ApprovalSummary {
@@ -212,6 +212,20 @@ export interface Deadline {
   title: string;
   date: string;
   status: TaskStatus;
+  link: string;
+  mine: boolean;
+}
+
+/** A module's whole-day span on the calendar (e.g. approved leave, `kind` 'leave'); `title` is the person's name for leave. */
+export interface Period {
+  module: string;
+  kind: string;
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  halfStart: boolean;
+  halfEnd: boolean;
   link: string;
   mine: boolean;
 }

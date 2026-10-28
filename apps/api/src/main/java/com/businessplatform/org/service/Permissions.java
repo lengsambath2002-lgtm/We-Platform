@@ -23,6 +23,13 @@ public final class Permissions {
                 p.add("projects.create");
             }
         }
+        // HR: everyone but guests sees their own profile and leave and the team's leave; admins run HR.
+        if (modules.contains(Module.HR) && !ctx.isGuest()) {
+            p.add("hr.view");
+            if (ctx.isAdmin()) {
+                p.add("hr.manage");
+            }
+        }
         if (!ctx.isGuest()) {
             p.add("calendar.create");
             p.add("reports.view");

@@ -3,17 +3,21 @@ import {
   BarChart3,
   Blocks,
   Briefcase,
+  CalendarCheck2,
   CalendarDays,
   CheckSquare,
+  Contact,
   FileText,
   FolderKanban,
   GitBranch,
   GraduationCap,
+  Inbox,
   LayoutDashboard,
   Settings,
   type LucideIcon,
   ScrollText,
   ShoppingCart,
+  SlidersHorizontal,
   UserCog,
   Users,
   Wrench,
@@ -26,6 +30,10 @@ export interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  /** Active only on this exact page (a module home with sub-pages under it). */
+  exact?: boolean;
+  /** Shown indented under the item before it. */
+  sub?: boolean;
 }
 
 /** Global navigation, filtered by the permissions the server sent (it re-checks every request). */
@@ -63,6 +71,23 @@ export const MODULE_ICON: Record<string, LucideIcon> = {
   hr: Users,
   service: Wrench,
 };
+
+/** Where a switched-on module lives: built modules have their own pages, the others a "planned" page. */
+export const moduleHref = (key: string) => (key === 'projects' ? 'projects' : key === 'hr' ? 'hr' : `m/${key}`);
+
+/** HR's pages for the sidebar and HR's tabs, filtered by permission (the server re-checks). */
+export function hrNav(ctx: OrgContext): NavItem[] {
+  const can = (p: string) => ctx.permissions.includes(p);
+  if (!can('hr.view')) return [];
+  return [
+    { href: 'hr', label: tr('hr.navHome'), icon: CalendarCheck2, exact: true },
+    { href: 'hr/people', label: tr('hr.navPeople'), icon: Contact },
+    ...(can('hr.manage') ? [
+      { href: 'hr/requests', label: tr('hr.navRequests'), icon: Inbox },
+      { href: 'hr/settings', label: tr('hr.navSettings'), icon: SlidersHorizontal },
+    ] : []),
+  ];
+}
 
 /** A module's name in the current language. */
 export const moduleName = (m: { nameEn: string; nameKm: string }) => (currentLocale() === 'km' && m.nameKm ? m.nameKm : m.nameEn);

@@ -15,7 +15,7 @@ import { orgApi, useOrgMutation, useWorkflows } from '@/lib/api/queries';
 import type { Workflow } from '@/lib/api/types';
 
 export function stepText(s: Workflow['steps'][number]) {
-  return s.type === 'PROJECT_LEAD' ? tr('approvals.projectLead') : s.type === 'ORG_ROLE' ? tr(s.role === 'OWNER' ? 'approvals.anOwner' : 'approvals.anAdmin') : (s.userName ?? tr('approvals.aPerson'));
+  return s.type === 'PROJECT_LEAD' ? tr('approvals.projectLead') : s.type === 'MANAGER' ? tr('approvals.requesterManager') : s.type === 'ORG_ROLE' ? tr(s.role === 'OWNER' ? 'approvals.anOwner' : 'approvals.anAdmin') : (s.userName ?? tr('approvals.aPerson'));
 }
 
 /** Sends any module's record through an approval workflow. The record decides who may see it. */

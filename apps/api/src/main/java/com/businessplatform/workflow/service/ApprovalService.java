@@ -14,6 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,7 +55,9 @@ import lombok.RequiredArgsConstructor;
  *
  * Before a request is shown or decided, the owning module's {@link RecordResolver} confirms, on the
  * server, that the person may see the record. Nobody approves their own request. One open request per
- * record. Every step writes the request's history, the record's activity and notifications.
+ * record. Every step writes the request's history, the record's activity and notifications. When a request
+ * closes (approved, rejected, withdrawn) an {@link ApprovalClosed} event goes out inside the same
+ * transaction, so the owning module can apply the outcome to its record (or refuse, rolling it all back).
  */
 @Service
 @RequiredArgsConstructor
@@ -72,6 +75,7 @@ public class ApprovalService {
     private final UserRepository users;
     private final ActivityService activity;
     private final NotificationService notifications;
+    private final ApplicationEventPublisher events;
     private final Clock clock;
 
     // ── Submit ───────────────────────────────────────────────────────────────────────
@@ -120,6 +124,10 @@ public class ApprovalService {
                 case "PROJECT_LEAD" -> s.setApproverId(resolver.leadOf(ctx, in.recordType(), in.recordId())
                         .orElseThrow(() -> BusinessException.field(ErrorCode.VALIDATION_FAILED, "workflowId",
                                 "This record has no lead to approve it")));
+                // The requester's manager when the module knows one, otherwise the organisation's Admins.
+                case "MANAGER" -> resolver.managerOf(ctx, in.recordType(), in.recordId())
+                        .filter(u -> !u.equals(ctx.userId()))
+                        .ifPresentOrElse(s::setApproverId, () -> s.setApproverRole("ADMIN"));
                 default -> throw new IllegalStateException(d.getApproverType());
             }
             if (ctx.userId().equals(s.getApproverId())) {
@@ -177,6 +185,16 @@ public class ApprovalService {
                 ctx.orgId(), module, recordType, recordId);
         Map<UUID, PersonView> ps = persons(found.stream().map(ApprovalRequest::getRequesterId).toList());
         return found.stream().map(r -> summary(r, view, ps)).toList();
+    }
+
+    /** The status of each of {@code ids} in the organisation, for modules that list their records' approvals. */
+    @Transactional(readOnly = true)
+    public Map<UUID, String> statuses(UUID orgId, Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        return requests.findAllById(ids).stream().filter(r -> r.getOrgId().equals(orgId))
+                .collect(Collectors.toMap(ApprovalRequest::getId, ApprovalRequest::getStatus));
     }
 
     // ── Decide ───────────────────────────────────────────────────────────────────────
@@ -239,6 +257,9 @@ public class ApprovalService {
             default -> throw new IllegalStateException(action);
         }
         log(r, ctx.userId(), action, step.getStepOrder(), comment);
+        if (!r.open()) {
+            closed(ctx, r);
+        }
         recordActivity(ctx, r, verb, comment == null ? Map.of("step", step.getStepOrder())
                 : Map.of("step", step.getStepOrder(), "comment", comment));
         Map<String, Object> about = Map.of("title", r.getTitle(), "step", step.getStepOrder());
@@ -294,11 +315,17 @@ public class ApprovalService {
         r.setStatus(ApprovalRequest.WITHDRAWN);
         r.setDecidedAt(clock.instant());
         log(r, ctx.userId(), "WITHDRAW", r.getCurrentStep(), null);
+        closed(ctx, r);
         recordActivity(ctx, r, "approval.withdrawn", Map.of());
         return detail(ctx, r);
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────────
+
+    private void closed(OrgContext ctx, ApprovalRequest r) {
+        events.publishEvent(new ApprovalClosed(ctx, r.getId(), r.getModuleKey(), r.getRecordType(), r.getRecordId(),
+                r.getStatus()));
+    }
 
     private ApprovalDetail detail(OrgContext ctx, ApprovalRequest r) {
         RecordResolver.RecordView view = visible(ctx, r).orElseThrow(BusinessException::notFound);

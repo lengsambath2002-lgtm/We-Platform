@@ -155,3 +155,25 @@ Approved: {title} = បានអនុម័ត៖ {title}
 Rejected: {title} = បានបដិសេធ៖ {title}
 Changes requested: {title} = បានស្នើឱ្យកែប្រែ៖ {title}
 Step {step} approved: {title} = ជំហានទី {step} បានអនុម័ត៖ {title}
+
+# HR & Workforce: profiles, leave types, balances, leave requests
+Only project workflows can ask the project lead = មានតែលំហូរការងារនៃគម្រោងទេ ដែលអាចស្នើទៅអ្នកដឹកនាំគម្រោងបាន
+Someone can't be their own manager = គ្មាននរណាម្នាក់អាចជាអ្នកគ្រប់គ្រងខ្លួនឯងបានទេ
+That person reports to them already = បុគ្គលនោះកំពុងរាយការណ៍ទៅគាត់រួចហើយ
+Use digits, spaces and + ( ) - only = ប្រើតែលេខ ដកឃ្លា និង + ( ) - ប៉ុណ្ណោះ
+Another leave type has this name = មានប្រភេទច្បាប់ឈប់សម្រាកផ្សេងទៀតប្រើឈ្មោះនេះរួចហើយ
+Use whole or half days = ប្រើចំនួនថ្ងៃពេញ ឬកន្លះថ្ងៃ
+Use whole or half days, not 0 = ប្រើចំនួនថ្ងៃពេញ ឬកន្លះថ្ងៃ មិនមែន 0 ទេ
+This leave type is unlimited — there is no balance to adjust = ប្រភេទច្បាប់នេះគ្មានដែនកំណត់ — គ្មានសមតុល្យត្រូវកែសម្រួលទេ
+This leave type is switched off = ប្រភេទច្បាប់ឈប់សម្រាកនេះត្រូវបានបិទ
+The last day is before the first = ថ្ងៃចុងក្រោយនៅមុនថ្ងៃដំបូង
+Split leave that crosses into a new year into two requests = សូមបំបែកច្បាប់ឈប់សម្រាកដែលឆ្លងចូលឆ្នាំថ្មី ជាសំណើពីរ
+This leave type is taken in whole days = ប្រភេទច្បាប់នេះត្រូវឈប់ជាថ្ងៃពេញ
+For half a day, choose the morning or the afternoon = សម្រាប់កន្លះថ្ងៃ សូមជ្រើសរើសពេលព្រឹក ឬពេលរសៀល
+These days are all on a weekend = ថ្ងៃទាំងនេះសុទ្ធតែជាថ្ងៃចុងសប្ដាហ៍
+You already have leave on some of these days = អ្នកមានច្បាប់ឈប់សម្រាករួចហើយ នៅថ្ងៃខ្លះក្នុងចំណោមថ្ងៃទាំងនេះ
+Not enough days left of this leave type = ចំនួនថ្ងៃនៅសល់នៃប្រភេទច្បាប់នេះមិនគ្រប់គ្រាន់ទេ
+Only a request that is waiting can be withdrawn = មានតែសំណើដែលកំពុងរង់ចាំប៉ុណ្ណោះ ដែលអាចដកវិញបាន
+Only approved leave can be cancelled = មានតែច្បាប់ឈប់សម្រាកដែលបានអនុម័តប៉ុណ្ណោះ ដែលអាចលុបចោលបាន
+Leave that has started can only be cancelled by HR = ច្បាប់ឈប់សម្រាកដែលបានចាប់ផ្ដើមហើយ អាចលុបចោលបានដោយផ្នែកធនធានមនុស្សប៉ុណ្ណោះ
+Leave cancelled: {title} = បានលុបចោលច្បាប់ឈប់សម្រាក៖ {title}
