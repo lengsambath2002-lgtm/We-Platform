@@ -1,0 +1,150 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: business_platform_test
+          POSTGRES_USER: bizplat
+          POSTGRES_PASSWORD: bizplat
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U bizplat" --health-interval 5s --health-timeout 3s --health-retries 20
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Test
+        env:
+          TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/business_platform_test
+        run: ./gradlew --no-daemon test
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-report
+          path: apps/api/build/reports/tests/test
+
+  web:
+    name: Web typecheck, lint, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: apps/web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm build
+
+  e2e:
+    name: End-to-end journeys
+    needs: [api, web]
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: business_platform
+          POSTGRES_USER: bizplat
+          POSTGRES_PASSWORD: bizplat
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U bizplat" --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: apps/web/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: apps/web/pnpm-lock.yaml
+      - name: Start the API
+        working-directory: apps/api
+        env:
+          DATABASE_URL: jdbc:postgresql://localhost:5432/business_platform
+        run: |
+          ./gradlew --no-daemon bootJar -x test
+          nohup java -jar build/libs/*.jar > api.log 2>&1 &
+          curl -sf --retry 60 --retry-delay 2 --retry-all-errors http://localhost:8280/actuator/health
+      - name: Build and start the web app
+        working-directory: apps/web
+        env:
+          API_URL: http://localhost:8280
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          cp -R .next/static .next/standalone/.next/static
+          cp -R public .next/standalone/public
+          PORT=3300 HOSTNAME=127.0.0.1 nohup node .next/standalone/server.js > web.log 2>&1 &
+          curl -sf --retry 30 --retry-delay 1 --retry-all-errors -o /dev/null http://localhost:3300/sign-in
+      - name: Run Playwright
+        working-directory: apps/web
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm test:e2e
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: |
+            apps/web/test-results
+            apps/api/api.log
+            apps/web/web.log
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          push: false
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/web
+          push: false
+          build-args: API_URL=http://api:8280
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web

@@ -22,6 +22,8 @@ spring:
       max-request-size: 20MB
 
 platform:
+  # local | production. Production refuses to start with local-only settings (see ProductionSafety).
+  environment: ${PLATFORM_ENV:local}
   auth:
     # Required outside local: at least 32 random bytes, Base64 (openssl rand -base64 48).
     jwt-secret: ${PLATFORM_JWT_SECRET:bG9jYWwtZGV2LW9ubHktc2VjcmV0LWNoYW5nZS1tZS0wMTIzNDU2Nzg5YWJjZGVm}

@@ -21,7 +21,29 @@ cd apps/api && ./gradlew bootRun        # http://localhost:8280 (DATABASE_URL to
 cd apps/web && pnpm install && pnpm dev # http://localhost:3300
 ```
 
-Tests: `cd apps/api && ./gradlew test` (uses `business_platform_test`, wiped each run).
+Tests: `cd apps/api && ./gradlew test` (uses `business_platform_test`, wiped each run;
+`TEST_DATABASE_URL` to change) · `cd apps/web && pnpm typecheck && pnpm lint && pnpm test:e2e`
+(Playwright, with the API and web app running).
+
+## Run with Docker
+
+```sh
+cp .env.example .env          # set DATABASE_PASSWORD and PLATFORM_JWT_SECRET (openssl rand -base64 48)
+docker compose up --build     # web http://localhost:3300 · API docs http://localhost:8280/api/docs/ui
+```
+
+Images: `apps/api/Dockerfile` (JRE, non-root, uploads in the `/data/files` volume) and
+`apps/web/Dockerfile` (Next.js standalone, non-root; `API_URL` is a build argument because the
+`/api` rewrite is compiled in).
+
+**Production**: set `PLATFORM_ENV=production`. The API then refuses to start unless
+`PLATFORM_JWT_SECRET` is your own, `PLATFORM_COOKIE_SECURE=true` and `PLATFORM_APP_URL` is `https://…`.
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request: API tests against
+PostgreSQL, web typecheck + lint + build, the Playwright journeys against the built API and web app,
+and a build of both Docker images (not pushed).
 
 Existing systems (WeGroupware, VirtualBiz) are **not modified**; they will be integrated later only
 through their current APIs.

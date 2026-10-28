@@ -1,0 +1,52 @@
+# Runs the whole platform locally: PostgreSQL, the API and the web app.
+#   cp .env.example .env   # then set PLATFORM_JWT_SECRET
+#   docker compose up --build
+# Web: http://localhost:3300 · API docs: http://localhost:8280/api/docs/ui
+name: business-platform
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: business_platform
+      POSTGRES_USER: bizplat
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?set DATABASE_PASSWORD in .env}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bizplat -d business_platform"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: ./apps/api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/business_platform
+      DATABASE_USERNAME: bizplat
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      PLATFORM_ENV: ${PLATFORM_ENV:-local}
+      PLATFORM_JWT_SECRET: ${PLATFORM_JWT_SECRET:?set PLATFORM_JWT_SECRET in .env (openssl rand -base64 48)}
+      PLATFORM_COOKIE_SECURE: ${PLATFORM_COOKIE_SECURE:-false}
+      PLATFORM_APP_URL: ${PLATFORM_APP_URL:-http://localhost:3300}
+    volumes:
+      - files:/data/files
+    ports:
+      - "8280:8280"
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        API_URL: http://api:8280
+    depends_on:
+      - api
+    ports:
+      - "3300:3300"
+
+volumes:
+  db-data:
+  files:
