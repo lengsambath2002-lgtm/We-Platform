@@ -292,7 +292,7 @@ export function Header({ ctx }: { ctx: OrgContext }) {
   const { t } = useT();
   const [menu, setMenu] = useState(false);
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-4">
+    <header className="sticky top-0 z-30 flex h-14 print:hidden items-center gap-2 border-b bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:px-4">
       <Button variant="ghost" size="icon" className="lg:hidden" onClick={() => setMenu(true)} aria-label={t('shell.openMenu')}>
         <Menu className="size-5" />
       </Button>

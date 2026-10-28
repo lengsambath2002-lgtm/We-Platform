@@ -22,7 +22,7 @@ export function BottomNav({ ctx }: { ctx: OrgContext }) {
     { href: 'calendar', label: t('shell.calendar'), icon: CalendarDays },
   ];
   return (
-    <nav aria-label={t('shell.quickNav')} className="fixed inset-x-0 bottom-0 z-30 grid border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden"
+    <nav aria-label={t('shell.quickNav')} className="fixed inset-x-0 bottom-0 z-30 grid border-t bg-background pb-[env(safe-area-inset-bottom)] lg:hidden print:hidden"
       style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
       {items.map((i) => {
         const href = `/${org}/${i.href}`;

@@ -36,7 +36,7 @@ export default function ApprovalPage() {
             <ApprovalBadge status={s.status} /> {data.workflowName} · {t('approvals.requestedBy', { name: s.requester.name, date: day(s.createdAt) })}
           </p>
         </div>
-        <Button asChild variant="outline" size="sm"><Link href={s.recordLink.startsWith('/') ? s.recordLink : `/${slug}/${s.recordLink}`}><ExternalLink className="size-4" />{s.recordType === 'task' ? t('approvals.openTask') : s.recordType === 'leave' ? t('approvals.openLeave') : t('approvals.openRecord', { type: s.recordType })}</Link></Button>
+        <Button asChild variant="outline" size="sm"><Link href={s.recordLink.startsWith('/') ? s.recordLink : `/${slug}/${s.recordLink}`}><ExternalLink className="size-4" />{s.recordType === 'task' ? t('approvals.openTask') : s.recordType === 'leave' ? t('approvals.openLeave') : s.recordType === 'expense' ? t('approvals.openExpense') : t('approvals.openRecord', { type: s.recordType })}</Link></Button>
       </div>
       <div className="grid gap-6 md:grid-cols-[1fr_280px]">
         <div className="space-y-6">

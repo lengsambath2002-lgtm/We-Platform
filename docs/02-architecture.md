@@ -102,6 +102,29 @@ refuse, never the other way round.
 | Configure workflows | ✅ | ✅ | — | — |
 | View audit log | ✅ | ✅ | — | — |
 
+### General Business permissions (built)
+
+`business.view` for Owners, Admins and Members with the module on; `business.manage` for Owners and Admins.
+Guests get nothing. The API enforces every row (`com.businessplatform.business.service.BusinessAccess`).
+
+| Action | Owner / Admin | Member |
+|---|---|---|
+| See customers, products, quotes, invoices, the business home | ✅ | ✅ |
+| Add / edit customers | ✅ | ✅ |
+| Archive / restore customers; add / edit products and prices | ✅ | — |
+| Create quotes and invoices; edit, delete, send, accept / decline, convert, issue, record payments | anyone's | their own |
+| Void an issued invoice (with a reason, no payments on it); remove a payment | ✅ | — |
+| Record expenses and submit them for approval | ✅ (own) | ✅ (own) |
+| See expenses | everyone's | their own |
+| Decide expenses | the workflow's approvers (default "Expense approval": an Admin) | — |
+| Mark an approved expense paid; expense categories; business settings | ✅ | — |
+| Invoice due dates on the calendar | ✅ | — |
+
+Money is USD `NUMERIC(12,2)`, computed only by the API (`Totals`: each step rounds half-up to cents; VAT 10%
+once on the document's taxable sum). Quotes are numbered Q-0001 at creation, invoices INV-0001 when issued, from
+a per-organisation counter taken with one atomic upsert (`biz_sequence`), so numbers never repeat. Screens show
+riel beside USD at 1 USD = 4,100 KHR, rounded to 100 (`apps/web/src/lib/money.ts`).
+
 ## 6. Core user journeys (MVP first)
 
 1. **Sign up → create organisation** (name, slug, branch optional) → lands on Overview with the Projects module on.
