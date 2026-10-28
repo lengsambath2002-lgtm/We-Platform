@@ -47,3 +47,14 @@
 .report-viz .recharts-surface:focus {
   outline: none;
 }
+
+/* General Business: sales vs expenses (validated as a pair: light on the card, dark on the dark card). */
+.report-viz {
+  --rv-sales: #2563eb;
+  --rv-expenses: #c2410c;
+}
+
+.dark .report-viz {
+  --rv-sales: #3b82f6;
+  --rv-expenses: #ea580c;
+}

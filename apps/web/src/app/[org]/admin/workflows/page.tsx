@@ -35,8 +35,8 @@ const fits = (moduleKey: string, s: Step) => kindsFor(moduleKey).some((k) => k.v
 function Editor({ org, wf, onClose }: { org: string; wf: Workflow | 'new'; onClose: () => void }) {
   const { t, locale } = useT();
   const { modules } = useOrg();
-  // Modules whose records go through approvals: Projects, and HR when it is switched on.
-  const usable = modules.filter((m) => (m.key === 'projects' || m.key === 'hr') && (m.enabled || (wf !== 'new' && wf.moduleKey === m.key)));
+  // Modules whose records go through approvals: Projects, and HR and General Business when switched on.
+  const usable = modules.filter((m) => ['projects', 'hr', 'business'].includes(m.key) && (m.enabled || (wf !== 'new' && wf.moduleKey === m.key)));
   const [moduleKey, setModuleKey] = useState(wf === 'new' ? 'projects' : wf.moduleKey);
   const members = useMembers(org);
   const people = (members.data ?? []).filter((m) => m.status === 'ACTIVE' && m.role !== 'GUEST');

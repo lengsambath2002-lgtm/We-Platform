@@ -18,7 +18,7 @@ export function AppShell({ ctx, children }: { ctx: OrgContext; children: ReactNo
         <Sidebar ctx={ctx} collapsed={collapsed} setCollapsed={setCollapsed} />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header ctx={ctx} />
-          <main id="main" className="mx-auto w-full max-w-[1440px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:pb-10">{children}</main>
+          <main id="main" className="mx-auto w-full max-w-[1440px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:pb-10 print:max-w-none print:p-0">{children}</main>
         </div>
       </div>
       <BottomNav ctx={ctx} />

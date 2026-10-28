@@ -2,6 +2,7 @@
 export const en = {
   recordType_task: 'Task',
   recordType_leave: 'Leave request',
+  recordType_expense: 'Expense',
   title: 'Approvals',
   subtitle: 'Requests from every module, decided one step at a time.',
   boxInbox: 'Waiting for me',
@@ -31,6 +32,7 @@ export const en = {
   projectLead: 'Project lead',
   requesterManager: "The requester's manager",
   openLeave: 'Open the leave request',
+  openExpense: 'Open the expense',
   aPerson: 'A person',
   approvedBy: 'Approved by {name} {ago}',
   rejectedBy: 'Rejected by {name} {ago}',
@@ -83,6 +85,7 @@ export const en = {
 export const km: Record<keyof typeof en, string> = {
   recordType_task: 'ការងារ',
   recordType_leave: 'សំណើច្បាប់ឈប់សម្រាក',
+  recordType_expense: 'ការចំណាយ',
   title: 'ការអនុម័ត',
   subtitle: 'សំណើពីគ្រប់ម៉ូឌុល សម្រេចម្ដងមួយជំហាន។',
   boxInbox: 'រង់ចាំខ្ញុំ',
@@ -111,6 +114,7 @@ export const km: Record<keyof typeof en, string> = {
   projectLead: 'អ្នកដឹកនាំគម្រោង',
   requesterManager: 'អ្នកគ្រប់គ្រងរបស់អ្នកស្នើសុំ',
   openLeave: 'បើកសំណើច្បាប់ឈប់សម្រាក',
+  openExpense: 'បើកការចំណាយ',
   aPerson: 'បុគ្គលម្នាក់',
   approvedBy: 'អនុម័តដោយ {name} {ago}',
   rejectedBy: 'បដិសេធដោយ {name} {ago}',

@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  Banknote,
   BarChart3,
   Blocks,
   Briefcase,
@@ -7,11 +8,14 @@ import {
   CalendarDays,
   CheckSquare,
   Contact,
+  FileSignature,
   FileText,
   FolderKanban,
   GitBranch,
   GraduationCap,
   Inbox,
+  Package,
+  Receipt,
   LayoutDashboard,
   Settings,
   type LucideIcon,
@@ -19,6 +23,7 @@ import {
   SlidersHorizontal,
   Store,
   UserCog,
+  UserRound,
   Users,
   Wrench,
 } from 'lucide-react';
@@ -72,8 +77,26 @@ export const MODULE_ICON: Record<string, LucideIcon> = {
   service: Wrench,
 };
 
-/** Where a switched-on module lives: built modules (projects, HR, retail) have their own pages, the others a "planned" page. */
-export const moduleHref = (key: string) => (['projects', 'hr', 'retail'].includes(key) ? key : `m/${key}`);
+/** Where a switched-on module lives: built modules (projects, business, HR, retail) have their own pages, the others a "planned" page. */
+export const moduleHref = (key: string) => (['projects', 'business', 'hr', 'retail'].includes(key) ? key : `m/${key}`);
+
+/** Modules with a home page and sub-pages listed under it in the sidebar. */
+export const subNav = (key: string, ctx: OrgContext): NavItem[] => (key === 'hr' ? hrNav(ctx) : key === 'business' ? businessNav(ctx) : []);
+
+/** General Business's pages for the sidebar and its tabs, filtered by permission (the server re-checks). */
+export function businessNav(ctx: OrgContext): NavItem[] {
+  const can = (p: string) => ctx.permissions.includes(p);
+  if (!can('business.view')) return [];
+  return [
+    { href: 'business', label: tr('business.navOverview'), icon: LayoutDashboard, exact: true },
+    { href: 'business/customers', label: tr('business.navCustomers'), icon: UserRound },
+    { href: 'business/products', label: tr('business.navProducts'), icon: Package },
+    { href: 'business/quotes', label: tr('business.navQuotes'), icon: FileSignature },
+    { href: 'business/invoices', label: tr('business.navInvoices'), icon: Receipt },
+    { href: 'business/expenses', label: tr('business.navExpenses'), icon: Banknote },
+    ...(can('business.manage') ? [{ href: 'business/settings', label: tr('business.navSettings'), icon: SlidersHorizontal }] : []),
+  ];
+}
 
 /** HR's pages for the sidebar and HR's tabs, filtered by permission (the server re-checks). */
 export function hrNav(ctx: OrgContext): NavItem[] {

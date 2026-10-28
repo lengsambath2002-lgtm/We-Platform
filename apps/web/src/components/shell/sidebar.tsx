@@ -10,7 +10,7 @@ import { useT } from '@/i18n/provider';
 import type { OrgContext } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 
-import { adminNav, globalNav, hrNav, MODULE_ICON, moduleHref, moduleName, type NavItem } from './nav';
+import { adminNav, globalNav, MODULE_ICON, moduleHref, moduleName, type NavItem, subNav } from './nav';
 
 function Item({ org, item, collapsed, onNavigate }: { org: string; item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
   const path = usePathname();
@@ -66,8 +66,8 @@ export function SidebarNav({ ctx, collapsed = false, onNavigate }: { ctx: OrgCon
           {modules.map((m) => (
             <div key={m.key} className="space-y-0.5">
               <Item org={org} collapsed={collapsed} onNavigate={onNavigate}
-                item={{ href: moduleHref(m.key), label: moduleName(m), icon: MODULE_ICON[m.key] ?? MODULE_ICON.business, exact: m.key === 'hr' }} />
-              {m.key === 'hr' && hrNav(ctx).slice(1).map((i) => (
+                item={{ href: moduleHref(m.key), label: moduleName(m), icon: MODULE_ICON[m.key] ?? MODULE_ICON.business, exact: m.key === 'hr' || m.key === 'business' }} />
+              {subNav(m.key, ctx).slice(1).map((i) => (
                 <Item key={i.href} org={org} collapsed={collapsed} onNavigate={onNavigate} item={{ ...i, sub: true }} />
               ))}
             </div>
@@ -87,7 +87,7 @@ export function Sidebar({ ctx, collapsed, setCollapsed }: { ctx: OrgContext; col
   const { t } = useT();
   return (
     <aside
-      className={cn('sticky top-0 hidden h-dvh shrink-0 flex-col border-r bg-sidebar transition-[width] duration-200 lg:flex', collapsed ? 'w-16' : 'w-62')}
+      className={cn('sticky top-0 hidden h-dvh shrink-0 flex-col border-r bg-sidebar transition-[width] duration-200 lg:flex print:hidden', collapsed ? 'w-16' : 'w-62')}
     >
       <div className={cn('flex h-14 items-center gap-2 border-b px-4', collapsed && 'justify-center px-0')}>
         <span className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-xs font-bold text-primary-foreground">BP</span>

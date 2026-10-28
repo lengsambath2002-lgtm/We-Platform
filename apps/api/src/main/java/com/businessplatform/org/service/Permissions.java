@@ -23,6 +23,14 @@ public final class Permissions {
                 p.add("projects.create");
             }
         }
+        // General Business: everyone but guests works with customers, quotes, invoices and their own expenses;
+        // admins also void, manage products, categories and settings, and see every expense.
+        if (modules.contains(Module.BUSINESS) && !ctx.isGuest()) {
+            p.add("business.view");
+            if (ctx.isAdmin()) {
+                p.add("business.manage");
+            }
+        }
         // HR: everyone but guests sees their own profile and leave and the team's leave; admins run HR.
         if (modules.contains(Module.HR) && !ctx.isGuest()) {
             p.add("hr.view");
