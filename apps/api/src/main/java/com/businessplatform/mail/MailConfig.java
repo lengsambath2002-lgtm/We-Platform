@@ -21,6 +21,12 @@ public class MailConfig {
     Mailer mailer(MailProperties props, @Value("${platform.environment:local}") String environment) {
         if (props.configured()) {
             log.info("Mail: SMTP {}", props.host());
+            if (props.restricted()) {
+                log.info("Mail: only {} addresses in PLATFORM_MAIL_ONLY_TO get real email; others are logged",
+                        AllowListMailer.parse(props.onlyTo()).size());
+                return new AllowListMailer(new SmtpMailer(props), new LoggingMailer("local".equalsIgnoreCase(environment)),
+                        props.onlyTo());
+            }
             return new SmtpMailer(props);
         }
         if ("production".equalsIgnoreCase(environment)) {

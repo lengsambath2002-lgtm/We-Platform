@@ -38,6 +38,7 @@ services:
       PLATFORM_MAIL_PASSWORD: ${PLATFORM_MAIL_PASSWORD:-}
       PLATFORM_MAIL_FROM: ${PLATFORM_MAIL_FROM:-Business Platform <no-reply@localhost>}
       PLATFORM_MAIL_SECURITY: ${PLATFORM_MAIL_SECURITY:-starttls}
+      PLATFORM_MAIL_ONLY_TO: ${PLATFORM_MAIL_ONLY_TO:-}
     volumes:
       - files:/data/files
     ports:

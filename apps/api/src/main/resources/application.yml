@@ -42,6 +42,8 @@ platform:
     from: ${PLATFORM_MAIL_FROM:Business Platform <no-reply@localhost>}
     # starttls (587) | ssl (465) | none
     security: ${PLATFORM_MAIL_SECURITY:starttls}
+    # Development/test servers on a real mailbox: only these addresses (comma-separated) get real email.
+    only-to: ${PLATFORM_MAIL_ONLY_TO:}
 
 springdoc:
   api-docs:

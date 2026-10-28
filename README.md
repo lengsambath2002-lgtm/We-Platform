@@ -46,7 +46,9 @@ Images: `apps/api/Dockerfile` (JRE, non-root, uploads in the `/data/files` volum
 the request commits, in the recipient's language; a failure is logged and never fails the request.
 Without a host, emails are only logged (with their link only when `PLATFORM_ENV=local`); production
 then starts with a warning, since invitation links can still be copied but password resets can't
-reach anyone.
+reach anyone. On a development or test server that uses a real mailbox (e.g. Gmail with an app
+password: host `smtp.gmail.com`, port 587), set `PLATFORM_MAIL_ONLY_TO` to the addresses that may get
+real email; everyone else is only logged, so test sign-ups never bounce off the mailbox.
 
 ## CI
 
