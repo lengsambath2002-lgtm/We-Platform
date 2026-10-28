@@ -10,12 +10,12 @@ import { useT } from '@/i18n/provider';
 import type { OrgContext } from '@/lib/api/types';
 import { cn } from '@/lib/utils';
 
-import { adminNav, globalNav, MODULE_ICON, moduleName, type NavItem } from './nav';
+import { adminNav, globalNav, hrNav, MODULE_ICON, moduleHref, moduleName, type NavItem } from './nav';
 
 function Item({ org, item, collapsed, onNavigate }: { org: string; item: NavItem; collapsed: boolean; onNavigate?: () => void }) {
   const path = usePathname();
   const href = `/${org}/${item.href}`;
-  const active = path === href || path.startsWith(`${href}/`);
+  const active = item.exact ? path === href : path === href || path.startsWith(`${href}/`);
   const link = (
     <Link
       href={href}
@@ -25,6 +25,7 @@ function Item({ org, item, collapsed, onNavigate }: { org: string; item: NavItem
         'flex h-9 items-center gap-3 rounded-md px-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground',
         active && 'bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground',
         collapsed && 'justify-center px-0',
+        item.sub && !collapsed && 'ml-4 h-8 text-[13px]',
       )}
     >
       <item.icon className="size-[18px] shrink-0" aria-hidden />
@@ -63,8 +64,13 @@ export function SidebarNav({ ctx, collapsed = false, onNavigate }: { ctx: OrgCon
       {modules.length > 0 && (
         <Section title={t('shell.modules')} collapsed={collapsed}>
           {modules.map((m) => (
-            <Item key={m.key} org={org} collapsed={collapsed} onNavigate={onNavigate}
-              item={{ href: `m/${m.key}`, label: moduleName(m), icon: MODULE_ICON[m.key] ?? MODULE_ICON.business }} />
+            <div key={m.key} className="space-y-0.5">
+              <Item org={org} collapsed={collapsed} onNavigate={onNavigate}
+                item={{ href: moduleHref(m.key), label: moduleName(m), icon: MODULE_ICON[m.key] ?? MODULE_ICON.business, exact: m.key === 'hr' }} />
+              {m.key === 'hr' && hrNav(ctx).slice(1).map((i) => (
+                <Item key={i.href} org={org} collapsed={collapsed} onNavigate={onNavigate} item={{ ...i, sub: true }} />
+              ))}
+            </div>
           ))}
         </Section>
       )}

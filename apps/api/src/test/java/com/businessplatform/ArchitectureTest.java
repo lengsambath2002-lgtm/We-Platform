@@ -18,7 +18,17 @@ class ArchitectureTest {
     void the_core_does_not_depend_on_modules() {
         noClasses().that().resideInAnyPackage("..common..", "..identity..", "..org..", "..module..", "..workflow..",
                 "..calendar..", "..activity..", "..notification..", "..file..", "..document..")
+                .should().dependOnClassesThat().resideInAnyPackage("..project..", "..overview..", "..report..", "..hr..")
+                .check(CLASSES);
+    }
+
+    @Test
+    void modules_do_not_depend_on_each_other() {
+        noClasses().that().resideInAPackage("..hr..")
                 .should().dependOnClassesThat().resideInAnyPackage("..project..", "..overview..", "..report..")
+                .check(CLASSES);
+        noClasses().that().resideInAPackage("..project..")
+                .should().dependOnClassesThat().resideInAPackage("..hr..")
                 .check(CLASSES);
     }
 

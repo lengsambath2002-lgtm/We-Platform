@@ -38,7 +38,7 @@ import { ago } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 import { LOCALE_NAME, useChangeLocale } from './language-switch';
-import { MODULE_ICON, moduleName } from './nav';
+import { MODULE_ICON, moduleHref, moduleName } from './nav';
 import { SidebarNav } from './sidebar';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -87,7 +87,7 @@ function ModuleSwitcher({ ctx }: { ctx: OrgContext }) {
         <ul className="space-y-0.5">
           {ctx.modules.map((m) => {
             const Icon = MODULE_ICON[m.key] ?? Blocks;
-            const href = m.key === 'projects' ? `/${org}/projects` : `/${org}/m/${m.key}`;
+            const href = `/${org}/${moduleHref(m.key)}`;
             const body = (
               <>
                 <Icon className="size-4 shrink-0" aria-hidden />

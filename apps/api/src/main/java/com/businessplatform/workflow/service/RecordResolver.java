@@ -24,6 +24,14 @@ public interface RecordResolver {
     /** Who leads the record (for PROJECT_LEAD approval steps), if anyone. */
     Optional<UUID> leadOf(OrgContext ctx, String recordType, UUID recordId);
 
+    /**
+     * The manager of the person the record is about (for MANAGER approval steps), if the module knows one
+     * and they are an active member. Empty makes the step fall back to the organisation's Admins.
+     */
+    default Optional<UUID> managerOf(OrgContext ctx, String recordType, UUID recordId) {
+        return Optional.empty();
+    }
+
     record RecordView(String title, String link, boolean canRequestApproval) {
     }
 }

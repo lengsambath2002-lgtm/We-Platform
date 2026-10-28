@@ -77,6 +77,12 @@ export function describe(a: ActivityItem, moduleName: (key: string) => string = 
     case 'org.team.updated': return tr('collab.actTeamUpdated', { name: s(d.name) });
     case 'org.team.deleted': return tr('collab.actTeamDeleted', { name: s(d.name) });
     case 'project.members': return tr('tasks.actProjectMembers');
+    case 'leave.requested': return tr('hr.actRequested', { days: tr('hr.days', { count: Number(d.days ?? 0) }), type: s(d.type), from: day(s(d.start)), to: day(s(d.end)) });
+    case 'leave.cancelled': return d.reason ? tr('hr.actCancelledWithReason', { reason: s(d.reason) }) : tr('hr.actCancelled');
+    case 'leave.balance.adjusted': return tr('hr.actAdjusted', { type: s(d.type), year: String(d.year ?? ''), days: Number(d.days) > 0 ? `+${s(d.days)}` : s(d.days), reason: s(d.reason) });
+    case 'employee.updated': return tr('hr.actProfileUpdated', { name: s(d.name) });
+    case 'leave_type.created': return tr('hr.actTypeCreated', { name: s(d.name) });
+    case 'leave_type.updated': return tr('hr.actTypeUpdated', { name: s(d.name) });
     case 'approval.requested': return tr('tasks.actApprovalRequested', { workflow: s(d.workflow) });
     case 'approval.step.approved': return tr('tasks.actStepApproved');
     case 'approval.approved': return tr('tasks.actApproved');

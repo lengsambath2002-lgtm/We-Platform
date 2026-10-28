@@ -49,6 +49,8 @@ export const en = {
   stepKind_ADMIN: 'Any admin',
   stepKind_OWNER: 'Any owner',
   stepKind_USER: 'A specific person',
+  stepKind_MANAGER: "The requester's manager (else any admin)",
+  workflowModule: 'Used for',
 };
 
 export const km: Record<keyof typeof en, string> = {
@@ -98,4 +100,6 @@ export const km: Record<keyof typeof en, string> = {
   stepKind_ADMIN: 'អ្នកគ្រប់គ្រងណាម្នាក់',
   stepKind_OWNER: 'ម្ចាស់ណាម្នាក់',
   stepKind_USER: 'បុគ្គលជាក់លាក់ម្នាក់',
+  stepKind_MANAGER: 'អ្នកគ្រប់គ្រងរបស់អ្នកស្នើសុំ (បើគ្មាន អ្នកគ្រប់គ្រងណាម្នាក់)',
+  workflowModule: 'ប្រើសម្រាប់',
 };

@@ -18,7 +18,7 @@ pnpm build && cp -R .next/static .next/standalone/.next/static && cp -R public .
 PORT=3300 node .next/standalone/server.js   # then, in another terminal: pnpm test:e2e
 ```
 
-- `src/app/[org]/…` — pages inside an organisation (overview, my tasks, projects, tasks, approvals, calendar, teams, admin, `m/[module]` for modules not built yet).
+- `src/app/[org]/…` — pages inside an organisation (overview, my tasks, projects, tasks, approvals, calendar, teams, admin, `hr` for HR & Workforce, `m/[module]` for modules not built yet).
 - `src/lib/api` — fetch client (access token in memory, one refresh retry), response types, query hooks and mutations.
 - `src/components` — shell (sidebar, header, bottom nav), shared states (loading / empty / error / no access), and feature components.
 

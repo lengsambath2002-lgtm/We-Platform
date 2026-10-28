@@ -3,7 +3,7 @@
 import {
   addDays, addMonths, eachDayOfInterval, endOfMonth, endOfWeek, format, isSameDay, isSameMonth, isToday, parseISO, startOfDay, startOfMonth, startOfWeek,
 } from 'date-fns';
-import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Clock, Flag, FolderKanban, MapPin, Plus, Users } from 'lucide-react';
+import { CalendarDays, CalendarX2, ChevronLeft, ChevronRight, Clock, Flag, FolderKanban, MapPin, Palmtree, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useState } from 'react';
@@ -20,17 +20,25 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { tr } from '@/i18n/core';
 import { useT } from '@/i18n/provider';
 import { useCalendar } from '@/lib/api/queries';
-import type { CalendarEvent, Deadline } from '@/lib/api/types';
+import type { CalendarEvent, Deadline, Period } from '@/lib/api/types';
 import { fmt } from '@/lib/format';
 import { useOrg } from '@/lib/org-context';
 import { cn } from '@/lib/utils';
 
 const iso = (d: Date) => format(d, 'yyyy-MM-dd');
-type Item = { kind: 'event'; e: CalendarEvent } | { kind: 'deadline'; d: Deadline };
+type Item = { kind: 'event'; e: CalendarEvent } | { kind: 'deadline'; d: Deadline } | { kind: 'period'; p: Period };
+const keyOf = (it: Item) => (it.kind === 'event' ? it.e.id : it.kind === 'deadline' ? it.d.id : `${it.p.id}`);
 
-function itemsOn(day: Date, events: CalendarEvent[], deadlines: Deadline[]): Item[] {
+/** Periods (approved leave) show on the working days they cover, like they are counted. */
+function periodOn(p: Period, day: Date) {
+  const d = iso(day);
+  return p.start <= d && p.end >= d && day.getDay() !== 0 && day.getDay() !== 6;
+}
+
+function itemsOn(day: Date, events: CalendarEvent[], deadlines: Deadline[], periods: Period[] = []): Item[] {
   return [
     ...deadlines.filter((d) => isSameDay(parseISO(d.date), day)).map((d) => ({ kind: 'deadline' as const, d })),
+    ...periods.filter((p) => periodOn(p, day)).map((p) => ({ kind: 'period' as const, p })),
     ...events.filter((e) => parseISO(e.startsAt) <= addDays(day, 1) && parseISO(e.endsAt) >= day
       && (isSameDay(parseISO(e.startsAt), day) || (parseISO(e.startsAt) < day && parseISO(e.endsAt) > day)))
       .sort((a, b) => a.startsAt.localeCompare(b.startsAt)).map((e) => ({ kind: 'event' as const, e })),
@@ -39,6 +47,15 @@ function itemsOn(day: Date, events: CalendarEvent[], deadlines: Deadline[]): Ite
 
 /** A deadline links to its record; an event opens its details (`onOpen`). */
 function Chip({ item, compact, onOpen }: { org: string; item: Item; compact?: boolean; onOpen: (e: CalendarEvent) => void }) {
+  if (item.kind === 'period') {
+    const { p } = item;
+    const label = p.kind === 'leave' ? tr('hr.calAway', { name: p.title }) : p.title;
+    return (
+      <Link href={p.link} className="flex items-center gap-1 truncate rounded bg-muted px-1.5 py-0.5 text-xs text-foreground hover:underline" title={label}>
+        <Palmtree className="size-3 shrink-0 text-muted-foreground" aria-hidden /><span className="truncate">{compact ? p.title : label}</span>
+      </Link>
+    );
+  }
   if (item.kind === 'deadline') {
     const { d } = item;
     return (
@@ -77,8 +94,9 @@ function CalendarPage() {
   const days = useMemo(() => eachDayOfInterval({ start: gridStart, end: gridEnd }), [gridStart.getTime(), gridEnd.getTime()]); // eslint-disable-line react-hooks/exhaustive-deps
   const events = data?.events ?? [];
   const deadlines = data?.deadlines ?? [];
-  const agenda = days.filter((d) => isSameMonth(d, month)).map((d) => ({ d, items: itemsOn(d, events, deadlines) })).filter((x) => x.items.length);
-  const dayItems = itemsOn(selected, events, deadlines);
+  const periods = data?.periods ?? [];
+  const agenda = days.filter((d) => isSameMonth(d, month)).map((d) => ({ d, items: itemsOn(d, events, deadlines, periods) })).filter((x) => x.items.length);
+  const dayItems = itemsOn(selected, events, deadlines, periods);
   const canCreate = can('calendar.create');
   const opened = openId ? events.find((e) => e.id === openId) : undefined;
   const open = (e: CalendarEvent) => setOpenId(e.id);
@@ -123,7 +141,7 @@ function CalendarPage() {
                     <div className="text-xs uppercase text-muted-foreground">{fmt(d, locale === 'km' ? 'EEEE' : 'EEE')}</div>
                     <div className="text-xl font-semibold tabular">{fmt(d, 'd')}</div>
                   </div>
-                  <ul className="min-w-0 flex-1 space-y-1">{items.map((it) => <li key={it.kind === 'event' ? it.e.id : it.d.id}><Chip org={slug} item={it} onOpen={open} /></li>)}</ul>
+                  <ul className="min-w-0 flex-1 space-y-1">{items.map((it) => <li key={keyOf(it)}><Chip org={slug} item={it} onOpen={open} /></li>)}</ul>
                 </li>
               ))}
             </ol>
@@ -142,7 +160,7 @@ function CalendarPage() {
             </div>
             <div className="grid grid-cols-7">
               {days.map((d) => {
-                const items = itemsOn(d, events, deadlines);
+                const items = itemsOn(d, events, deadlines, periods);
                 // The whole cell selects the day; its chips sit above that button and open what they show.
                 return (
                   <div key={iso(d)}
@@ -153,7 +171,7 @@ function CalendarPage() {
                       className="absolute inset-0 focus-visible:outline-2 focus-visible:outline-ring" />
                     <span className={cn('pointer-events-none relative inline-grid size-6 place-items-center rounded-full text-xs tabular', isToday(d) && 'bg-primary font-semibold text-primary-foreground')}>{fmt(d, 'd')}</span>
                     <span className="relative mt-0.5 hidden space-y-0.5 sm:block">
-                      {items.slice(0, 3).map((it) => <span key={it.kind === 'event' ? it.e.id : it.d.id} className="block"><Chip org={slug} item={it} compact onOpen={open} /></span>)}
+                      {items.slice(0, 3).map((it) => <span key={keyOf(it)} className="block"><Chip org={slug} item={it} compact onOpen={open} /></span>)}
                       {items.length > 3 && <span className="pointer-events-none block px-1.5 text-[11px] text-muted-foreground">{t('calendar.more', { count: items.length - 3 })}</span>}
                     </span>
                     {items.length > 0 && <span className="pointer-events-none relative mx-auto mt-1 block size-1.5 rounded-full bg-primary sm:hidden" aria-hidden />}
@@ -169,8 +187,8 @@ function CalendarPage() {
             </div>
             {dayItems.length === 0 ? <p className="text-sm text-muted-foreground">{t('calendar.nothingOnDay')}</p> : (
               <ul className="space-y-3">
-                {dayItems.map((it) => it.kind === 'deadline' ? (
-                  <li key={it.d.id}><Chip org={slug} item={it} onOpen={open} /></li>
+                {dayItems.map((it) => it.kind !== 'event' ? (
+                  <li key={keyOf(it)}><Chip org={slug} item={it} onOpen={open} /></li>
                 ) : (
                   <li key={it.e.id}>
                     <button type="button" onClick={() => open(it.e)} aria-label={t('collab.openEvent', { title: it.e.title })}
@@ -194,7 +212,7 @@ function CalendarPage() {
       {creating && <NewEventDialog org={slug} date={creating} open onOpenChange={(v) => !v && setCreating(null)} />}
       {opened && !editing && <EventDetail event={opened} open onOpenChange={(v) => !v && close()} onEdit={() => setEditing(opened)} />}
       {editing && <NewEventDialog org={slug} date={iso(parseISO(editing.startsAt))} event={editing} open onOpenChange={(v) => !v && setEditing(null)} />}
-      {!isPending && !error && events.length === 0 && deadlines.length === 0 && view === 'month' && (
+      {!isPending && !error && events.length === 0 && deadlines.length === 0 && periods.length === 0 && view === 'month' && (
         <p className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><CalendarDays className="size-4" />{t('calendar.noEventsMonth')}</p>
       )}
     </>
