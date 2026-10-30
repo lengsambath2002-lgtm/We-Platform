@@ -1,5 +1,6 @@
 package com.businessplatform.hr.repository;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -58,5 +59,7 @@ public final class DevelopmentRepositories {
         Optional<TrainingEnrolment> findByCourseIdAndUserId(UUID courseId, UUID userId);
 
         Optional<TrainingEnrolment> findByIdAndOrgId(UUID id, UUID orgId);
+
+        long countByOrgIdAndStatusAndCompletedAtGreaterThanEqual(UUID orgId, String status, Instant since);
     }
 }

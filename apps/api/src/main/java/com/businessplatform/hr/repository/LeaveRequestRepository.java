@@ -17,6 +17,8 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, UUID
 
     List<LeaveRequest> findByOrgIdAndUserIdOrderByStartDateDesc(UUID orgId, UUID userId);
 
+    long countByOrgIdAndStatus(UUID orgId, String status);
+
     /** Whether the person already has pending or approved leave on any day of {@code start}–{@code end}. */
     @Query("SELECT COUNT(l) > 0 FROM LeaveRequest l WHERE l.orgId = :orgId AND l.userId = :userId"
             + " AND l.status IN ('PENDING', 'APPROVED') AND l.startDate <= :end AND l.endDate >= :start")
