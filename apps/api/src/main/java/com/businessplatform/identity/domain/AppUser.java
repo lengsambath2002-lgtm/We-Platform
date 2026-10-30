@@ -45,6 +45,21 @@ public class AppUser {
     @Column(name = "locked_until")
     private Instant lockedUntil;
 
+    /** Runs the platform: the console at /admin, every organisation and account. */
+    @Column(name = "super_admin", nullable = false)
+    private boolean superAdmin;
+
+    /** Set by a super admin: the account cannot sign in until enabled again. */
+    @Column(name = "disabled_at")
+    private Instant disabledAt;
+
+    @Column(name = "disabled_reason", length = 500)
+    private String disabledReason;
+
+    public boolean isDisabled() {
+        return disabledAt != null;
+    }
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

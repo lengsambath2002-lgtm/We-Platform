@@ -12,6 +12,8 @@ export interface User {
   email: string;
   locale: string;
   avatarUrl: string | null;
+  /** May open the platform console (/admin). */
+  superAdmin: boolean;
 }
 
 export interface Session {

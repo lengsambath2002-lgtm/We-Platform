@@ -43,6 +43,7 @@ function SignIn() {
     } catch (e) {
       if (e instanceof ApiError && e.code === 'INVALID_CREDENTIALS') setError(t('auth.wrongCredentials'));
       else if (e instanceof ApiError && e.code === 'ACCOUNT_LOCKED') setError(t('auth.accountLocked'));
+      else if (e instanceof ApiError && e.code === 'ACCOUNT_DISABLED') setError(t('common.errAccountDisabled'));
       else setError(applyServerErrors(form, e));
     }
   });

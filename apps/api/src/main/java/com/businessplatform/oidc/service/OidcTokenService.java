@@ -136,11 +136,11 @@ public class OidcTokenService {
         return b.build();
     }
 
-    /** Active memberships of organisations that are not deleted, by name. */
+    /** Active memberships of organisations that are neither deleted nor suspended, by name. */
     List<Map<String, Object>> orgs(UUID userId) {
         List<Membership> ms = memberships.findByUserIdAndStatus(userId, Membership.ACTIVE);
         Map<UUID, Organisation> byId = orgs.findAllById(ms.stream().map(Membership::getOrgId).toList()).stream()
-                .filter(o -> !o.isDeleted()).collect(Collectors.toMap(Organisation::getId, Function.identity()));
+                .filter(Organisation::isLive).collect(Collectors.toMap(Organisation::getId, Function.identity()));
         List<Map<String, Object>> out = new ArrayList<>();
         ms.stream().filter(m -> byId.containsKey(m.getOrgId()))
                 .sorted(Comparator.comparing(m -> byId.get(m.getOrgId()).getName(), String.CASE_INSENSITIVE_ORDER))

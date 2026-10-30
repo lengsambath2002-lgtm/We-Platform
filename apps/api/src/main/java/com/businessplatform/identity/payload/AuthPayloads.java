@@ -21,7 +21,8 @@ public final class AuthPayloads {
     public record SignInRequest(@NotBlank @Email String email, @NotBlank String password) {
     }
 
-    public record UserResponse(UUID id, String name, String email, String locale, String avatarUrl) {
+    /** {@code superAdmin}: may open the platform console (/admin). */
+    public record UserResponse(UUID id, String name, String email, String locale, String avatarUrl, boolean superAdmin) {
     }
 
     /** The access token (15 minutes) for {@code Authorization: Bearer}; the refresh token is a cookie (web) or here (mobile). */

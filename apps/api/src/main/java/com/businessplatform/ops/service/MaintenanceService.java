@@ -111,12 +111,12 @@ public class MaintenanceService {
         return tx.execute(s -> new GenerateResult(made.size(), views.workOrders(w.orgId(), made)));
     }
 
-    /** The hourly job: every organisation with Service &amp; Operations on and a plan due. */
+    /** The hourly job: every live organisation (not deleted or suspended) with Service &amp; Operations on and a plan due. */
     public int generateAll() {
         LocalDate today = access.today();
         int n = 0;
         for (UUID orgId : plans.orgsWithDue(today)) {
-            String slug = orgs.findById(orgId).filter(o -> !o.isDeleted()).map(o -> o.getSlug()).orElse(null);
+            String slug = orgs.findById(orgId).filter(o -> o.isLive()).map(o -> o.getSlug()).orElse(null);
             if (slug != null) {
                 n += generate(orgId, slug, null).size();
             }

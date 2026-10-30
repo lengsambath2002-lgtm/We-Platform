@@ -4,6 +4,8 @@ spring:
   flyway:
     clean-disabled: false
 platform:
+  # PlatformAdminTest signs this address up to check the first super admins come from the configuration.
+  super-admins: First.Admin@Platform.test
   service:
     # The tests run the maintenance job themselves.
     maintenance-cron: "-"

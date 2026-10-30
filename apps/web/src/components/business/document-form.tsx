@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2, UserPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
@@ -92,11 +92,13 @@ export function DocumentForm({ org, kind, quote, invoice, customerId }: {
     },
   });
   // A new document starts with the organisation's VAT default once the settings are known.
-  const [seeded, setSeeded] = useState(!!existing);
-  if (!seeded && settings.data) {
-    setSeeded(true);
+  // Done in an effect: setValue notifies the form's fields, which must not happen while this component renders.
+  const seeded = useRef(!!existing);
+  useEffect(() => {
+    if (seeded.current || !settings.data) return;
+    seeded.current = true;
     form.setValue('vatEnabled', settings.data.vatDefault);
-  }
+  }, [settings.data, form]);
   const lines = useFieldArray({ control: form.control, name: 'lines' });
   const v = form.watch();
   const totals = documentTotals(v.lines.map((l) => ({ quantity: Number(l.quantity), unitPrice: Number(l.unitPrice), discountPct: Number(l.discountPct || 0), vat: l.vat })),

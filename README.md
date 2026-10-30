@@ -39,6 +39,11 @@ Images: `apps/api/Dockerfile` (JRE, non-root, uploads in the `/data/files` volum
 **Production**: set `PLATFORM_ENV=production`. The API then refuses to start unless
 `PLATFORM_JWT_SECRET` is your own, `PLATFORM_COOKIE_SECURE=true` and `PLATFORM_APP_URL` is `https://…`.
 
+**Super admins** (the platform console at `/admin`): set `PLATFORM_SUPER_ADMINS` to the emails (comma-separated)
+of the people who run the platform. Each becomes a super admin when it signs up, or at the next start if the account
+exists; after that, super admins grant and revoke it in the console. They can suspend organisations, disable accounts
+and switch modules, but never see an organisation's own data. Removing an email from the list doesn't revoke it.
+
 **Email** (invitations, "forgot password", "password changed"): set `PLATFORM_MAIL_HOST`,
 `PLATFORM_MAIL_PORT` (default 587, or 465 with `ssl`), `PLATFORM_MAIL_USERNAME`,
 `PLATFORM_MAIL_PASSWORD`, `PLATFORM_MAIL_FROM` (e.g. `Business Platform <no-reply@your-domain>`) and

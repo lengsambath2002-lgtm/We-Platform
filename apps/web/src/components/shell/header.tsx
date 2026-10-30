@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Blocks, Check, ChevronsUpDown, Languages, LogOut, Menu, Monitor, Moon, Plus, Search, Sun, UserRound } from 'lucide-react';
+import { Bell, Blocks, Check, ChevronsUpDown, Languages, LogOut, Menu, Monitor, Moon, Plus, Search, ShieldCheck, Sun, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -265,6 +265,9 @@ function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => router.push('/account')}><UserRound className="size-4" /> {t('shell.account')}</DropdownMenuItem>
+        {user.superAdmin && (
+          <DropdownMenuItem onSelect={() => router.push('/admin')}><ShieldCheck className="size-4" /> {t('shell.platformAdmin')}</DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="text-xs text-muted-foreground">{t('shell.theme')}</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>

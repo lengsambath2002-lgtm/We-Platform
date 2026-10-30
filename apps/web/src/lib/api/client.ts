@@ -124,6 +124,10 @@ export function errorMessage(e: unknown): string {
       return tr('common.errNotFound');
     case 'MODULE_DISABLED':
       return tr('common.errModuleOff');
+    case 'ACCOUNT_DISABLED':
+      return tr('common.errAccountDisabled');
+    case 'ORG_SUSPENDED':
+      return tr('common.errOrgSuspended');
     case 'INVALID_STATE':
     case 'CONFLICT':
     case 'VALIDATION_FAILED':

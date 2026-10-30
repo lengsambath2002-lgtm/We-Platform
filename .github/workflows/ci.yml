@@ -100,6 +100,8 @@ jobs:
         working-directory: apps/api
         env:
           DATABASE_URL: jdbc:postgresql://localhost:5432/business_platform
+          # platform.spec.ts signs this address up as the super admin.
+          PLATFORM_SUPER_ADMINS: root@e2e.test
         run: |
           ./gradlew --no-daemon bootJar -x test
           nohup java -jar build/libs/*.jar > api.log 2>&1 &

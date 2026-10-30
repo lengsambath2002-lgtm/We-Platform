@@ -33,6 +33,8 @@ platform:
   files:
     dir: ${PLATFORM_FILES_DIR:./data/files}
   app-url: ${PLATFORM_APP_URL:http://localhost:3300}
+  # Emails (comma-separated) that become super admins (the platform console at /admin) on sign-up or start-up.
+  super-admins: ${PLATFORM_SUPER_ADMINS:}
   # Email (invitations, password resets). Without a host, emails are only logged.
   mail:
     host: ${PLATFORM_MAIL_HOST:}

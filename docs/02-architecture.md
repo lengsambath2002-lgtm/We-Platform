@@ -72,13 +72,23 @@ and record references (`module`, `recordType`, `recordId`). Each module owns its
 /[org]/m/service/...               Service & Operations module
 /[org]/admin/organisation · members · roles · modules · workflows · audit
 /account (profile, security, notifications, appearance, language)
+/admin                             Platform console (super admins): overview · organisations · users · audit log
 ```
 
 `[org]` is the organisation's slug; switching organisation changes the URL, so links are shareable.
 
 ## 5. Roles and permissions
 
-Three layers, all checked on the server:
+Three layers, all checked on the server, plus the people who run the platform:
+
+**Super admin** (platform, not organisation): a flag on the account. The first ones are the emails in
+`PLATFORM_SUPER_ADMINS`; super admins then grant and revoke it in the console (never their own). In `/admin`
+they see every organisation (members, owners, modules, last activity) and every account, and they suspend or
+reactivate an organisation, restore one its owner deleted, switch its modules, disable or enable an account,
+sign it out everywhere and send it a password reset; every action goes to the platform audit log. Being a super
+admin is **not** membership: an organisation's own data (tasks, documents, invoices …) stays closed to them. A
+suspended organisation answers `ORG_SUSPENDED` to its members and disappears from single sign-on and shop
+links; a disabled account answers `ACCOUNT_DISABLED` on sign-in and its sessions end at once.
 
 | Layer | Roles | Grants |
 |---|---|---|
@@ -211,6 +221,7 @@ Every org-scoped table has `org_id` NOT NULL with an index; ids are UUID; timest
 | Activity, notifications | `GET /api/orgs/{org}/activity?module&recordType&recordId`, `GET /api/notifications`, `POST /api/notifications/read` |
 | Overview | `GET /api/orgs/{org}/overview` (my tasks, deadlines, project progress, pending approvals, recent activity, events) |
 | Files | `POST /api/orgs/{org}/files`, `GET /api/files/{id}` |
+| Platform (super admins; NOT_FOUND for others) | `GET /api/platform/stats`, `GET /api/platform/orgs?q&status`, `GET /api/platform/orgs/{id}`, `POST /api/platform/orgs/{id}/{suspend|reactivate|restore}`, `PUT /api/platform/orgs/{id}/modules/{key}`, `GET /api/platform/users?q&status`, `GET /api/platform/users/{id}`, `POST /api/platform/users/{id}/{disable|enable|sign-out|password-reset}`, `PUT /api/platform/users/{id}/super-admin`, `GET /api/platform/audit?target` |
 
 Envelope `{status, data, error}`; errors as codes (`NOT_FOUND`, `FORBIDDEN`, `VALIDATION_FAILED` with field details); pagination `page`, `size`.
 
