@@ -62,6 +62,10 @@ public class EmployeeProfile {
     @Column(name = "emergency_relation")
     private String emergencyRelation;
 
+    /** The person's work schedule; null = the organisation's default. */
+    @Column(name = "schedule_id")
+    private UUID scheduleId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

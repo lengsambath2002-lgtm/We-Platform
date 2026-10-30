@@ -1,12 +1,14 @@
 'use client';
 
-import { Palmtree, Pencil, Plus, SlidersHorizontal, UserRound } from 'lucide-react';
+import { Palmtree, Pencil, Plus, SlidersHorizontal, Trash2, UserRound } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
+import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/common/page-header';
 import { PersonAvatar } from '@/components/common/person';
 import { EmptyState, ErrorState, ListSkeleton, PermissionDenied } from '@/components/common/states';
+import { ScheduleDialog, hhmm, weekdays } from '@/components/hr/attendance-ui';
 import { Holidays } from '@/components/hr/holidays';
 import { BalanceCards, daysText, typeName } from '@/components/hr/leave-ui';
 import { AdjustDialog, LeaveTypeDialog } from '@/components/hr/settings-dialogs';
@@ -15,7 +17,9 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useT } from '@/i18n/provider';
-import { type LeaveType, useAdjustments, useBalances, useLeaveTypes, usePeople } from '@/lib/api/hr';
+import { errorMessage } from '@/lib/api/client';
+import { type LeaveType, type WorkSchedule, attendanceApi, useAdjustments, useBalances, useLeaveTypes, usePeople, useSchedules } from '@/lib/api/hr';
+import { useOrgMutation } from '@/lib/api/queries';
 import { ago } from '@/lib/format';
 import { useOrg } from '@/lib/org-context';
 
@@ -123,6 +127,47 @@ function Balances({ org }: { org: string }) {
   );
 }
 
+function Schedules({ org }: { org: string }) {
+  const { t } = useT();
+  const { data, error, isPending, refetch } = useSchedules(org);
+  const [editing, setEditing] = useState<WorkSchedule | 'new' | null>(null);
+  const remove = useOrgMutation(org, (id: string) => attendanceApi.deleteSchedule(org, id));
+  return (
+    <section aria-labelledby="sched-h">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 id="sched-h" className="text-base font-semibold">{t('hr.schedules')}</h2>
+          <p className="text-sm text-muted-foreground">{t('hr.schedulesBody')}</p>
+        </div>
+        <Button size="sm" onClick={() => setEditing('new')}><Plus className="size-4" />{t('hr.newSchedule')}</Button>
+      </div>
+      {error ? <ErrorState error={error} retry={() => refetch()} /> : isPending ? <ListSkeleton rows={2} /> : (
+        <ul className="divide-y rounded-lg border bg-card">
+          {data.map((s) => (
+            <li key={s.id} className="flex items-center gap-3 px-4 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium">{s.name}{s.isDefault && <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{t('hr.isDefault')}</span>}</p>
+                <p className="text-xs text-muted-foreground">
+                  {[`${hhmm(s.startTime)}–${hhmm(s.endTime)}`, weekdays(s.workDays), `${t('hr.breakMinutes')}: ${s.breakMinutes}`,
+                    `${t('hr.graceMinutes')}: ${s.graceMinutes}`, ...(s.people ? [t('hr.schedulePeople', { count: s.people })] : [])].join(' · ')}
+                </p>
+              </div>
+              <Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label={t('hr.editSchedule', { name: s.name })} onClick={() => setEditing(s)}><Pencil className="size-4" /></Button>
+              {!s.isDefault && (
+                <Button variant="ghost" size="icon" className="size-8 shrink-0" aria-label={t('hr.deleteSchedule', { name: s.name })} onClick={async () => {
+                  if (!window.confirm(`${t('hr.deleteSchedule', { name: s.name })}?\n${t('hr.deleteScheduleBody')}`)) return;
+                  try { await remove.mutateAsync(s.id); toast.success(t('hr.scheduleDeleted')); } catch (e) { toast.error(errorMessage(e)); }
+                }}><Trash2 className="size-4" /></Button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {editing && <ScheduleDialog org={org} schedule={editing} onClose={() => setEditing(null)} />}
+    </section>
+  );
+}
+
 /** HR managers: leave types and balance adjustments (`?tab=balances&person=<id>` opens a person's balances). */
 function HrSettings() {
   const { slug, can } = useOrg();
@@ -130,15 +175,17 @@ function HrSettings() {
   const params = useSearchParams();
   const router = useRouter();
   if (!can('hr.manage')) return <PermissionDenied />;
-  const tab = params.get('tab') === 'balances' || params.get('person') ? 'balances' : params.get('tab') === 'holidays' ? 'holidays' : 'types';
+  const tab = params.get('tab') === 'balances' || params.get('person') ? 'balances'
+    : params.get('tab') === 'holidays' ? 'holidays' : params.get('tab') === 'schedules' ? 'schedules' : 'types';
   return (
     <>
       <PageHeader title={t('hr.settingsTitle')} subtitle={t('hr.settingsSubtitle')} />
       <Tabs value={tab} onValueChange={(v) => router.replace(`/${slug}/hr/settings${v === 'types' ? '' : `?tab=${v}`}`, { scroll: false })}>
-        <TabsList className="mb-4"><TabsTrigger value="types">{t('hr.leaveTypes')}</TabsTrigger><TabsTrigger value="balances">{t('hr.balances')}</TabsTrigger><TabsTrigger value="holidays">{t('hr.holidays')}</TabsTrigger></TabsList>
+        <TabsList className="mb-4"><TabsTrigger value="types">{t('hr.leaveTypes')}</TabsTrigger><TabsTrigger value="balances">{t('hr.balances')}</TabsTrigger><TabsTrigger value="holidays">{t('hr.holidays')}</TabsTrigger><TabsTrigger value="schedules">{t('hr.schedules')}</TabsTrigger></TabsList>
         <TabsContent value="types"><LeaveTypes org={slug} /></TabsContent>
         <TabsContent value="balances"><Balances org={slug} /></TabsContent>
         <TabsContent value="holidays"><Holidays org={slug} /></TabsContent>
+        <TabsContent value="schedules"><Schedules org={slug} /></TabsContent>
       </Tabs>
     </>
   );

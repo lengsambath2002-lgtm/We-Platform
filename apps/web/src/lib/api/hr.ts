@@ -190,3 +190,100 @@ export function workingDays(start: string, end: string, halfStart: boolean, half
   }
   return total;
 }
+
+// ── Attendance: work schedules, clocking in and out, timesheets, the day board, overtime ──────────────
+
+/** `workDays`: ISO weekdays, 1 = Monday … 7 = Sunday; times are "HH:mm:ss" in the organisation's zone. */
+export interface WorkSchedule {
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  breakMinutes: number;
+  graceMinutes: number;
+  workDays: number[];
+  isDefault: boolean;
+  dayMinutes: number;
+  people: number;
+}
+
+export type DayStatus = 'PRESENT' | 'LATE' | 'ABSENT' | 'LEAVE' | 'HOLIDAY' | 'DAY_OFF' | 'NOT_IN' | 'UPCOMING';
+
+export interface AttendanceDay {
+  date: string;
+  status: DayStatus;
+  recordId: string | null;
+  clockIn: string | null;
+  clockOut: string | null;
+  lateMinutes: number;
+  workedMinutes: number;
+  overtimeMinutes: number;
+  note: string | null;
+  corrected: boolean;
+  editReason: string | null;
+  holidayEn: string | null;
+  holidayKm: string | null;
+}
+
+export interface AttendanceToday { day: AttendanceDay; schedule: WorkSchedule; canClockIn: boolean; canClockOut: boolean }
+
+export interface Timesheet {
+  person: PersonRef;
+  schedule: WorkSchedule;
+  month: string;
+  days: AttendanceDay[];
+  totals: { presentDays: number; lateDays: number; absentDays: number; leaveDays: number; workedMinutes: number; expectedMinutes: number; overtimeMinutes: number };
+  canEdit: boolean;
+}
+
+export interface BoardRow { person: PersonRef; department: string | null; schedule: WorkSchedule; day: AttendanceDay }
+
+export type OvertimeStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN';
+
+export interface Overtime {
+  id: string;
+  person: PersonRef;
+  workDate: string;
+  minutes: number;
+  reason: string | null;
+  status: OvertimeStatus;
+  approvalId: string | null;
+  approvalStatus: ApprovalStatus | null;
+  createdAt: string;
+  canWithdraw: boolean;
+}
+
+export const attendanceKeys = {
+  schedules: (org: string) => ['org', org, 'hr', 'schedules'] as const,
+  today: (org: string) => ['org', org, 'hr', 'attendance', 'today'] as const,
+  timesheet: (org: string, userId: string, month: string) => ['org', org, 'hr', 'attendance', 'sheet', userId, month] as const,
+  board: (org: string, date: string) => ['org', org, 'hr', 'attendance', 'board', date] as const,
+  myOvertime: (org: string) => ['org', org, 'hr', 'overtime', 'mine'] as const,
+  overtime: (org: string, status: string) => ['org', org, 'hr', 'overtime', 'all', status] as const,
+};
+
+export const useSchedules = (org: string) =>
+  useQuery({ queryKey: attendanceKeys.schedules(org), queryFn: () => http.get<WorkSchedule[]>(`${h(org)}/schedules`) });
+export const useAttendanceToday = (org: string) =>
+  useQuery({ queryKey: attendanceKeys.today(org), queryFn: () => http.get<AttendanceToday>(`${h(org)}/attendance/today`) });
+/** `userId` '' = mine; `month` yyyy-MM. */
+export const useTimesheet = (org: string, userId: string, month: string) =>
+  useQuery({ queryKey: attendanceKeys.timesheet(org, userId, month), queryFn: () => http.get<Timesheet>(`${h(org)}/attendance/timesheet${qs({ userId, month })}`) });
+export const useAttendanceBoard = (org: string, date: string, enabled = true) =>
+  useQuery({ queryKey: attendanceKeys.board(org, date), queryFn: () => http.get<BoardRow[]>(`${h(org)}/attendance/board${qs({ date })}`), enabled });
+export const useMyOvertime = (org: string) =>
+  useQuery({ queryKey: attendanceKeys.myOvertime(org), queryFn: () => http.get<Overtime[]>(`${h(org)}/overtime/mine`) });
+export const useAllOvertime = (org: string, status: string, enabled = true) =>
+  useQuery({ queryKey: attendanceKeys.overtime(org, status), queryFn: () => http.get<Overtime[]>(`${h(org)}/overtime${qs({ status })}`), enabled });
+
+export const attendanceApi = {
+  saveSchedule: (org: string, id: string | null, body: unknown) =>
+    id ? http.put<WorkSchedule>(`${h(org)}/schedules/${id}`, body) : http.post<WorkSchedule>(`${h(org)}/schedules`, body),
+  deleteSchedule: (org: string, id: string) => http.delete<void>(`${h(org)}/schedules/${id}`),
+  assignSchedule: (org: string, userId: string, scheduleId: string | null) => http.put<WorkSchedule>(`${h(org)}/people/${userId}/schedule`, { scheduleId }),
+  clockIn: (org: string, note: string | null) => http.post<AttendanceToday>(`${h(org)}/attendance/clock-in`, { note }),
+  clockOut: (org: string, note: string | null) => http.post<AttendanceToday>(`${h(org)}/attendance/clock-out`, { note }),
+  correct: (org: string, userId: string, date: string, body: unknown) => http.put<AttendanceDay>(`${h(org)}/attendance/${userId}/${date}`, body),
+  requestOvertime: (org: string, body: unknown) => http.post<Overtime>(`${h(org)}/overtime`, body),
+  withdrawOvertime: (org: string, id: string) => http.post<Overtime>(`${h(org)}/overtime/${id}/withdraw`),
+};

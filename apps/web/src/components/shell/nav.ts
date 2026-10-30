@@ -8,6 +8,7 @@ import {
   CalendarDays,
   CalendarClock,
   CheckSquare,
+  Clock,
   ClipboardList,
   Cpu,
   HardHat,
@@ -32,6 +33,7 @@ import {
   UserCog,
   UserRound,
   Users,
+  UsersRound,
   Wrench,
   ClipboardCheck,
   HeartHandshake,
@@ -167,8 +169,10 @@ export function hrNav(ctx: OrgContext): NavItem[] {
   if (!can('hr.view')) return [];
   return [
     { href: 'hr', label: tr('hr.navHome'), icon: CalendarCheck2, exact: true },
+    { href: 'hr/attendance', label: tr('hr.navAttendance'), icon: Clock, exact: true },
     { href: 'hr/people', label: tr('hr.navPeople'), icon: Contact },
     ...(can('hr.manage') ? [
+      { href: 'hr/attendance/board', label: tr('hr.navTeamAttendance'), icon: UsersRound },
       { href: 'hr/requests', label: tr('hr.navRequests'), icon: Inbox },
       { href: 'hr/settings', label: tr('hr.navSettings'), icon: SlidersHorizontal },
     ] : []),
