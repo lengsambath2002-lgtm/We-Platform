@@ -43,7 +43,7 @@ public final class PayrollPayloads {
 
     public record PayRequest(@NotNull @DecimalMin("0") @Digits(integer = 10, fraction = 2) BigDecimal monthlySalary,
             @Min(0) @Max(20) int dependants, boolean nssfEnrolled, @Size(max = 60) String bankName,
-            @Size(max = 40) String bankAccount) {
+            @Size(max = 40) String bankAccount, @Size(max = 300) String reason) {
     }
 
     public record RunRequest(@NotNull @Pattern(regexp = "^\\d{4}-(0[1-9]|1[0-2])$", message = "Use a month like 2026-11") String month,

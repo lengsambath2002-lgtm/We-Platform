@@ -9,6 +9,7 @@ import { PersonAvatar } from '@/components/common/person';
 import { ErrorState, ListSkeleton } from '@/components/common/states';
 import { BalanceCards } from '@/components/hr/leave-ui';
 import { ContactDialog, EMPLOYMENT_LABEL, ProfileDialog } from '@/components/hr/profile-dialogs';
+import { RecordSections } from '@/components/hr/records-ui';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/provider';
 import { useBalances, useProfile } from '@/lib/api/hr';
@@ -89,6 +90,7 @@ export default function ProfilePage() {
           ) : (
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground"><Lock className="size-3" />{t('hr.privateHidden')}</p>
           )}
+          <RecordSections org={slug} userId={userId} payroll={can('hr.payroll')} />
           {showBalances && (
             <section aria-labelledby="bal-h">
               <h2 id="bal-h" className="mb-3 text-sm font-semibold">{t('hr.balancesThisYear')}</h2>
