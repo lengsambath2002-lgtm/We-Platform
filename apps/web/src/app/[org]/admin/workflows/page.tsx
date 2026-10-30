@@ -19,17 +19,18 @@ import { orgApi, useMembers, useOrgMutation, useWorkflows } from '@/lib/api/quer
 import type { Workflow } from '@/lib/api/types';
 import { useOrg } from '@/lib/org-context';
 
-type Step = { type: 'USER' | 'ORG_ROLE' | 'PROJECT_LEAD' | 'MANAGER'; userId: string | null; role: string | null };
+type Step = { type: 'USER' | 'ORG_ROLE' | 'PROJECT_LEAD' | 'MANAGER' | 'SECOND_MANAGER'; userId: string | null; role: string | null };
 const STEP_KIND = [
   { v: 'PROJECT_LEAD', key: 'admin.stepKind_PROJECT_LEAD' },
   { v: 'MANAGER', key: 'admin.stepKind_MANAGER' },
+  { v: 'SECOND_MANAGER', key: 'admin.stepKind_SECOND_MANAGER' },
   { v: 'ORG_ROLE:ADMIN', key: 'admin.stepKind_ADMIN' },
   { v: 'ORG_ROLE:OWNER', key: 'admin.stepKind_OWNER' },
   { v: 'USER', key: 'admin.stepKind_USER' },
 ] as const;
 const kindOf = (s: Step) => (s.type === 'ORG_ROLE' ? `ORG_ROLE:${s.role}` : s.type);
 /** Step kinds that make sense for a module's records: the project lead for tasks, the manager for HR. */
-const kindsFor = (moduleKey: string) => STEP_KIND.filter((k) => (k.v !== 'PROJECT_LEAD' || moduleKey === 'projects') && (k.v !== 'MANAGER' || moduleKey === 'hr'));
+const kindsFor = (moduleKey: string) => STEP_KIND.filter((k) => (k.v !== 'PROJECT_LEAD' || moduleKey === 'projects') && ((k.v !== 'MANAGER' && k.v !== 'SECOND_MANAGER') || moduleKey === 'hr'));
 const fits = (moduleKey: string, s: Step) => kindsFor(moduleKey).some((k) => k.v === kindOf(s));
 
 function Editor({ org, wf, onClose }: { org: string; wf: Workflow | 'new'; onClose: () => void }) {

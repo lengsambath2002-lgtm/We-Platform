@@ -77,6 +77,9 @@ public class WorkflowService {
         if (!Module.PROJECTS.equals(in.moduleKey()) && in.steps().stream().anyMatch(s -> "PROJECT_LEAD".equals(s.type()))) {
             throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "steps", "Only project workflows can ask the project lead");
         }
+        if (!Module.HR.equals(in.moduleKey()) && in.steps().stream().anyMatch(s -> "SECOND_MANAGER".equals(s.type()))) {
+            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "steps", "Only HR workflows can ask the 2nd approver");
+        }
         short order = 1;
         for (StepInput s : in.steps()) {
             stepDefs.save(step(ctx, w.getId(), order++, s));

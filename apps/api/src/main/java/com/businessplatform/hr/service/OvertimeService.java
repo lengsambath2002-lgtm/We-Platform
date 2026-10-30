@@ -27,6 +27,7 @@ import com.businessplatform.hr.payload.HrPayloads.PersonRef;
 import com.businessplatform.hr.repository.OvertimeRequestRepository;
 import com.businessplatform.identity.domain.AppUser;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.workflow.domain.ApprovalRequest;
 import com.businessplatform.workflow.payload.WorkflowPayloads.ApprovalDetail;
 import com.businessplatform.workflow.payload.WorkflowPayloads.StepInput;
 import com.businessplatform.workflow.payload.WorkflowPayloads.SubmitRequest;
@@ -87,8 +88,11 @@ public class OvertimeService {
         activity.record(ctx.orgId(), HrAccess.MODULE, RECORD, o.getId(), ctx.userId(), "overtime.requested",
                 Map.of("date", o.getWorkDate().toString(), "minutes", (int) o.getMinutes()));
         UUID workflow = workflows.ensure(ctx, HrAccess.MODULE, LeaveService.WORKFLOW, new StepInput("MANAGER", null, null));
-        ApprovalDetail d = approvals.submit(slug, new SubmitRequest(workflow, HrAccess.MODULE, RECORD, o.getId(), o.getReason()));
+        ApprovalDetail d = approvals.submit(slug, new SubmitRequest(workflow, HrAccess.MODULE, RECORD, o.getId(), o.getReason()), true);
         o.setApprovalId(d.summary().id());
+        if (ApprovalRequest.APPROVED.equals(d.summary().status())) {
+            settle(o, OvertimeRequest.APPROVED); // nobody above the requester
+        }
         return view(ctx, o);
     }
 

@@ -63,4 +63,10 @@ public class LeaveRecordResolver implements RecordResolver {
     public Optional<UUID> managerOf(OrgContext ctx, String recordType, UUID recordId) {
         return leaves.findByIdAndOrgId(recordId, ctx.orgId()).flatMap(l -> profiles.managerOf(ctx.orgId(), l.getUserId()));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<UUID> secondManagerOf(OrgContext ctx, String recordType, UUID recordId) {
+        return leaves.findByIdAndOrgId(recordId, ctx.orgId()).flatMap(l -> profiles.secondManagerOf(ctx.orgId(), l.getUserId()));
+    }
 }

@@ -126,6 +126,15 @@ client); moving people, leave requests, schedules, reviews, training, settings a
 organisation-wide. Payroll is its own permission, apart from managing people. `OrgAccess` resolves the caller's grants
 into `OrgContext` (`can`, `canFor`, `canSome`, `scopeOf`), which every module's access helper checks.
 
+### Approval line (built)
+
+Workflow steps can ask the requester's manager (`MANAGER`) and, in HR workflows, their 2nd approver
+(`SECOND_MANAGER`): the one set on their HR profile (`employee_profile.second_manager_id`), else their manager's
+manager. When the line is built, someone already in it is not asked again (a 1st and 2nd approver who are the same
+person approve once), a missing 2nd approver drops that level, and for leave and overtime an Owner with nobody above
+them is approved at once (`AUTO_APPROVE` in the history) instead of going to the other Admins. Tested against a real
+129-person company chart (centers → teams, 1st and 2nd managers): every line matched.
+
 ### General Business permissions (built)
 
 `business.view` for Owners, Admins and Members with the module on; `business.manage` for Owners and Admins.

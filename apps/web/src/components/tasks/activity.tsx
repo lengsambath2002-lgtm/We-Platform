@@ -149,6 +149,7 @@ export function describe(a: ActivityItem, moduleName: (key: string) => string = 
     case 'approval.requested': return tr('tasks.actApprovalRequested', { workflow: s(d.workflow) });
     case 'approval.step.approved': return tr('tasks.actStepApproved');
     case 'approval.approved': return tr('tasks.actApproved');
+    case 'approval.auto_approved': return tr('tasks.actAutoApproved');
     case 'approval.rejected': return d.comment ? tr('tasks.actRejectedWithComment', { comment: s(d.comment) }) : tr('tasks.actRejected');
     case 'approval.changes_requested': return tr('tasks.actChangesRequested', { comment: s(d.comment) });
     case 'approval.resubmitted': return tr('tasks.actResubmitted');

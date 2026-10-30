@@ -32,6 +32,14 @@ public interface RecordResolver {
         return Optional.empty();
     }
 
+    /**
+     * The 2nd approver of the person the record is about (for SECOND_MANAGER steps), if the module knows one.
+     * Empty skips the step: the line then has one level.
+     */
+    default Optional<UUID> secondManagerOf(OrgContext ctx, String recordType, UUID recordId) {
+        return Optional.empty();
+    }
+
     record RecordView(String title, String link, boolean canRequestApproval) {
     }
 }

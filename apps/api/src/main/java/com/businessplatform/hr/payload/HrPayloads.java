@@ -32,7 +32,7 @@ public final class HrPayloads {
      * {@code unitId} is empty. Without a manager, a changed place sets the one the structure gives.
      */
     public record ProfileRequest(@Size(max = 80) String title, @Size(max = 120) String department, UUID unitId,
-            UUID positionId, UUID managerId,
+            UUID positionId, UUID managerId, UUID secondManagerId,
             @Pattern(regexp = "^$|FULL_TIME|PART_TIME|CONTRACT|INTERN") String employmentType, LocalDate startDate,
             @Pattern(regexp = "^$|" + PHONE, message = "Use digits, spaces and + ( ) - only") String workPhone,
             @Size(max = 80) String emergencyName,
@@ -79,7 +79,7 @@ public final class HrPayloads {
      * an HR manager ({@code privateShown}).
      */
     public record ProfileView(PersonRef person, String email, String role, String title, String department,
-            UUID unitId, UUID positionId, PersonRef manager, String workPhone, boolean privateShown, String employmentType, LocalDate startDate,
+            UUID unitId, UUID positionId, PersonRef manager, PersonRef secondManager, List<PersonRef> approvalLine, String workPhone, boolean privateShown, String employmentType, LocalDate startDate,
             String emergencyName, String emergencyPhone, String emergencyRelation, List<PersonRef> reports,
             boolean canEdit, boolean canEditContact) {
     }

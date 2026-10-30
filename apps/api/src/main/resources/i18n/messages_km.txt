@@ -453,3 +453,6 @@ Roles are for members: Owners and Admins can already do everything, guests can't
 This role always applies to the whole organisation = តួនាទីនេះតែងតែអនុវត្តចំពោះស្ថាប័នទាំងមូល
 They already have this role here = គាត់មានតួនាទីនេះនៅទីនេះរួចហើយ
 Remove the roles granted for it first = សូមដកតួនាទីដែលបានផ្ដល់សម្រាប់វាជាមុនសិន
+Only HR workflows can ask the 2nd approver = មានតែលំហូរការងារ HR ប៉ុណ្ណោះដែលអាចសួរអ្នកអនុម័តទី ២ បាន
+Someone can't approve their own requests = មិនអាចអនុម័តសំណើរបស់ខ្លួនឯងបានទេ
+Nobody can approve this request — choose another workflow = គ្មាននរណាអាចអនុម័តសំណើនេះបានទេ — សូមជ្រើសលំហូរការងារផ្សេង

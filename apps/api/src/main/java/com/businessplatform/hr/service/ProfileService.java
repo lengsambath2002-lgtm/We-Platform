@@ -97,6 +97,15 @@ public class ProfileService {
                 throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "managerId", "That person reports to them already");
             }
         }
+        UUID second = in.secondManagerId();
+        if (second != null && !second.equals(p.getSecondManagerId())) {
+            if (second.equals(userId)) {
+                throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "secondManagerId", "Someone can't approve their own requests");
+            }
+            if (!activeMembers(ctx.orgId()).containsKey(second)) {
+                throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "secondManagerId", "Choose a member of the organisation");
+            }
+        }
         List<String> changed = new ArrayList<>();
         Optional<Placement> placedBefore = structure.primaryOf(ctx.orgId(), m.getId());
         UUID unitId = in.unitId();
@@ -133,6 +142,7 @@ public class ProfileService {
             manager = structure.structuralManager(ctx.orgId(), userId).filter(x -> !reportsTo(ctx.orgId(), x, userId)).orElse(null);
         }
         change(changed, "manager", p.getManagerId(), manager, p::setManagerId);
+        change(changed, "secondManager", p.getSecondManagerId(), second, p::setSecondManagerId);
         change(changed, "employmentType", p.getEmploymentType(), clean(in.employmentType()), p::setEmploymentType);
         change(changed, "startDate", p.getStartDate(), in.startDate(), p::setStartDate);
         contact(changed, p, in.workPhone(), in.emergencyName(), in.emergencyPhone(), in.emergencyRelation());
@@ -165,6 +175,21 @@ public class ProfileService {
         });
     }
 
+    /**
+     * The person's 2nd approver: the one set on their profile, else their manager's manager; never themselves,
+     * and only an active member. The same person as the manager is allowed (they then approve once).
+     */
+    @Transactional(readOnly = true)
+    public Optional<UUID> secondManagerOf(UUID orgId, UUID userId) {
+        Optional<EmployeeProfile> p = profiles.findByOrgIdAndUserId(orgId, userId);
+        Optional<UUID> explicit = p.map(EmployeeProfile::getSecondManagerId)
+                .filter(m -> memberships.existsByOrgIdAndUserIdAndStatus(orgId, m, Membership.ACTIVE));
+        if (explicit.isPresent()) {
+            return explicit.filter(m -> !m.equals(userId));
+        }
+        return managerOf(orgId, userId).flatMap(m -> managerOf(orgId, m)).filter(m -> !m.equals(userId));
+    }
+
     /** The person's manager when one is set and still an active member. */
     @Transactional(readOnly = true)
     public Optional<UUID> managerOf(UUID orgId, UUID userId) {
@@ -193,10 +218,16 @@ public class ProfileService {
         Membership m = active.get(p.getUserId());
         boolean self = p.getUserId().equals(ctx.userId());
         boolean shown = self || HrAccess.managesPerson(ctx, p.getUserId());
+        Optional<UUID> second = secondManagerOf(ctx.orgId(), p.getUserId());
+        Map<UUID, PersonRef> lineRefs = persons(java.util.stream.Stream.of(manager.orElse(null), second.orElse(null), p.getSecondManagerId())
+                .filter(Objects::nonNull).toList());
+        List<PersonRef> line = java.util.stream.Stream.of(manager.orElse(null), second.orElse(null)).filter(Objects::nonNull).distinct()
+                .map(lineRefs::get).filter(Objects::nonNull).toList();
         Optional<Placement> placed = m == null ? Optional.empty() : structure.primaryOf(ctx.orgId(), m.getId());
         return new ProfileView(ref(u), u.getEmail(), m == null ? null : m.getRole().name(), m == null ? null : m.getTitle(),
                 p.getDepartment(), placed.map(Placement::unitId).orElse(null), placed.map(Placement::positionId).orElse(null),
-                manager.map(people::get).map(ProfileService::ref).orElse(null), p.getWorkPhone(), shown,
+                manager.map(people::get).map(ProfileService::ref).orElse(null),
+                p.getSecondManagerId() == null ? null : lineRefs.get(p.getSecondManagerId()), line, p.getWorkPhone(), shown,
                 shown ? p.getEmploymentType() : null, shown ? p.getStartDate() : null,
                 shown ? p.getEmergencyName() : null, shown ? p.getEmergencyPhone() : null,
                 shown ? p.getEmergencyRelation() : null,

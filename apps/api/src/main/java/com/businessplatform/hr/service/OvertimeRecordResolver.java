@@ -45,7 +45,8 @@ public class OvertimeRecordResolver implements RecordResolver {
         }
         return requests.findByIdAndOrgId(recordId, ctx.orgId())
                 .filter(o -> o.getUserId().equals(ctx.userId()) || HrAccess.manages(ctx)
-                        || profiles.managerOf(ctx.orgId(), o.getUserId()).map(ctx.userId()::equals).orElse(false))
+                        || profiles.managerOf(ctx.orgId(), o.getUserId()).map(ctx.userId()::equals).orElse(false)
+                        || profiles.secondManagerOf(ctx.orgId(), o.getUserId()).map(ctx.userId()::equals).orElse(false))
                 .map(o -> new RecordView(OvertimeService.title(o, users.findById(o.getUserId()).orElseThrow()),
                         OvertimeService.link(ctx),
                         o.getUserId().equals(ctx.userId()) && OvertimeRequest.PENDING.equals(o.getStatus())));
@@ -60,5 +61,11 @@ public class OvertimeRecordResolver implements RecordResolver {
     @Transactional(readOnly = true)
     public Optional<UUID> managerOf(OrgContext ctx, String recordType, UUID recordId) {
         return requests.findByIdAndOrgId(recordId, ctx.orgId()).flatMap(o -> profiles.managerOf(ctx.orgId(), o.getUserId()));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<UUID> secondManagerOf(OrgContext ctx, String recordType, UUID recordId) {
+        return requests.findByIdAndOrgId(recordId, ctx.orgId()).flatMap(o -> profiles.secondManagerOf(ctx.orgId(), o.getUserId()));
     }
 }

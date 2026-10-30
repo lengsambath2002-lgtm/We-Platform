@@ -82,6 +82,16 @@ public class ApprovalService {
 
     @Transactional
     public ApprovalDetail submit(String slug, SubmitRequest in) {
+        return submit(slug, in, false);
+    }
+
+    /**
+     * {@code topApprovesItself}: a request from an Owner with nobody above them (their MANAGER steps find no one)
+     * is approved at once instead of going to the other Admins, as for the head of a company. The caller settles
+     * its record when the returned request is already APPROVED.
+     */
+    @Transactional
+    public ApprovalDetail submit(String slug, SubmitRequest in, boolean topApprovesItself) {
         OrgContext ctx = access.require(slug);
         modules.require(ctx.orgId(), in.moduleKey());
         RecordResolver resolver = resolver(in.moduleKey(), in.recordType());
@@ -112,30 +122,74 @@ public class ApprovalService {
         r.setCurrentStep((short) 1);
         requests.saveAndFlush(r);
         List<WorkflowStepDef> defs = stepDefs.findByWorkflowIdOrderByStepOrder(w.getId());
+        List<ApprovalStep> line = new ArrayList<>();
+        boolean nobodyAbove = false;
         for (WorkflowStepDef d : defs) {
-            ApprovalStep s = new ApprovalStep();
-            s.setId(Ids.next());
-            s.setRequestId(r.getId());
-            s.setStepOrder(d.getStepOrder());
-            s.setStatus(d.getStepOrder() == 1 ? "PENDING" : "WAITING");
+            UUID approver = null;
+            String role = null;
             switch (d.getApproverType()) {
-                case "USER" -> s.setApproverId(d.getApproverUser());
-                case "ORG_ROLE" -> s.setApproverRole(d.getApproverRole());
-                case "PROJECT_LEAD" -> s.setApproverId(resolver.leadOf(ctx, in.recordType(), in.recordId())
+                case "USER" -> approver = d.getApproverUser();
+                case "ORG_ROLE" -> role = d.getApproverRole();
+                case "PROJECT_LEAD" -> approver = resolver.leadOf(ctx, in.recordType(), in.recordId())
                         .orElseThrow(() -> BusinessException.field(ErrorCode.VALIDATION_FAILED, "workflowId",
-                                "This record has no lead to approve it")));
-                // The requester's manager when the module knows one, otherwise the organisation's Admins.
-                case "MANAGER" -> resolver.managerOf(ctx, in.recordType(), in.recordId())
-                        .filter(u -> !u.equals(ctx.userId()))
-                        .ifPresentOrElse(s::setApproverId, () -> s.setApproverRole("ADMIN"));
+                                "This record has no lead to approve it"));
+                // The requester's manager when the module knows one. Nobody above an Owner (the top of the
+                // organisation) may mean nobody approves; otherwise the organisation's Admins decide.
+                case "MANAGER" -> {
+                    Optional<UUID> m = resolver.managerOf(ctx, in.recordType(), in.recordId()).filter(u -> !u.equals(ctx.userId()));
+                    if (m.isPresent()) {
+                        approver = m.get();
+                    } else if (topApprovesItself && ctx.role() == OrgRole.OWNER) {
+                        nobodyAbove = true;
+                        continue;
+                    } else {
+                        role = "ADMIN";
+                    }
+                }
+                // The requester's 2nd approver; without one the line simply has one level less.
+                case "SECOND_MANAGER" -> {
+                    Optional<UUID> m = resolver.secondManagerOf(ctx, in.recordType(), in.recordId()).filter(u -> !u.equals(ctx.userId()));
+                    if (m.isEmpty()) {
+                        continue;
+                    }
+                    approver = m.get();
+                }
                 default -> throw new IllegalStateException(d.getApproverType());
             }
-            if (ctx.userId().equals(s.getApproverId())) {
+            if (ctx.userId().equals(approver)) {
                 throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "workflowId",
                         "You can't approve your own request — choose another workflow");
             }
-            steps.save(s);
+            // Someone already in the line (e.g. the 1st and 2nd approver are the same person) approves once.
+            UUID who = approver;
+            String as = role;
+            if (line.stream().anyMatch(x -> (who != null && who.equals(x.getApproverId())) || (as != null && as.equals(x.getApproverRole())))) {
+                continue;
+            }
+            ApprovalStep s = new ApprovalStep();
+            s.setId(Ids.next());
+            s.setRequestId(r.getId());
+            s.setStepOrder((short) (line.size() + 1));
+            s.setStatus(line.isEmpty() ? "PENDING" : "WAITING");
+            s.setApproverId(approver);
+            s.setApproverRole(role);
+            line.add(s);
         }
+        if (line.isEmpty() && nobodyAbove) {
+            // The top of the organisation: approved at once, and the history says why.
+            r.setStatus(ApprovalRequest.APPROVED);
+            r.setDecidedAt(clock.instant());
+            requests.save(r);
+            log(r, ctx.userId(), "SUBMIT", (short) 1, r.getSummary());
+            log(r, ctx.userId(), "AUTO_APPROVE", null, null);
+            recordActivity(ctx, r, "approval.auto_approved", Map.of("workflow", w.getName()));
+            closed(ctx, r);
+            return detail(ctx, r);
+        }
+        if (line.isEmpty()) {
+            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "workflowId", "Nobody can approve this request — choose another workflow");
+        }
+        steps.saveAll(line);
         log(r, ctx.userId(), "SUBMIT", (short) 1, r.getSummary());
         recordActivity(ctx, r, "approval.requested", Map.of("workflow", w.getName()));
         notifyApprovers(ctx, r, "approval.requested", Text.of("Approval requested: {title}", Map.of("title", r.getTitle())), record.link());

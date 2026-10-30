@@ -61,6 +61,11 @@ export default function ProfilePage() {
               <Field label={t('hr.jobTitle')}>{p.title ?? dash}</Field>
               <Field label={t('hr.department')}>{p.department ?? dash}</Field>
               <Field label={t('hr.manager')}>{p.manager ? <Link href={`/${slug}/hr/people/${p.manager.id}`} className="inline-flex items-center gap-2 hover:underline"><PersonAvatar person={p.manager} />{p.manager.name}</Link> : dash}</Field>
+              <Field label={t('hr.approvalLine')}>{p.approvalLine.length === 0 ? <span className="text-muted-foreground">{t('hr.approvalLineNone')}</span> : (
+                <ol className="flex flex-wrap items-center gap-1.5" aria-label={t('hr.approvalLine')}>
+                  {p.approvalLine.map((a, i) => <li key={a.id} className="inline-flex items-center gap-1.5">{i > 0 && <span aria-hidden className="text-muted-foreground">→</span>}<Link href={`/${slug}/hr/people/${a.id}`} className="hover:underline">{a.name}</Link></li>)}
+                </ol>
+              )}</Field>
               <Field label={t('hr.email')}><a href={`mailto:${p.email}`} className="inline-flex items-center gap-1.5 hover:underline"><Mail className="size-3.5 shrink-0" />{p.email}</a></Field>
               <Field label={t('hr.workPhone')}>{p.workPhone ? <a href={`tel:${p.workPhone}`} className="inline-flex items-center gap-1.5 hover:underline"><Phone className="size-3.5" />{p.workPhone}</a> : dash}</Field>
               {p.privateShown && (
