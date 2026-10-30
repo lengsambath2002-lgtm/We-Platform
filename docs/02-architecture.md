@@ -124,6 +124,17 @@ with an account elsewhere are invited and placed by importing again after they a
 Placements are made quietly and announced once (`StructureChanged`), and HR's details travel in `PeopleImported`.
 Importing the same file twice changes nothing. A 129-person company imports in about 2 seconds.
 
+### Platform operator and organisation roles (checked against real products)
+
+Super admins run the platform (`/admin`): organisations, accounts, modules, suspension; they are not members of any
+organisation and cannot open its data (like Google and Microsoft staff, who need the customer's approval). Opening an
+organisation's or an account's details is itself logged (`org.viewed`, `user.viewed`), like Access Transparency.
+Inside an organisation, as in Slack, one Owner is the primary owner (`organisation.primary_owner_id`): only they delete
+the organisation or hand the role over (`POST /transfer-ownership`, the new one becomes an Owner too), and they can't
+be demoted, suspended or leave before handing over. Admins have full rights as BambooHR's Full Admin does (payroll
+included); a narrower Payroll or HR role is a custom role. Still to come with plans and billing: modules a company is
+allowed (set by the platform) apart from those it switches on, and a billing role.
+
 ### Custom roles (built)
 
 Owner, Admin, Member and Guest stay the base roles. On top of them, Owners and Admins create custom roles (`org_role`:

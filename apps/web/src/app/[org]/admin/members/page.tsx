@@ -60,7 +60,7 @@ export default function MembersAdmin() {
             <TableBody>
               {members.data.map((m) => {
                 const me = m.userId === user?.id;
-                const locked = me || (m.role === 'OWNER' && !isOwner);
+                const locked = me || m.primaryOwner || (m.role === 'OWNER' && !isOwner);
                 return (
                   <TableRow key={m.membershipId} className={m.status === 'SUSPENDED' ? 'opacity-60' : undefined}>
                     <TableCell>
@@ -79,7 +79,7 @@ export default function MembersAdmin() {
                       ) : <span className="text-sm text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell>
-                      {locked ? <span className="text-sm">{ROLE_TEXT[m.role]?.label}</span> : (
+                      {locked ? <span className="text-sm">{ROLE_TEXT[m.role]?.label}{m.primaryOwner && <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{t('settings.transferSection')}</span>}</span> : (
                         <Select value={m.role} onValueChange={(r) => change(m.membershipId, { role: r }, t('admin.roleChanged', { name: m.name, role: ROLE_TEXT[r]?.label.toLowerCase() ?? r }))}>
                           <SelectTrigger size="sm" className="w-full" aria-label={t('admin.roleOf', { name: m.name })}><SelectValue /></SelectTrigger>
                           <SelectContent>{ROLES.filter((r) => isOwner || r !== 'OWNER').map((r) => <SelectItem key={r} value={r}>{ROLE_TEXT[r]!.label}</SelectItem>)}</SelectContent>

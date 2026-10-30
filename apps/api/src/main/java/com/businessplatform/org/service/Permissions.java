@@ -88,9 +88,6 @@ public final class Permissions {
         if (ctx.can(RoleCatalogue.STRUCTURE)) {
             p.add("org.structure.manage");
         }
-        if (ctx.role() == com.businessplatform.org.domain.OrgRole.OWNER) {
-            p.add("org.delete");
-        }
         return p;
     }
 }

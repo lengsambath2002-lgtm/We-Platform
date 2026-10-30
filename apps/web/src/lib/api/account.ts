@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api, http } from './client';
 import { keys } from './queries';
-import type { Invitation, OrgSummary, Session } from './types';
+import type { Invitation, Member, OrgSummary, Session } from './types';
 
 /** One signed-in device; `id` stays the same across token refreshes. */
 export interface DeviceSession {
@@ -31,6 +31,7 @@ export const accountApi = {
   checkResetToken: (token: string) => http.post<{ valid: boolean }>('/auth/reset-password/check', { token }),
   resetPassword: (token: string, password: string) => http.post<Session>('/auth/reset-password', { token, password }),
   renameOrg: (org: string, name: string) => http.patch<OrgSummary>(o(org), { name }),
+  transferOwnership: (org: string, membershipId: string) => http.post<Member>(`${o(org)}/transfer-ownership`, { membershipId }),
   leaveOrg: (org: string) => http.post<void>(`${o(org)}/leave`),
   /** The organisation's exact name confirms the deletion. */
   deleteOrg: (org: string, name: string) => api<void>(o(org), { method: 'DELETE', body: JSON.stringify({ name }) }),

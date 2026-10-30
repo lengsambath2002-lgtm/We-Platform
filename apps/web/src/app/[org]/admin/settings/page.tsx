@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useT } from '@/i18n/provider';
 import { accountApi, useLeaveOrDeleteOrg } from '@/lib/api/account';
 import { errorMessage } from '@/lib/api/client';
@@ -85,6 +86,9 @@ export default function OrgSettings() {
   const [host, setHost] = useState('');
   useEffect(() => setHost(window.location.host), []);
   const lastOwner = isOwner && (members.data?.filter((m) => m.role === 'OWNER' && m.status === 'ACTIVE').length ?? 2) <= 1;
+  const primary = can('org.transfer');
+  const [heir, setHeir] = useState('');
+  const others = (members.data ?? []).filter((m) => m.status === 'ACTIVE' && m.role !== 'GUEST' && !m.primaryOwner);
   if (!can('org.settings.manage')) return <PermissionDenied />;
 
   return (
@@ -122,21 +126,47 @@ export default function OrgSettings() {
         <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-4 sm:p-6" aria-labelledby="leave-title">
           <div className="min-w-0 flex-1">
             <h2 id="leave-title" className="text-base font-semibold">{t('settings.leaveSection')}</h2>
-            <p className="text-sm text-muted-foreground">{lastOwner ? t('settings.lastOwnerHint') : t('settings.leaveSectionBody', { org: org.name })}</p>
+            <p className="text-sm text-muted-foreground">{lastOwner ? t('settings.lastOwnerHint') : primary ? t('settings.primaryOwnerHint') : t('settings.leaveSectionBody', { org: org.name })}</p>
           </div>
-          <Button variant="outline" disabled={lastOwner} onClick={() => setLeaving(true)}>{t('settings.leave')}</Button>
+          <Button variant="outline" disabled={lastOwner || primary} onClick={() => setLeaving(true)}>{t('settings.leave')}</Button>
         </section>
+
+        {primary && (
+          <section className="space-y-3 rounded-lg border bg-card p-4 sm:p-6" aria-labelledby="transfer-title">
+            <h2 id="transfer-title" className="text-base font-semibold">{t('settings.transferSection')}</h2>
+            <p className="text-sm text-muted-foreground">{t('settings.transferBody')}</p>
+            <div className="flex flex-wrap items-end gap-2">
+              <div className="min-w-56 flex-1 space-y-1.5">
+                <Label htmlFor="heir">{t('settings.transferTo')}</Label>
+                <Select value={heir} onValueChange={setHeir}>
+                  <SelectTrigger id="heir" className="w-full"><SelectValue placeholder={t('settings.transferChoose')} /></SelectTrigger>
+                  <SelectContent>{others.map((m) => <SelectItem key={m.membershipId} value={m.membershipId}>{m.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <Button variant="outline" disabled={!heir} onClick={async () => {
+                const m = others.find((x) => x.membershipId === heir);
+                if (!m || !window.confirm(t('settings.transferConfirm', { name: m.name }))) return;
+                try {
+                  await accountApi.transferOwnership(slug, heir);
+                  await qc.invalidateQueries({ queryKey: ['org', slug] });
+                  setHeir('');
+                  toast.success(t('settings.transferred', { name: m.name }));
+                } catch (e) { toast.error(errorMessage(e)); }
+              }}>{t('settings.transferButton')}</Button>
+            </div>
+          </section>
+        )}
 
         <section className="rounded-lg border border-destructive/40 bg-card p-4 sm:p-6" aria-labelledby="delete-title">
           <h2 id="delete-title" className="text-base font-semibold text-destructive">{t('settings.deleteSection')}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{t('settings.deleteBody', { org: org.name })}</p>
-          {isOwner
+          {can('org.delete')
             ? <Button variant="destructive" className="mt-4" onClick={() => setDeleting(true)}>{t('settings.deleteButton')}</Button>
             : <p className="mt-3 text-sm font-medium">{t('settings.ownersOnlyDelete')}</p>}
         </section>
       </div>
       <LeaveOrgDialog org={{ slug, name: org.name }} open={leaving} onOpenChange={setLeaving} onLeft={() => router.replace('/')} />
-      {isOwner && <DeleteOrgDialog org={{ slug, name: org.name }} open={deleting} onOpenChange={setDeleting} />}
+      {can('org.delete') && <DeleteOrgDialog org={{ slug, name: org.name }} open={deleting} onOpenChange={setDeleting} />}
     </>
   );
 }

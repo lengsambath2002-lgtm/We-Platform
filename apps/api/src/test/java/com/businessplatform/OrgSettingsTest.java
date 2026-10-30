@@ -81,14 +81,14 @@ class OrgSettingsTest extends IntegrationTest {
         assertThat(code(call(member, HttpMethod.GET, "/api/orgs/" + org + "/context", null))).isEqualTo("NOT_FOUND");
         assertThat(ok(call(member, HttpMethod.GET, "/api/orgs", null)).path("data")).isEmpty();
 
-        // With a second owner, the first may go.
+        // Once they hand primary ownership to someone (who becomes an owner too), the first owner may go.
         String adminMembership = null;
         for (JsonNode m : ok(call(owner, HttpMethod.GET, "/api/orgs/" + org + "/members", null)).path("data")) {
             if (m.path("userId").asText().equals(admin.id().toString())) {
                 adminMembership = m.path("membershipId").asText();
             }
         }
-        ok(call(owner, HttpMethod.PATCH, "/api/orgs/" + org + "/members/" + adminMembership, Map.of("role", "OWNER")));
+        ok(call(owner, HttpMethod.POST, "/api/orgs/" + org + "/transfer-ownership", Map.of("membershipId", adminMembership)));
         ok(call(owner, HttpMethod.POST, "/api/orgs/" + org + "/leave", null));
         assertThat(code(call(owner, HttpMethod.GET, "/api/orgs/" + org + "/context", null))).isEqualTo("NOT_FOUND");
         ok(call(admin, HttpMethod.GET, "/api/orgs/" + org + "/context", null));

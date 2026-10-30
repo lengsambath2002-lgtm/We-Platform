@@ -89,10 +89,13 @@ public class PlatformAdminService {
         return new PageResponse<>(p.items(), Math.max(page, 0), s, p.total());
     }
 
-    @Transactional(readOnly = true)
+    /** Opening an organisation (its members included) is logged: platform staff looking at a customer. */
+    @Transactional
     public OrgDetail organisation(UUID id) {
-        requireSuperAdmin();
-        return detail(org(id));
+        UUID me = requireSuperAdmin();
+        Organisation o = org(id);
+        record(me, "org.viewed", PlatformAudit.ORGANISATION, o.getId(), Map.of());
+        return detail(o);
     }
 
     /** Closes the organisation to its members (they see why it is closed, not the reason); its data is kept. */
@@ -181,10 +184,13 @@ public class PlatformAdminService {
         return new PageResponse<>(p.items(), Math.max(page, 0), s, p.total());
     }
 
-    @Transactional(readOnly = true)
+    /** Opening someone's account (their organisations included) is logged too. */
+    @Transactional
     public UserDetail user(UUID id) {
-        requireSuperAdmin();
-        return detail(account(id));
+        UUID me = requireSuperAdmin();
+        AppUser u = account(id);
+        record(me, "user.viewed", PlatformAudit.USER, u.getId(), Map.of());
+        return detail(u);
     }
 
     /** Refuses sign-in and signs the account out everywhere at once. Not yourself, and not a super admin. */

@@ -84,6 +84,12 @@ public class OrgController {
         return ResponseEntity.ok(ApiResponse.ok(orgs.updateMember(org, id, in)));
     }
 
+    /** The primary owner hands primary ownership to another member. */
+    @PostMapping("/api/orgs/{org}/transfer-ownership")
+    public ResponseEntity<ApiResponse<MemberResponse>> transfer(@PathVariable String org, @Valid @RequestBody TransferRequest in) {
+        return ResponseEntity.ok(ApiResponse.ok(orgs.transferOwnership(org, in)));
+    }
+
     @GetMapping("/api/orgs/{org}/invitations")
     public ResponseEntity<ApiResponse<List<InvitationResponse>>> invitations(@PathVariable String org) {
         return ResponseEntity.ok(ApiResponse.ok(orgs.pendingInvitations(org)));
