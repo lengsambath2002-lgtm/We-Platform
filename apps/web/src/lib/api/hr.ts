@@ -27,6 +27,8 @@ export interface Profile {
   role: string | null;
   title: string | null;
   department: string | null;
+  unitId: string | null;
+  positionId: string | null;
   manager: PersonRef | null;
   workPhone: string | null;
   privateShown: boolean;

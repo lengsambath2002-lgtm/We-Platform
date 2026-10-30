@@ -53,6 +53,8 @@ export interface Member {
   role: OrgRole;
   status: 'ACTIVE' | 'SUSPENDED';
   title: string | null;
+  /** The primary unit's name in the organisation structure. */
+  unit: string | null;
   joinedAt: string;
 }
 

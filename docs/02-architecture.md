@@ -35,7 +35,7 @@ and VirtualBiz (marketplace, seller POS / catalogue / orders / inventory, provid
 
 ```
 ┌──────────────────────────── Shared core (platform-owned) ───────────────────────────┐
-│ identity · organisation (orgs, branches, members, teams, roles, permissions)         │
+│ identity · organisation (orgs, structure, positions, members, teams, roles, perms)  │
 │ module registry · project & task · workflow (approvals) · calendar · notification   │
 │ activity & audit · file storage · document (later) · reporting kit                  │
 └──────────────────────────────────────────────────────────────────────────────────────┘
@@ -61,6 +61,7 @@ and record references (`module`, `recordType`, `recordId`). Each module owns its
 /[org]/projects                    Project list ─ /[org]/projects/[key] (board · list · timeline later · members · settings)
 /[org]/projects/[key]/tasks/[n]    Task detail (drawer on desktop, page on phone)
 /[org]/calendar                    Calendar (month / week / agenda)
+/[org]/structure                   Organisation structure (units, positions, who sits where)
 /[org]/teams                       Teams & members
 /[org]/approvals                   Inbox · Sent · All (admins)
 /[org]/documents                   (after MVP)
@@ -167,6 +168,21 @@ payments. Received quantities never exceed what was ordered and payments never e
 VirtualBiz (one stock count): a delivery links to VirtualBiz inventory through SSO and is ticked "In stock" once it is
 recorded there. VirtualBiz is not modified; automatic stock sync would need a VirtualBiz change and is not built.
 
+### Organisation structure (built)
+
+Units form a tree under the organisation: Branch, Division, Department, Center, Section and Team, in any nesting
+(names unique among siblings, optional organisation-wide codes, a head who is an active member). Positions are jobs
+with a unit (or organisation-wide), a grade, a "reports to" position and a planned headcount; filled and open seats
+are counted from placements. Each member has at most one primary place (a unit, a position or both; a position in a
+unit implies the unit) and up to ten additional ones. The primary position is the member's job title. HR's
+department is derived, never typed: the database function `org_department_of` gives the nearest Department at or
+above the primary unit (else that unit's name), and HR keeps `employee_profile.department` equal to it on every
+change (`StructureChanged` event). Someone newly placed without a manager gets the holder of their position's
+"reports to" position, else the nearest unit head above them. Everyone but guests reads the structure
+(`org.structure.view`); Owners and Admins change it (`org.structure.manage`). Units and positions in use can only
+be archived once emptied; only never-used ones can be deleted. The old `branch` table and free-text departments and
+titles were migrated into units, positions and primary placements.
+
 ## 6. Core user journeys (MVP first)
 
 1. **Sign up → create organisation** (name, slug, branch optional) → lands on Overview with the Projects module on.
@@ -202,7 +218,7 @@ user ─< membership >─ organisation ─< branch
 | Area | Tables |
 |---|---|
 | Identity | `app_user` (email, password hash, name, locale, avatar), `user_session` (refresh token hash, device, expiry), `password_reset`, `user_preference` |
-| Organisation | `organisation` (slug, name, plan), `branch`, `membership` (user, org, role, status ACTIVE / INVITED / SUSPENDED), `invitation` (token hash, email, role, expiry), `team`, `team_member` |
+| Organisation | `organisation` (slug, name, plan), `org_unit` (branch / division / department / center / section / team tree, head, code), `org_position` (title, unit, grade, reports-to, headcount), `org_assignment` (member → unit and/or position, one primary), `membership` (user, org, role, status ACTIVE / INVITED / SUSPENDED), `invitation` (token hash, email, role, expiry), `team`, `team_member` |
 | Modules | `module` (key, name, status — registry), `org_module` (org, module, enabled, enabled_by, at) |
 | Projects | `project` (org, key, name, description, status, visibility ORG / PRIVATE, lead, start, due), `project_member` (role), `task` (project, number, title, description, status, priority, assignee, reporter, due_date, start_date, parent_id, position, completed_at), `task_comment`, `task_attachment`, `task_watcher` |
 | Workflow | `workflow_definition` (org, module, name, active), `workflow_step_def` (order, approver type USER / ROLE / PROJECT_LEAD, approver ref), `approval_request` (org, module, record_type, record_id, title, requester, status PENDING / CHANGES_REQUESTED / APPROVED / REJECTED / WITHDRAWN, current_step), `approval_step` (request, order, approver, status), `approval_action` (request, actor, action, comment, at) |

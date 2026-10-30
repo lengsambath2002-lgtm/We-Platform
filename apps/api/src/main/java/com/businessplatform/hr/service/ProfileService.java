@@ -29,7 +29,9 @@ import com.businessplatform.identity.repository.UserRepository;
 import com.businessplatform.org.domain.Membership;
 import com.businessplatform.org.domain.OrgRole;
 import com.businessplatform.org.repository.MembershipRepository;
+import com.businessplatform.org.payload.StructurePayloads.Placement;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.org.service.OrgStructureService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,6 +53,7 @@ public class ProfileService {
     private final MembershipRepository memberships;
     private final UserRepository users;
     private final ActivityService activity;
+    private final OrgStructureService structure;
     private final Clock clock;
 
     @Transactional
@@ -95,8 +98,28 @@ public class ProfileService {
             }
         }
         List<String> changed = new ArrayList<>();
-        change(changed, "title", m.getTitle(), clean(in.title()), m::setTitle);
-        change(changed, "department", p.getDepartment(), clean(in.department()), p::setDepartment);
+        UUID unitId = in.unitId();
+        if (unitId == null && clean(in.department()) != null) {
+            unitId = structure.departmentNamed(ctx, clean(in.department()));
+        }
+        Optional<Placement> placedBefore = structure.primaryOf(ctx.orgId(), m.getId());
+        String titleBefore = m.getTitle();
+        String departmentBefore = p.getDepartment();
+        // Updates the job title and (through StructureSync) the department.
+        structure.placePrimary(ctx, userId, unitId, in.positionId(), in.title());
+        boolean moved = !placedBefore.equals(structure.primaryOf(ctx.orgId(), m.getId()));
+        if (moved) {
+            changed.add("placement");
+        }
+        if (!Objects.equals(titleBefore, m.getTitle())) {
+            changed.add("title");
+        }
+        if (!Objects.equals(departmentBefore, p.getDepartment())) {
+            changed.add("department");
+        }
+        if (manager == null && moved) {
+            manager = structure.structuralManager(ctx.orgId(), userId).filter(x -> !reportsTo(ctx.orgId(), x, userId)).orElse(null);
+        }
         change(changed, "manager", p.getManagerId(), manager, p::setManagerId);
         change(changed, "employmentType", p.getEmploymentType(), clean(in.employmentType()), p::setEmploymentType);
         change(changed, "startDate", p.getStartDate(), in.startDate(), p::setStartDate);
@@ -158,8 +181,10 @@ public class ProfileService {
         Membership m = active.get(p.getUserId());
         boolean self = p.getUserId().equals(ctx.userId());
         boolean shown = self || HrAccess.manages(ctx);
+        Optional<Placement> placed = m == null ? Optional.empty() : structure.primaryOf(ctx.orgId(), m.getId());
         return new ProfileView(ref(u), u.getEmail(), m == null ? null : m.getRole().name(), m == null ? null : m.getTitle(),
-                p.getDepartment(), manager.map(people::get).map(ProfileService::ref).orElse(null), p.getWorkPhone(), shown,
+                p.getDepartment(), placed.map(Placement::unitId).orElse(null), placed.map(Placement::positionId).orElse(null),
+                manager.map(people::get).map(ProfileService::ref).orElse(null), p.getWorkPhone(), shown,
                 shown ? p.getEmploymentType() : null, shown ? p.getStartDate() : null,
                 shown ? p.getEmergencyName() : null, shown ? p.getEmergencyPhone() : null,
                 shown ? p.getEmergencyRelation() : null,

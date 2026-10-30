@@ -43,9 +43,6 @@ public class Membership {
     @Column(length = 80)
     private String title;
 
-    @Column(name = "branch_id")
-    private UUID branchId;
-
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 }
