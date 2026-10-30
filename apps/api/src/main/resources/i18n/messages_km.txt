@@ -353,3 +353,19 @@ Clock-out is before clock-in = ម៉ោងចេញនៅមុនម៉ោង�
 Ask for overtime after you have worked it = សូមស្នើសុំម៉ោងបន្ថែម បន្ទាប់ពីអ្នកបានធ្វើការរួច
 At most 60 days back = មិនលើសពី 60 ថ្ងៃមុន
 You already asked for overtime on this day = អ្នកបានស្នើសុំម៉ោងបន្ថែមសម្រាប់ថ្ងៃនេះរួចហើយ
+
+# HR: payroll
+Only the last bracket has no upper limit = មានតែកម្រិតចុងក្រោយប៉ុណ្ណោះដែលគ្មានដែនកំណត់ខាងលើ
+Each bracket must end above the one before = កម្រិតនីមួយៗត្រូវបញ្ចប់ខ្ពស់ជាងកម្រិតមុន
+The cap is below the floor = ពិដាននៅទាបជាងកម្រិតអប្បបរមា
+There is already a pay run for this month = មានការបើកប្រាក់ខែសម្រាប់ខែនេះរួចហើយ
+Set up someone's salary before approving = សូមកំណត់ប្រាក់ខែរបស់នរណាម្នាក់ មុនពេលអនុម័ត
+Only an approved run that isn't paid can be reopened = មានតែការបើកប្រាក់ខែដែលបានអនុម័ត និងមិនទាន់បង់ប៉ុណ្ណោះ ដែលអាចបើកឡើងវិញបាន
+Approve the run first = សូមអនុម័តការបើកប្រាក់ខែជាមុនសិន
+This pay run is approved; reopen it to change it = ការបើកប្រាក់ខែនេះត្រូវបានអនុម័តហើយ។ សូមបើកវាឡើងវិញដើម្បីកែប្រែ
+Use a month like 2026-11 = សូមប្រើខែដូចជា 2026-11
+Your payslip for {month} is ready = តារាងបើកប្រាក់ខែរបស់អ្នកសម្រាប់ {month} រួចរាល់ហើយ
+Your payslip for {month} from {org} = តារាងបើកប្រាក់ខែរបស់អ្នកសម្រាប់ {month} ពី {org}
+{org} has paid your salary for {month}. Your payslip is ready to view. = {org} បានបើកប្រាក់ខែរបស់អ្នកសម្រាប់ {month} ហើយ។ តារាងបើកប្រាក់ខែរបស់អ្នករួចរាល់សម្រាប់មើល។
+View your payslip = មើលតារាងបើកប្រាក់ខែរបស់អ្នក
+Payslips are private: only you and your organisation's HR can see them. = តារាងបើកប្រាក់ខែជាឯកជន៖ មានតែអ្នក និងផ្នែកធនធានមនុស្សនៃស្ថាប័នរបស់អ្នកប៉ុណ្ណោះដែលអាចមើលឃើញ។
