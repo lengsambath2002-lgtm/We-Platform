@@ -167,7 +167,7 @@ export interface Workflow {
   name: string;
   moduleKey: string;
   active: boolean;
-  steps: { order: number; type: 'USER' | 'ORG_ROLE' | 'PROJECT_LEAD' | 'MANAGER'; userId: string | null; userName: string | null; role: string | null }[];
+  steps: { order: number; type: 'USER' | 'ORG_ROLE' | 'PROJECT_LEAD' | 'MANAGER' | 'SECOND_MANAGER'; userId: string | null; userName: string | null; role: string | null }[];
 }
 
 export interface ApprovalSummary {

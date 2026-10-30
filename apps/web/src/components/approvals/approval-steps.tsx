@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 const ACTION: Record<string, MessageKey> = {
   SUBMIT: 'approvals.actSubmit', APPROVE: 'approvals.actApprove', REJECT: 'approvals.actReject', REQUEST_CHANGES: 'approvals.actRequestChanges',
-  RESUBMIT: 'approvals.actResubmit', WITHDRAW: 'approvals.actWithdraw',
+  RESUBMIT: 'approvals.actResubmit', WITHDRAW: 'approvals.actWithdraw', AUTO_APPROVE: 'approvals.actAutoApprove',
 };
 
 /** Steps in order with who decided, then the request's history. */

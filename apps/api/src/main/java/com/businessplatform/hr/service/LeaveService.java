@@ -37,6 +37,7 @@ import com.businessplatform.identity.domain.AppUser;
 import com.businessplatform.identity.repository.UserRepository;
 import com.businessplatform.notification.NotificationService;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.workflow.domain.ApprovalRequest;
 import com.businessplatform.workflow.payload.WorkflowPayloads.ApprovalDetail;
 import com.businessplatform.workflow.payload.WorkflowPayloads.StepInput;
 import com.businessplatform.workflow.payload.WorkflowPayloads.SubmitRequest;
@@ -133,8 +134,11 @@ public class LeaveService {
         activity.record(ctx.orgId(), HrAccess.MODULE, RECORD, l.getId(), ctx.userId(), "leave.requested",
                 Map.of("type", type.getNameEn(), "start", start.toString(), "end", end.toString(), "days", days.toPlainString()));
         UUID workflow = workflows.ensure(ctx, HrAccess.MODULE, WORKFLOW, new StepInput("MANAGER", null, null));
-        ApprovalDetail d = approvals.submit(slug, new SubmitRequest(workflow, HrAccess.MODULE, RECORD, l.getId(), l.getReason()));
+        ApprovalDetail d = approvals.submit(slug, new SubmitRequest(workflow, HrAccess.MODULE, RECORD, l.getId(), l.getReason()), true);
         l.setApprovalId(d.summary().id());
+        if (ApprovalRequest.APPROVED.equals(d.summary().status())) {
+            settle(l, LeaveRequest.APPROVED); // nobody above the requester
+        }
         return view(ctx, l);
     }
 

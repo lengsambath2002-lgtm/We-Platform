@@ -34,6 +34,7 @@ const profileSchema = (t: ReturnType<typeof useT>['t']) => contactSchema(t).exte
   unitId: z.string(),
   positionId: z.string(),
   managerId: z.string(),
+  secondManagerId: z.string(),
   employmentType: z.string(),
   startDate: z.string(),
 });
@@ -109,13 +110,14 @@ export function ProfileDialog({ org, profile, onClose }: { org: string; profile:
     resolver: zodResolver(schema),
     defaultValues: {
       title: profile.title ?? '', unitId: profile.unitId ?? NONE, positionId: profile.positionId ?? NONE, managerId: profile.manager?.id ?? NONE,
+      secondManagerId: profile.secondManager?.id ?? NONE,
       employmentType: profile.employmentType ?? NONE, startDate: profile.startDate ?? '',
       workPhone: profile.workPhone ?? '', emergencyName: profile.emergencyName ?? '', emergencyPhone: profile.emergencyPhone ?? '', emergencyRelation: profile.emergencyRelation ?? '',
     },
   });
   const save = useOrgMutation(org, (v: Values) => hrApi.updateProfile(org, profile.person.id, {
     ...v, unitId: v.unitId === NONE ? null : v.unitId, positionId: v.positionId === NONE ? null : v.positionId,
-    managerId: v.managerId === NONE ? null : v.managerId, employmentType: v.employmentType === NONE ? null : v.employmentType,
+    managerId: v.managerId === NONE ? null : v.managerId, secondManagerId: v.secondManagerId === NONE ? null : v.secondManagerId, employmentType: v.employmentType === NONE ? null : v.employmentType,
     startDate: v.startDate || null,
   }));
   const onSubmit = form.handleSubmit(async (v) => {
@@ -174,19 +176,35 @@ export function ProfileDialog({ org, profile, onClose }: { org: string; profile:
                 <FormItem><FormLabel>{t('hr.jobTitle')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             )}
-            <FormField control={form.control} name="managerId" render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t('hr.manager')}</FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    <SelectItem value={NONE}>{t('hr.noManager')}</SelectItem>
-                    {managers.map((p) => <SelectItem key={p.person.id} value={p.person.id}>{p.person.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField control={form.control} name="managerId" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('hr.manager')}</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value={NONE}>{t('hr.noManager')}</SelectItem>
+                      {managers.map((p) => <SelectItem key={p.person.id} value={p.person.id}>{p.person.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="secondManagerId" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('hr.secondManager')}</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value={NONE}>{t('hr.secondManagerDefault')}</SelectItem>
+                      {managers.map((p) => <SelectItem key={p.person.id} value={p.person.id}>{p.person.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+            <p className="-mt-2 text-xs text-muted-foreground">{t('hr.secondManagerHint')}</p>
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField control={form.control} name="employmentType" render={({ field }) => (
                 <FormItem>

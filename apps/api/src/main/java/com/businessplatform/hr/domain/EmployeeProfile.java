@@ -44,6 +44,10 @@ public class EmployeeProfile {
     @Column(name = "manager_id")
     private UUID managerId;
 
+    /** The 2nd approver in the approval line; null = the manager's manager. */
+    @Column(name = "second_manager_id")
+    private UUID secondManagerId;
+
     @Column(name = "employment_type")
     private String employmentType;
 

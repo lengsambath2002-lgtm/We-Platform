@@ -30,6 +30,10 @@ export interface Profile {
   unitId: string | null;
   positionId: string | null;
   manager: PersonRef | null;
+  /** The 2nd approver set on the profile (null = the manager's manager). */
+  secondManager: PersonRef | null;
+  /** Who approves their requests, in order (empty = approved automatically, nobody above). */
+  approvalLine: PersonRef[];
   workPhone: string | null;
   privateShown: boolean;
   employmentType: EmploymentType | null;

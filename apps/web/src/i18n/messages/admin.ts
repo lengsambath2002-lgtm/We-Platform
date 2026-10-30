@@ -50,6 +50,7 @@ export const en = {
   stepKind_OWNER: 'Any owner',
   stepKind_USER: 'A specific person',
   stepKind_MANAGER: "The requester's manager (else any admin)",
+  stepKind_SECOND_MANAGER: "The requester's 2nd approver (skipped if none or the same person)",
   workflowModule: 'Used for',
 };
 
@@ -101,5 +102,6 @@ export const km: Record<keyof typeof en, string> = {
   stepKind_OWNER: 'ម្ចាស់ណាម្នាក់',
   stepKind_USER: 'បុគ្គលជាក់លាក់ម្នាក់',
   stepKind_MANAGER: 'អ្នកគ្រប់គ្រងរបស់អ្នកស្នើសុំ (បើគ្មាន អ្នកគ្រប់គ្រងណាម្នាក់)',
+  stepKind_SECOND_MANAGER: 'អ្នកអនុម័តទី ២ របស់អ្នកស្នើសុំ (រំលងបើគ្មាន ឬជាមនុស្សតែមួយ)',
   workflowModule: 'ប្រើសម្រាប់',
 };
