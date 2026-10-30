@@ -327,6 +327,17 @@ public class OrgStructureService {
      */
     @Transactional
     public void placePrimary(OrgContext ctx, UUID userId, UUID unitId, UUID positionId, String title) {
+        if (placePrimary(ctx, userId, unitId, positionId, title, false)) {
+            changed(ctx.orgId(), List.of(userId));
+        }
+    }
+
+    /**
+     * {@link #placePrimary} without telling the modules (a bulk import tells them once, at the end, through
+     * {@link #announce}). Whether the member's places changed.
+     */
+    @Transactional
+    public boolean placePrimary(OrgContext ctx, UUID userId, UUID unitId, UUID positionId, String title, boolean quiet) {
         if (!ctx.can(RoleCatalogue.STRUCTURE) && !ctx.can(RoleCatalogue.HR)) {
             throw BusinessException.forbidden();
         }
@@ -334,13 +345,23 @@ public class OrgStructureService {
         List<Placement> extra = assignments.findByMembershipIdOrderByCreatedAt(m.getId()).stream().filter(a -> !a.isPrimary())
                 .map(a -> new Placement(a.getUnitId(), a.getPositionId())).toList();
         Placement primary = unitId == null && positionId == null ? null : new Placement(unitId, positionId);
-        replace(ctx, m, primary, extra);
+        boolean moved = replace(ctx, m, primary, extra, false);
         if (positionId == null) {
             m.setTitle(clean(title));
         }
+        return moved;
+    }
+
+    /** Tells the modules that these members were placed (after a bulk import). */
+    public void announce(UUID orgId, List<UUID> placed) {
+        changed(orgId, placed);
     }
 
     private void replace(OrgContext ctx, Membership m, Placement primary, List<Placement> extra) {
+        replace(ctx, m, primary, extra, true);
+    }
+
+    private boolean replace(OrgContext ctx, Membership m, Placement primary, List<Placement> extra, boolean tell) {
         Map<UUID, OrgUnit> us = units.findByOrgId(ctx.orgId()).stream().collect(Collectors.toMap(OrgUnit::getId, Function.identity()));
         Map<UUID, OrgPosition> ps = positions.findByOrgId(ctx.orgId()).stream().collect(Collectors.toMap(OrgPosition::getId, Function.identity()));
         List<OrgAssignment> before = assignments.findByMembershipIdOrderByCreatedAt(m.getId());
@@ -354,7 +375,7 @@ public class OrgStructureService {
         Map<List<UUID>, Boolean> had = new LinkedHashMap<>();
         before.forEach(a -> had.put(java.util.Arrays.asList(a.getUnitId(), a.getPositionId()), a.isPrimary()));
         if (had.equals(wanted)) {
-            return;
+            return false;
         }
         assignments.deleteByMembershipId(m.getId());
         assignments.flush();
@@ -384,7 +405,10 @@ public class OrgStructureService {
             data.put("unit", us.get(unitId).getName());
         }
         audit(ctx, "member", m.getUserId(), "org.member.placed", data);
-        changed(ctx.orgId(), List.of(m.getUserId()));
+        if (tell) {
+            changed(ctx.orgId(), List.of(m.getUserId()));
+        }
+        return true;
     }
 
     /** [unitId, positionId] for a placement: the position's unit when it has one; unknown or archived ones refused. */

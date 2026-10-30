@@ -148,6 +148,55 @@ public class AccountService {
         });
     }
 
+    private volatile String unusable;
+
+    /** A hash nobody knows the password of (made once: hashing is slow on purpose, and imports add many accounts). */
+    private String unusable() {
+        if (unusable == null) {
+            unusable = encoder.encode(Tokens.random());
+        }
+        return unusable;
+    }
+
+    /** How long the "set your password" link of an account created by an organisation works. */
+    static final Duration WELCOME_TTL = Duration.ofDays(7);
+
+    /**
+     * Creates an account for someone an organisation adds (a bulk import): no usable password until they choose one
+     * through the emailed link, valid 7 days (afterwards "Forgot password" works as usual). The email is the one
+     * their organisation gave; {@code org} and {@code by} name who added them.
+     */
+    @Transactional
+    public AppUser provision(String rawEmail, String name, String locale, String org, String by) {
+        String email = AuthService.normalise(rawEmail);
+        Instant now = clock.instant();
+        AppUser u = new AppUser();
+        u.setId(Ids.next());
+        u.setEmail(email);
+        u.setName(name.strip());
+        u.setLocale(locale == null ? "en" : locale);
+        u.setPasswordHash(unusable());
+        u.setCreatedAt(now);
+        u.setUpdatedAt(now);
+        users.save(u);
+        String token = Tokens.random();
+        PasswordReset r = new PasswordReset();
+        r.setId(Ids.next());
+        r.setUserId(u.getId());
+        r.setTokenHash(Tokens.sha256(token));
+        r.setCreatedAt(now);
+        r.setExpiresAt(now.plus(WELCOME_TTL));
+        resets.save(r);
+        Map<String, String> args = Map.of("org", org, "by", by, "email", email);
+        String lang = u.getLocale();
+        mail.queue(MailService.compose(email, messages.in(lang, "{by} added you to {org} on Business Platform", args),
+                List.of(messages.in(lang, "{by} added you to {org}. Your account uses {email}.", args),
+                        messages.in(lang, "Choose a password to sign in. The link works once, within 7 days.", args)),
+                messages.in(lang, "Choose a password", Map.of()), appUrl + "/reset-password?token=" + token,
+                messages.in(lang, "If you don't work with {org}, you can ignore this email.", args)));
+        return u;
+    }
+
     @Transactional(readOnly = true)
     public boolean resetTokenValid(String token) {
         return liveReset(token) != null;
