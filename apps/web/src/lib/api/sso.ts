@@ -75,4 +75,7 @@ export function useUnlinkShop(org: string) {
 export const virtualbiz = {
   open: (base: string, businessId: string) => `${base}/platform/open?business=${encodeURIComponent(businessId)}`,
   connect: (base: string, orgId: string) => `${base}/platform/connect?org=${encodeURIComponent(orgId)}`,
+  /** Opens the shop's inventory (VirtualBiz's sign-on keeps `next`; otherwise it lands on the shop's dashboard). */
+  inventory: (base: string, businessId: string) =>
+    `${base}/platform/open?business=${encodeURIComponent(businessId)}&next=${encodeURIComponent('/seller/inventory')}`,
 };

@@ -161,6 +161,12 @@ the threshold is scheduled only after approval. Maintenance plans generate their
 is due, hourly (`platform.service.maintenance-cron`) or with "Generate now", at most once per plan and due date.
 Bookings stay in VirtualBiz: the Bookings page links to the organisation's shops through Retail & Commerce.
 
+**Retail purchasing** (`retail` package, `retail_*` tables): suppliers (payment terms), purchase orders (draft →
+ordered → partly received / received, or cancelled; numbered PO-0001 per organisation), deliveries and supplier
+payments. Received quantities never exceed what was ordered and payments never exceed the order total. Stock stays in
+VirtualBiz (one stock count): a delivery links to VirtualBiz inventory through SSO and is ticked "In stock" once it is
+recorded there. VirtualBiz is not modified; automatic stock sync would need a VirtualBiz change and is not built.
+
 ## 6. Core user journeys (MVP first)
 
 1. **Sign up → create organisation** (name, slug, branch optional) → lands on Overview with the Projects module on.
