@@ -106,6 +106,7 @@ const makePaySchema = (t: ReturnType<typeof useT>['t']) => z.object({
   nssfEnrolled: z.boolean(),
   bankName: z.string().max(60),
   bankAccount: z.string().max(40),
+  reason: z.string().max(300),
 });
 
 /** What one person is paid. */
@@ -115,13 +116,13 @@ export function PayDialog({ org, row, onClose }: { org: string; row: PersonPay; 
   const [err, setErr] = useState<string | null>(null);
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { monthlySalary: row.monthlySalary === null ? '' : Number(row.monthlySalary).toFixed(2), dependants: String(row.dependants), nssfEnrolled: row.nssfEnrolled, bankName: row.bankName ?? '', bankAccount: row.bankAccount ?? '' },
+    defaultValues: { monthlySalary: row.monthlySalary === null ? '' : Number(row.monthlySalary).toFixed(2), dependants: String(row.dependants), nssfEnrolled: row.nssfEnrolled, bankName: row.bankName ?? '', bankAccount: row.bankAccount ?? '', reason: '' },
   });
   const save = useOrgMutation(org, (v: unknown) => payrollApi.setPay(org, row.person.id, v));
   const onSubmit = form.handleSubmit(async (v) => {
     setErr(null);
     try {
-      await save.mutateAsync({ ...v, monthlySalary: v.monthlySalary.trim(), dependants: Number(v.dependants), bankName: v.bankName || null, bankAccount: v.bankAccount || null });
+      await save.mutateAsync({ ...v, monthlySalary: v.monthlySalary.trim(), dependants: Number(v.dependants), bankName: v.bankName || null, bankAccount: v.bankAccount || null, reason: v.reason.trim() || null });
       toast.success(t('hr.paySaved'));
       onClose();
     } catch (e) { setErr(applyServerErrors(form, e)); }
@@ -151,6 +152,9 @@ export function PayDialog({ org, row, onClose }: { org: string; row: PersonPay; 
               )} />
               <FormField control={form.control} name="bankAccount" render={({ field }) => (
                 <FormItem><FormLabel>{t('hr.bankAccount')}</FormLabel><FormControl><Input maxLength={40} {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={form.control} name="reason" render={({ field }) => (
+                <FormItem className="sm:col-span-2"><FormLabel>{t('records.payReason')}</FormLabel><FormControl><Input maxLength={300} {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
             <DialogFooter>

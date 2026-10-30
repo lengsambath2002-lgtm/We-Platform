@@ -27,6 +27,7 @@ import com.businessplatform.common.i18n.Text;
 import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.hr.domain.EmployeePay;
 import com.businessplatform.hr.domain.EmployeeProfile;
+import com.businessplatform.hr.domain.PayChange;
 import com.businessplatform.hr.domain.LeaveRequest;
 import com.businessplatform.hr.domain.LeaveType;
 import com.businessplatform.hr.domain.OvertimeRequest;
@@ -43,6 +44,7 @@ import com.businessplatform.hr.repository.PayrollRepositories.EmployeePayReposit
 import com.businessplatform.hr.repository.PayrollRepositories.PayRunRepository;
 import com.businessplatform.hr.repository.PayrollRepositories.PayrollSettingsRepository;
 import com.businessplatform.hr.repository.PayrollRepositories.PayslipRepository;
+import com.businessplatform.hr.repository.RecordRepositories.PayChanges;
 import com.businessplatform.identity.domain.AppUser;
 import com.businessplatform.identity.repository.UserRepository;
 import com.businessplatform.mail.MailService;
@@ -87,6 +89,7 @@ public class PayrollService {
     private final MailService mail;
     private final Messages messages;
     private final Environment env;
+    private final PayChanges payChanges;
     private final Clock clock;
 
     // ── Settings ─────────────────────────────────────────────────────────────────────
@@ -212,6 +215,19 @@ public class PayrollService {
         pay.setUpdatedBy(ctx.userId());
         pay.setUpdatedAt(clock.instant());
         pays.save(pay);
+        if (before == null || before.compareTo(pay.getMonthlySalary()) != 0) {
+            PayChange c = new PayChange();
+            c.setId(Ids.next());
+            c.setOrgId(ctx.orgId());
+            c.setUserId(userId);
+            c.setMonthlySalary(pay.getMonthlySalary());
+            c.setPrevious(before);
+            c.setEffectiveOn(LeaveService.today(clock));
+            c.setReason(ProfileService.clean(in.reason()));
+            c.setChangedBy(ctx.userId());
+            c.setCreatedAt(clock.instant());
+            payChanges.save(c);
+        }
         // The amount itself stays out of the audit log, which more people than payroll may read.
         activity.record(ctx.orgId(), HrAccess.MODULE, ProfileService.RECORD, p.getId(), ctx.userId(),
                 before == null ? "employee.pay.set" : "employee.pay.changed", Map.of());

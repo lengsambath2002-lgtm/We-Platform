@@ -66,6 +66,47 @@ public class EmployeeProfile {
     @Column(name = "emergency_relation")
     private String emergencyRelation;
 
+    // Personal details (private: the person and HR).
+
+    @Column(name = "nickname")
+    private String nickname;
+
+    @Column(name = "duty")
+    private String duty;
+
+    @Column(name = "category")
+    private String category;
+
+    @Column(name = "gender")
+    private String gender;
+
+    @Column(name = "date_of_birth")
+    private java.time.LocalDate dateOfBirth;
+
+    @Column(name = "nationality")
+    private String nationality;
+
+    @Column(name = "id_type")
+    private String idType;
+
+    @Column(name = "id_number")
+    private String idNumber;
+
+    @Column(name = "id_expires_on")
+    private java.time.LocalDate idExpiresOn;
+
+    @Column(name = "nssf_number")
+    private String nssfNumber;
+
+    @Column(name = "home_address")
+    private String homeAddress;
+
+    @Column(name = "personal_email")
+    private String personalEmail;
+
+    @Column(name = "personal_phone")
+    private String personalPhone;
+
     /** The person's work schedule; null = the organisation's default. */
     @Column(name = "schedule_id")
     private UUID scheduleId;

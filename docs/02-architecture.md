@@ -156,6 +156,16 @@ remind the approver (and their delegate) after `remind_after_hours`, again every
 `escalate_after_hours`: the organisation's Admins are told and may then decide too (`ApprovalReminderJob`, hourly,
 `platform.approvals.reminder-cron`).
 
+### Employee records (built)
+
+On each person's HR page: personal details (`employee_profile`: nickname, duty, category for everyone; gender, birth date,
+nationality, ID or passport with expiry, NSSF number, address and personal contacts private to the person and their
+HR managers), contracts (`employee_contract`: probation, fixed-term FDC with an end, unlimited UDC, internship; probation
+end; signed file; salary only for payroll and the person), documents (`employee_document`: ID, contract, certificate,
+medical, other; expiry; people file their own certificates, HR files IDs and contracts) and, for payroll, salary
+history (`pay_change`, written on every salary change with an optional reason). HR managers of a unit manage these for
+its people. The HR dashboard lists what ends within 30 days (and lately): contracts, probations, IDs, documents.
+
 ### General Business permissions (built)
 
 `business.view` for Owners, Admins and Members with the module on; `business.manage` for Owners and Admins.

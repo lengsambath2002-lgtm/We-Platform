@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/common/page-header';
 import { ErrorState, ListSkeleton, PermissionDenied } from '@/components/common/states';
+import { ExpiringCard } from '@/components/hr/records-ui';
 import { orgToday } from '@/components/hr/attendance-ui';
 import { RunBadge, monthText } from '@/components/hr/payroll-ui';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ export default function HrDashboardPage() {
               </Link>
             ) : <Tile label={t('hr.payrollTitle')} value="—" hint={t('hr.noRuns')} href={`/${slug}/hr/payroll`} />}
           </div>
+          <div className="mt-6"><ExpiringCard org={slug} /></div>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
             <section aria-labelledby="dept-h" className="rounded-lg border bg-card p-4">
