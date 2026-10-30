@@ -28,7 +28,7 @@ import com.businessplatform.identity.repository.UserSessionRepository;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Sign-up, sign-in, refresh (rotating, reuse revokes every session) and sign-out. Five wrong
+ * Sign-up, sign-in (then a code, with two-step sign-in on), refresh (rotating, reuse revokes every session) and sign-out. Five wrong
  * passwords lock the account for 15 minutes. Wrong email and wrong password answer the same. A new
  * account takes the request language ({@code en} or {@code km}) and is emailed a link to confirm its address. A
  * disabled account cannot sign in or refresh.
@@ -47,6 +47,7 @@ public class AuthService {
     private final AuthProperties props;
     private final SuperAdmins superAdmins;
     private final EmailVerificationService verification;
+    private final TwoStepChallenges twoStep;
     private final Clock clock;
 
     @Transactional
@@ -88,6 +89,12 @@ public class AuthService {
         u.setFailedLogins((short) 0);
         u.setLockedUntil(null);
         // Only after the right password, so a disabled account isn't revealed to someone guessing.
+        if (u.isDisabled()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
+        }
+        if (u.isTwoStepOn()) {
+            return SessionResponse.challenge(twoStep.issue(u.getId()));
+        }
         return start(u, userAgent, ip);
     }
 

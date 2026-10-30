@@ -19,9 +19,11 @@ import com.businessplatform.identity.payload.AccountPayloads.ResetTokenState;
 import com.businessplatform.identity.payload.AuthPayloads.SessionResponse;
 import com.businessplatform.identity.payload.AuthPayloads.SignInRequest;
 import com.businessplatform.identity.payload.AuthPayloads.SignUpRequest;
+import com.businessplatform.identity.payload.AuthPayloads.TwoStepRequest;
 import com.businessplatform.identity.service.AccountService;
 import com.businessplatform.identity.service.AuthService;
 import com.businessplatform.identity.service.EmailVerificationService;
+import com.businessplatform.identity.service.TwoStepService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,6 +45,7 @@ public class AuthController {
     private final AuthService auth;
     private final AccountService account;
     private final EmailVerificationService verification;
+    private final TwoStepService twoStep;
     private final AuthProperties props;
 
     @PostMapping("/sign-up")
@@ -95,6 +98,13 @@ public class AuthController {
         return session(account.resetPassword(in.token(), in.password(), ua(http), ip(http)), client);
     }
 
+    /** The second step of a sign-in: the challenge the password step answered, and a code from the app. */
+    @PostMapping("/two-step")
+    public ResponseEntity<ApiResponse<SessionResponse>> twoStep(@Valid @RequestBody TwoStepRequest in,
+            HttpServletRequest http, @RequestHeader(value = "X-Client", required = false) String client) {
+        return session(twoStep.complete(in.challenge(), in.code(), ua(http), ip(http)), client);
+    }
+
     /** Confirms the email of the account the link was sent to (no sign-in needed: the link is the proof). */
     @PostMapping("/verify-email")
     public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody ResetTokenRequest in) {
@@ -106,7 +116,7 @@ public class AuthController {
     }
 
     private ResponseEntity<ApiResponse<SessionResponse>> session(SessionResponse s, String client) {
-        if ("mobile".equalsIgnoreCase(client)) {
+        if ("mobile".equalsIgnoreCase(client) || s.twoStep() != null) {
             return ResponseEntity.ok(ApiResponse.ok(s));
         }
         SessionResponse web = new SessionResponse(s.accessToken(), s.expiresIn(), s.user(), null);

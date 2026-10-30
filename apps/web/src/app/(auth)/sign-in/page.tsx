@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useT } from '@/i18n/provider';
 import { ApiError } from '@/lib/api/client';
 import { useSession } from '@/lib/auth/session';
@@ -23,6 +24,41 @@ const makeSchema = (t: ReturnType<typeof useT>['t']) => z.object({
 });
 type Values = z.infer<ReturnType<typeof makeSchema>>;
 
+/** The second step: a code from the authenticator app, or a recovery code. */
+function TwoStep({ challenge, onRestart }: { challenge: string; onRestart: () => void }) {
+  const { t } = useT();
+  const { completeTwoStep } = useSession();
+  const [recovery, setRecovery] = useState(false);
+  const [code, setCode] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  return (
+    <form className="space-y-4" noValidate onSubmit={async (e) => {
+      e.preventDefault();
+      setBusy(true); setError(null);
+      try {
+        await completeTwoStep(challenge, code);
+      } catch (x) {
+        if (x instanceof ApiError && x.code === 'INVALID_TOKEN') onRestart();
+        else if (x instanceof ApiError && x.code === 'ACCOUNT_LOCKED') setError(t('auth.accountLocked'));
+        else setError(x instanceof ApiError && x.fields[0]?.message ? x.fields[0].message : t('common.errGeneric'));
+      } finally { setBusy(false); }
+    }}>
+      <p className="text-sm text-muted-foreground">{t(recovery ? 'auth.twoStepRecoveryLead' : 'auth.twoStepLead')}</p>
+      {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+      <div className="space-y-1.5">
+        <Label htmlFor="two-step-code">{t('auth.twoStepCode')}</Label>
+        <Input id="two-step-code" key={String(recovery)} autoFocus autoComplete="one-time-code" inputMode={recovery ? 'text' : 'numeric'} maxLength={recovery ? 20 : 6}
+          value={code} onChange={(e) => setCode(recovery ? e.target.value : e.target.value.replace(/\D/g, ''))} />
+      </div>
+      <Button type="submit" className="w-full" disabled={busy || (recovery ? code.trim().length < 10 : code.length !== 6)}>{t('auth.twoStepVerify')}</Button>
+      <button type="button" className="w-full text-center text-sm font-medium text-primary hover:underline" onClick={() => { setRecovery(!recovery); setCode(''); setError(null); }}>
+        {t(recovery ? 'auth.twoStepUseApp' : 'auth.twoStepUseRecovery')}
+      </button>
+    </form>
+  );
+}
+
 function SignIn() {
   const { t } = useT();
   const schema = useMemo(() => makeSchema(t), [t]);
@@ -30,6 +66,7 @@ function SignIn() {
   const router = useRouter();
   const next = safeNext(useSearchParams().get('next'));
   const [error, setError] = useState<string | null>(null);
+  const [challenge, setChallenge] = useState<string | null>(null);
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } });
 
   useEffect(() => {
@@ -39,7 +76,7 @@ function SignIn() {
   const onSubmit = form.handleSubmit(async (v) => {
     setError(null);
     try {
-      await signIn(v.email, v.password);
+      setChallenge(await signIn(v.email, v.password));
     } catch (e) {
       if (e instanceof ApiError && e.code === 'INVALID_CREDENTIALS') setError(t('auth.wrongCredentials'));
       else if (e instanceof ApiError && e.code === 'ACCOUNT_LOCKED') setError(t('auth.accountLocked'));
@@ -51,10 +88,11 @@ function SignIn() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">{t('auth.signIn')}</CardTitle>
-        <CardDescription>{t('auth.welcomeBack')}</CardDescription>
+        <CardTitle className="text-lg">{t(challenge ? 'auth.twoStepTitle' : 'auth.signIn')}</CardTitle>
+        {!challenge && <CardDescription>{t('auth.welcomeBack')}</CardDescription>}
       </CardHeader>
       <CardContent>
+        {challenge ? <TwoStep challenge={challenge} onRestart={() => { setChallenge(null); setError(t('auth.twoStepExpired')); }} /> : <>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-4" noValidate>
             {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
@@ -83,6 +121,7 @@ function SignIn() {
         <p className="mt-6 text-center text-sm text-muted-foreground">
           {t('auth.newHere')} <Link className="font-medium text-primary hover:underline" href={`/sign-up${next ? `?next=${encodeURIComponent(next)}` : ''}`}>{t('auth.createAnAccount')}</Link>
         </p>
+        </>}
       </CardContent>
     </Card>
   );

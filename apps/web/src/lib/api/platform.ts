@@ -68,6 +68,8 @@ export interface PlatformUserDetail {
   disabledReason: string | null;
   signedInDevices: number;
   organisations: { id: string; slug: string; name: string; role: string; orgStatus: OrgStatus }[];
+  /** Two-step sign-in is on. */
+  twoStep: boolean;
 }
 
 export interface PlatformAuditEntry {
@@ -137,6 +139,7 @@ export const platformApi = {
   disableUser: (id: string, reason: string) => http.post<PlatformUserDetail>(`/platform/users/${id}/disable`, { reason }),
   enableUser: (id: string) => http.post<PlatformUserDetail>(`/platform/users/${id}/enable`),
   signOutUser: (id: string) => http.post<PlatformUserDetail>(`/platform/users/${id}/sign-out`),
+  resetTwoStep: (id: string) => http.post<PlatformUserDetail>(`/platform/users/${id}/two-step/reset`),
   sendPasswordReset: (id: string) => http.post<PlatformUserDetail>(`/platform/users/${id}/password-reset`),
   setSuperAdmin: (id: string, enabled: boolean) => http.put<PlatformUserDetail>(`/platform/users/${id}/super-admin`, { enabled }),
 };

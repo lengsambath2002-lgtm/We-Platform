@@ -45,6 +45,7 @@ public class AccountService {
     private final AuthService auth;
     private final MailService mail;
     private final EmailVerificationService verification;
+    private final TwoStepChallenges twoStep;
     private final Messages messages;
     private final Clock clock;
     private final String appUrl;
@@ -53,7 +54,7 @@ public class AccountService {
     private final AttemptLimiter perIp;
 
     public AccountService(UserRepository users, UserSessionRepository sessions, PasswordResetRepository resets,
-            PasswordEncoder encoder, AuthService auth, MailService mail, EmailVerificationService verification, Messages messages, Clock clock,
+            PasswordEncoder encoder, AuthService auth, MailService mail, EmailVerificationService verification, TwoStepChallenges twoStep, Messages messages, Clock clock,
             @Value("${platform.app-url}") String appUrl) {
         this.users = users;
         this.sessions = sessions;
@@ -62,6 +63,7 @@ public class AccountService {
         this.auth = auth;
         this.mail = mail;
         this.verification = verification;
+        this.twoStep = twoStep;
         this.messages = messages;
         this.clock = clock;
         this.appUrl = appUrl;
@@ -215,6 +217,10 @@ public class AccountService {
         sessions.revokeAll(u.getId(), now);
         // The link reached this inbox: the address is theirs.
         verification.markVerified(u);
+        // The emailed link replaces the password, not the code.
+        if (u.isTwoStepOn()) {
+            return SessionResponse.challenge(twoStep.issue(u.getId()));
+        }
         return auth.start(u, userAgent, ip);
     }
 

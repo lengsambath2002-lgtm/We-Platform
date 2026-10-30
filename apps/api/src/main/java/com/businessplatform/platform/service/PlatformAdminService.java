@@ -59,6 +59,7 @@ public class PlatformAdminService {
     private final ModuleService modules;
     private final ActivityService activity;
     private final AccountService accounts;
+    private final com.businessplatform.identity.service.TwoStepService twoStep;
     private final Clock clock;
     private final com.businessplatform.billing.service.SubscriptionService subscriptions;
     private final com.businessplatform.billing.service.PlatformInvoiceService invoiceService;
@@ -307,6 +308,21 @@ public class PlatformAdminService {
         return detail(u);
     }
 
+    /**
+     * Turns off two-step sign-in for someone who lost their phone and recovery codes (after checking who they are,
+     * outside the platform). They are emailed; they sign in with the password and can set it up again.
+     */
+    @Transactional
+    public UserDetail resetTwoStep(UUID id) {
+        UUID me = requireSuperAdmin();
+        AppUser u = account(id);
+        if (!twoStep.reset(u.getId())) {
+            throw new BusinessException(ErrorCode.INVALID_STATE, "Two-step sign-in is off", List.of());
+        }
+        record(me, "user.two_step_reset", PlatformAudit.USER, u.getId(), Map.of());
+        return detail(users.findById(id).orElseThrow());
+    }
+
     /** Grants or revokes super admin. Nobody revokes their own, so the platform always keeps one. */
     @Transactional
     public UserDetail setSuperAdmin(UUID id, boolean on) {
@@ -333,7 +349,7 @@ public class PlatformAdminService {
         users.flush();
         Instant now = clock.instant();
         return new UserDetail(platform.user(u.getId(), now), u.getLocale(), u.getDisabledAt(), u.getDisabledReason(),
-                sessions.findActive(u.getId(), now).size(), platform.userOrgs(u.getId()));
+                sessions.findActive(u.getId(), now).size(), platform.userOrgs(u.getId()), u.isTwoStepOn());
     }
 
     // ── Audit ────────────────────────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ export const en = {
   resetInvalid: 'This link has expired or was already used.',
   requestNewLink: 'Ask for a new link',
   resetDone: 'Password changed. You are signed in.',
+  resetDoneSignIn: 'Password changed. Sign in with it and a code from your authenticator app.',
   // account: password
   passwordTitle: 'Password',
   passwordLead: 'Changing it signs you out on your other devices.',
@@ -110,6 +111,7 @@ export const km: Record<keyof typeof en, string> = {
   resetInvalid: 'តំណនេះផុតកំណត់ ឬត្រូវបានប្រើរួចហើយ។',
   requestNewLink: 'ស្នើសុំតំណថ្មី',
   resetDone: 'បានប្ដូរពាក្យសម្ងាត់។ អ្នកបានចូលគណនីហើយ។',
+  resetDoneSignIn: 'បានប្ដូរពាក្យសម្ងាត់។ សូមចូលដោយប្រើវា និងលេខកូដពីកម្មវិធីផ្ទៀងផ្ទាត់របស់អ្នក។',
   passwordTitle: 'ពាក្យសម្ងាត់',
   passwordLead: 'ការប្ដូរពាក្យសម្ងាត់នឹងចាកចេញពីឧបករណ៍ផ្សេងទៀតរបស់អ្នក។',
   currentPassword: 'ពាក្យសម្ងាត់បច្ចុប្បន្ន',

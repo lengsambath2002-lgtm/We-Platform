@@ -1,6 +1,7 @@
 package com.businessplatform.identity.payload;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import jakarta.validation.constraints.Email;
@@ -28,6 +29,26 @@ public final class AccountPayloads {
     }
 
     /** Whether a reset link can still be used (the page checks before asking for a password). */
+    /** {@code recoveryCodesLeft}: unused recovery codes. */
+    public record TwoStepStatus(boolean enabled, Instant enabledAt, int recoveryCodesLeft) {
+    }
+
+    /** The secret to type in, and the otpauth:// address to show as a QR code. */
+    public record TwoStepSetup(String secret, String uri) {
+    }
+
+    public record TwoStepCodeRequest(@NotBlank @Size(max = 20) String code) {
+    }
+
+    public record TwoStepOffRequest(@NotBlank String password, @NotBlank @Size(max = 20) String code) {
+    }
+
+    public record PasswordRequest(@NotBlank String password) {
+    }
+
+    public record RecoveryCodes(List<String> codes) {
+    }
+
     public record ResetTokenState(boolean valid) {
     }
 

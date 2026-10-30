@@ -52,8 +52,9 @@ public final class PlatformPayloads {
     public record UserOrg(UUID id, String slug, String name, String role, String orgStatus) {
     }
 
+    /** {@code twoStep}: two-step sign-in is on. */
     public record UserDetail(UserRow user, String locale, Instant disabledAt, String disabledReason,
-            long signedInDevices, List<UserOrg> organisations) {
+            long signedInDevices, List<UserOrg> organisations, boolean twoStep) {
     }
 
     /** {@code targetName}: the organisation's or person's current name. */

@@ -113,6 +113,7 @@ const ACTIONS: Record<string, MessageKey> = {
   'user.enabled': 'platform.act_user_enabled',
   'user.signed_out': 'platform.act_user_signed_out',
   'user.password_reset_sent': 'platform.act_user_password_reset_sent',
+  'user.two_step_reset': 'platform.act_user_two_step_reset',
   'user.super_admin.granted': 'platform.act_user_super_admin_granted',
   'user.super_admin.revoked': 'platform.act_user_super_admin_revoked',
   'org.viewed': 'platform.act_org_viewed',
