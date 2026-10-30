@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.businessplatform.activity.RecordLabeler;
 import com.businessplatform.hr.repository.AttendanceRecordRepository;
 import com.businessplatform.hr.repository.OvertimeRequestRepository;
+import com.businessplatform.hr.repository.PayrollRepositories.PayRunRepository;
 import com.businessplatform.hr.repository.WorkScheduleRepository;
 import com.businessplatform.identity.domain.AppUser;
 import com.businessplatform.identity.repository.UserRepository;
@@ -18,7 +19,7 @@ import com.businessplatform.org.service.OrgContext;
 
 import lombok.RequiredArgsConstructor;
 
-/** Names and links of attendance records, overtime requests and work schedules for the audit log. */
+/** Names and links of attendance records, overtime requests, work schedules and pay runs for the audit log. */
 @Component
 @RequiredArgsConstructor
 public class AttendanceRecordLabeler implements RecordLabeler {
@@ -26,12 +27,13 @@ public class AttendanceRecordLabeler implements RecordLabeler {
     private final AttendanceRecordRepository records;
     private final OvertimeRequestRepository overtime;
     private final WorkScheduleRepository schedules;
+    private final PayRunRepository runs;
     private final UserRepository users;
 
     @Override
     public boolean handles(String recordType) {
         return TimekeepingService.RECORD.equals(recordType) || OvertimeService.RECORD.equals(recordType)
-                || ScheduleService.RECORD.equals(recordType);
+                || ScheduleService.RECORD.equals(recordType) || PayrollService.RUN.equals(recordType);
     }
 
     @Override
@@ -51,6 +53,12 @@ public class AttendanceRecordLabeler implements RecordLabeler {
                 Map<UUID, AppUser> people = people(found.stream().map(o -> o.getUserId()).toList());
                 found.forEach(o -> out.put(o.getId(), new Label(OvertimeService.title(o, people.get(o.getUserId())),
                         OvertimeService.link(ctx))));
+            }
+            case PayrollService.RUN -> {
+                runs.findAllById(ids).stream().filter(r -> r.getOrgId().equals(ctx.orgId())).forEach(r -> out.put(r.getId(),
+                        new Label("Payroll · " + PayrollService.monthName(r.getMonth()), base + "/payroll/" + r.getId())));
+                // Settings changes are recorded against the organisation itself.
+                ids.stream().filter(ctx.orgId()::equals).forEach(id -> out.put(id, new Label("Payroll settings", base + "/payroll/settings")));
             }
             default -> schedules.findAllById(ids).stream().filter(s -> s.getOrgId().equals(ctx.orgId()))
                     .forEach(s -> out.put(s.getId(), new Label(s.getName(), base + "/settings")));

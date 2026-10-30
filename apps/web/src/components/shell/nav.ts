@@ -171,9 +171,11 @@ export function hrNav(ctx: OrgContext): NavItem[] {
     { href: 'hr', label: tr('hr.navHome'), icon: CalendarCheck2, exact: true },
     { href: 'hr/attendance', label: tr('hr.navAttendance'), icon: Clock, exact: true },
     { href: 'hr/people', label: tr('hr.navPeople'), icon: Contact },
+    { href: 'hr/payslips', label: tr('hr.navPayslips'), icon: Receipt },
     ...(can('hr.manage') ? [
       { href: 'hr/attendance/board', label: tr('hr.navTeamAttendance'), icon: UsersRound },
       { href: 'hr/requests', label: tr('hr.navRequests'), icon: Inbox },
+      { href: 'hr/payroll', label: tr('hr.navPayroll'), icon: Banknote },
       { href: 'hr/settings', label: tr('hr.navSettings'), icon: SlidersHorizontal },
     ] : []),
   ];
