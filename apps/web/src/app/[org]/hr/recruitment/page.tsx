@@ -3,7 +3,7 @@
 import { BriefcaseBusiness, CalendarClock, Plus, Trash2, UserCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { PageHeader } from '@/components/common/page-header';
@@ -111,7 +111,9 @@ function TemplateEditor({ org }: { org: string }) {
   const { t } = useT();
   const { data, error, isPending, refetch } = useOnboardingTemplate(org);
   const [steps, setSteps] = useState<TemplateStep[]>([]);
-  useEffect(() => { if (data) setSteps(data.items); }, [data]);
+  // Filled once: a background refresh must not wipe unsaved edits.
+  const filled = useRef(false);
+  useEffect(() => { if (data && !filled.current) { filled.current = true; setSteps(data.items); } }, [data]);
   const save = useOrgMutation(org, (items: TemplateStep[]) => recruitmentApi.saveTemplate(org, items));
   if (error) return <ErrorState error={error} retry={() => refetch()} />;
   if (isPending) return <ListSkeleton rows={4} />;
