@@ -3,3 +3,6 @@ spring:
     url: ${TEST_DATABASE_URL:jdbc:postgresql://127.0.0.1:5433/business_platform_test}
   flyway:
     clean-disabled: false
+platform:
+  # PlatformAdminTest signs this address up to check the first super admins come from the configuration.
+  super-admins: First.Admin@Platform.test

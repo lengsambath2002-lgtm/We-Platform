@@ -71,7 +71,7 @@ public class ShopLinkService {
             throw ClientApiException.invalidRequest("businessName is longer than " + MAX_NAME + " characters");
         }
         UUID by = parse(in.linkedBy());
-        Organisation org = orgs.findById(in.orgId()).filter(o -> !o.isDeleted()).orElse(null);
+        Organisation org = orgs.findById(in.orgId()).filter(Organisation::isLive).orElse(null);
         boolean allowed = org != null && by != null && memberships.findByOrgIdAndUserId(org.getId(), by)
                 .filter(m -> Membership.ACTIVE.equals(m.getStatus()) && m.getRole().isAdmin()).isPresent();
         if (!allowed) {
@@ -105,12 +105,12 @@ public class ShopLinkService {
 
     /**
      * The shop's current link, so VirtualBiz can confirm it before granting access through it (an admin may
-     * have unlinked it here). A link to a deleted organisation counts as gone.
+     * have unlinked it here). A link to a deleted or suspended organisation counts as gone.
      */
     @Transactional(readOnly = true)
     public LinkResponse get(UUID businessId) {
         ShopLink link = links.findById(businessId).orElseThrow(() -> ClientApiException.notFound("This shop is not linked"));
-        if (orgs.findById(link.getOrgId()).filter(o -> !o.isDeleted()).isEmpty()) {
+        if (orgs.findById(link.getOrgId()).filter(Organisation::isLive).isEmpty()) {
             throw ClientApiException.notFound("This shop is not linked");
         }
         return new LinkResponse(link.getOrgId(), businessId, link.getBusinessName(), link.getLinkedAt());

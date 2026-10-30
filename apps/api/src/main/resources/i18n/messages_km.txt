@@ -17,6 +17,8 @@ VALIDATION_FAILED = ទិន្នន័យមិនត្រឹមត្រូ
 UNAUTHORIZED = សូមចូលគណនីជាមុនសិន
 INVALID_CREDENTIALS = អ៊ីមែល ឬពាក្យសម្ងាត់មិនត្រឹមត្រូវ
 ACCOUNT_LOCKED = គណនីត្រូវបានចាក់សោបណ្ដោះអាសន្ន។ សូមព្យាយាមម្ដងទៀតនៅពេលក្រោយ
+ACCOUNT_DISABLED = គណនីនេះត្រូវបានបិទ។ សូមទាក់ទងអ្នកគ្រប់គ្រងវេទិកា
+ORG_SUSPENDED = ស្ថាប័ននេះត្រូវបានផ្អាក។ សូមទាក់ទងអ្នកគ្រប់គ្រងវេទិកា
 FORBIDDEN = អ្នកមិនមានសិទ្ធិធ្វើការនេះទេ
 MODULE_DISABLED = ម៉ូឌុលនេះមិនទាន់បើកសម្រាប់ស្ថាប័នរបស់អ្នកទេ
 NOT_FOUND = រកមិនឃើញ
@@ -223,3 +225,15 @@ Only a draft expense can be deleted = មានតែការចំណាយព
 Only an approved expense can be marked paid = មានតែការចំណាយដែលបានអនុម័តប៉ុណ្ណោះ ដែលអាចសម្គាល់ថាបានបង់
 Expense paid: {title} = ការចំណាយបានបង់សងហើយ៖ {title}
 The receipt can't be changed any more = បង្កាន់ដៃមិនអាចផ្លាស់ប្ដូរបានទៀតទេ
+
+# Platform console (super admins)
+Restore the organisation first = សូមស្ដារស្ថាប័នឡើងវិញជាមុនសិន
+The organisation is already suspended = ស្ថាប័ននេះត្រូវបានផ្អាករួចហើយ
+The organisation is not suspended = ស្ថាប័ននេះមិនត្រូវបានផ្អាកទេ
+The organisation is not deleted = ស្ថាប័ននេះមិនត្រូវបានលុបទេ
+You cannot disable your own account = អ្នកមិនអាចបិទគណនីផ្ទាល់ខ្លួនបានទេ
+Remove super admin from this account first = សូមដកសិទ្ធិអ្នកគ្រប់គ្រងកំពូលចេញពីគណនីនេះជាមុនសិន
+The account is already disabled = គណនីនេះត្រូវបានបិទរួចហើយ
+The account is not disabled = គណនីនេះមិនត្រូវបានបិទទេ
+Enable the account first = សូមបើកគណនីឡើងវិញជាមុនសិន
+You cannot remove super admin from yourself = អ្នកមិនអាចដកសិទ្ធិអ្នកគ្រប់គ្រងកំពូលពីខ្លួនឯងបានទេ

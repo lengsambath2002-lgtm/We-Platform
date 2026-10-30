@@ -37,9 +37,16 @@ function OrgFrame({ children }: { children: ReactNode }) {
   }
   if (ctx.error) {
     const missing = ctx.error instanceof ApiError && ctx.error.status === 404;
+    const suspended = ctx.error instanceof ApiError && ctx.error.code === 'ORG_SUSPENDED';
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
-        {missing ? (
+        {suspended ? (
+          <>
+            <h1 className="text-lg font-semibold">{t('shell.orgSuspended')}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{t('shell.orgSuspendedBody')}</p>
+            <Button asChild className="mt-6"><Link href="/account">{t('shell.account')}</Link></Button>
+          </>
+        ) : missing ? (
           <>
             <h1 className="text-lg font-semibold">{t('shell.orgNotFound')}</h1>
             <p className="mt-2 text-sm text-muted-foreground">{t('shell.orgNotFoundBody')}</p>

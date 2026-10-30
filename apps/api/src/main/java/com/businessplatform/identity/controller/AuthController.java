@@ -115,7 +115,7 @@ public class AuthController {
         return http.getHeader(HttpHeaders.USER_AGENT);
     }
 
-    static String ip(HttpServletRequest http) {
+    public static String ip(HttpServletRequest http) {
         String f = http.getHeader("X-Forwarded-For");
         return f != null && !f.isBlank() ? f.split(",")[0].trim() : http.getRemoteAddr();
     }

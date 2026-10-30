@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * Sign-up, sign-in, refresh (rotating, reuse revokes every session) and sign-out. Five wrong
  * passwords lock the account for 15 minutes. Wrong email and wrong password answer the same. A new
- * account takes the request language ({@code en} or {@code km}).
+ * account takes the request language ({@code en} or {@code km}). A disabled account cannot sign in or refresh.
  */
 @Service
 @RequiredArgsConstructor
@@ -44,6 +44,7 @@ public class AuthService {
     private final PasswordEncoder encoder;
     private final TokenService tokens;
     private final AuthProperties props;
+    private final SuperAdmins superAdmins;
     private final Clock clock;
 
     @Transactional
@@ -59,6 +60,7 @@ public class AuthService {
         u.setName(name.strip());
         u.setPasswordHash(encoder.encode(password));
         u.setLocale(Messages.requestLanguage());
+        u.setSuperAdmin(superAdmins.listed(email));
         users.save(u);
         return start(u, userAgent, ip);
     }
@@ -82,6 +84,7 @@ public class AuthService {
         }
         u.setFailedLogins((short) 0);
         u.setLockedUntil(null);
+        // Only after the right password, so a disabled account isn't revealed to someone guessing.
         return start(u, userAgent, ip);
     }
 
@@ -120,7 +123,7 @@ public class AuthService {
     }
 
     public static UserResponse toUser(AppUser u) {
-        return new UserResponse(u.getId(), u.getName(), u.getEmail(), u.getLocale(), u.getAvatarUrl());
+        return new UserResponse(u.getId(), u.getName(), u.getEmail(), u.getLocale(), u.getAvatarUrl(), u.isSuperAdmin());
     }
 
     /** A new signed-in device. */
@@ -128,8 +131,14 @@ public class AuthService {
         return start(u, userAgent, ip, null);
     }
 
-    /** A new session row; {@code previous} is the row a refresh rotates from (same device), or null. */
+    /**
+     * A new session row; {@code previous} is the row a refresh rotates from (same device), or null. Every way
+     * of signing in ends here, so a disabled account is refused here.
+     */
     private SessionResponse start(AppUser u, String userAgent, String ip, UserSession previous) {
+        if (u.isDisabled()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
+        }
         String refresh = Tokens.random();
         Instant now = clock.instant();
         UserSession s = new UserSession();

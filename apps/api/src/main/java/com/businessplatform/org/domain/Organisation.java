@@ -46,8 +46,27 @@ public class Organisation {
     @Column(name = "deleted_by")
     private UUID deletedBy;
 
+    /** Set by a super admin: closed to its members until reactivated; data is kept. */
+    @Column(name = "suspended_at")
+    private Instant suspendedAt;
+
+    @Column(name = "suspended_by")
+    private UUID suspendedBy;
+
+    @Column(name = "suspended_reason", length = 500)
+    private String suspendedReason;
+
     public boolean isDeleted() {
         return deletedAt != null;
+    }
+
+    public boolean isSuspended() {
+        return suspendedAt != null;
+    }
+
+    /** Neither deleted nor suspended: its members (and linked apps) can use it. */
+    public boolean isLive() {
+        return !isDeleted() && !isSuspended();
     }
 
     @PrePersist

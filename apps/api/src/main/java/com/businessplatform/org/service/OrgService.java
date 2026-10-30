@@ -294,8 +294,7 @@ public class OrgService {
     @Transactional(readOnly = true)
     public InvitationPreview preview(String token) {
         Invitation i = live(token, false);
-        Organisation o = orgs.findById(i.getOrgId()).filter(x -> !x.isDeleted())
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
+        Organisation o = liveOrg(i);
         return new InvitationPreview(o.getName(), i.getEmail(), i.getRole(), !i.getExpiresAt().isAfter(clock.instant()));
     }
 
@@ -303,8 +302,7 @@ public class OrgService {
     @Transactional
     public OrgSummary accept(String token) {
         Invitation i = live(token, true);
-        orgs.findById(i.getOrgId()).filter(x -> !x.isDeleted())
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
+        liveOrg(i);
         AppUser me = users.findById(CurrentUser.id()).orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
         if (!me.getEmail().equalsIgnoreCase(i.getEmail())) {
             throw BusinessException.field(ErrorCode.FORBIDDEN, "email", "This invitation is for another email address");
@@ -320,6 +318,16 @@ public class OrgService {
                 Map.of("name", me.getName(), "role", m.getRole().name()));
         Organisation o = orgs.findById(i.getOrgId()).orElseThrow();
         return new OrgSummary(o.getId(), o.getSlug(), o.getName(), m.getRole());
+    }
+
+    /** The invitation's organisation: INVALID_TOKEN once deleted, ORG_SUSPENDED while suspended. */
+    private Organisation liveOrg(Invitation i) {
+        Organisation o = orgs.findById(i.getOrgId()).filter(x -> !x.isDeleted())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
+        if (o.isSuspended()) {
+            throw new BusinessException(ErrorCode.ORG_SUSPENDED);
+        }
+        return o;
     }
 
     // ── Teams ────────────────────────────────────────────────────────────────────────
