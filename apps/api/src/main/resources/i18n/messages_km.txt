@@ -369,3 +369,16 @@ Your payslip for {month} from {org} = តារាងបើកប្រាក់
 {org} has paid your salary for {month}. Your payslip is ready to view. = {org} បានបើកប្រាក់ខែរបស់អ្នកសម្រាប់ {month} ហើយ។ តារាងបើកប្រាក់ខែរបស់អ្នករួចរាល់សម្រាប់មើល។
 View your payslip = មើលតារាងបើកប្រាក់ខែរបស់អ្នក
 Payslips are private: only you and your organisation's HR can see them. = តារាងបើកប្រាក់ខែជាឯកជន៖ មានតែអ្នក និងផ្នែកធនធានមនុស្សនៃស្ថាប័នរបស់អ្នកប៉ុណ្ណោះដែលអាចមើលឃើញ។
+
+# HR: recruitment and onboarding
+This opening is closed = មុខតំណែងនេះបានបិទហើយ
+This candidate is hired already = បេក្ខជននេះត្រូវបានជ្រើសរើសរួចហើយ
+Say why the candidate isn't going ahead = សូមប្រាប់មូលហេតុដែលបេក្ខជនមិនបន្តទៅមុខ
+A hire can't be removed = មិនអាចលុបបុគ្គលិកដែលបានជ្រើសរើសបានទេ
+This candidate's application is closed = ពាក្យស្នើសុំរបស់បេក្ខជននេះបានបិទហើយ
+Choose members of the organisation = សូមជ្រើសសមាជិកនៃស្ថាប័ន
+Add the candidate's email to invite them = សូមបន្ថែមអ៊ីមែលរបស់បេក្ខជន ដើម្បីអញ្ជើញពួកគេ
+Onboarding starts when the candidate is hired = ការណែនាំការងារចាប់ផ្ដើម នៅពេលបេក្ខជនត្រូវបានជ្រើសរើស
+You are the hiring manager for {title} = អ្នកជាអ្នកគ្រប់គ្រងការជ្រើសរើសសម្រាប់ {title}
+Interview with {name} for {title} = សម្ភាសន៍ជាមួយ {name} សម្រាប់ {title}
+Interview feedback on {name} = មតិយោបល់ពីការសម្ភាសន៍ {name}
