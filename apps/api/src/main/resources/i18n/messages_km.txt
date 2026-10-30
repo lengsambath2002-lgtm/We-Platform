@@ -406,3 +406,9 @@ This course isn't open for sign-up = វគ្គនេះមិនបើកឱ�
 Already on this course = មានក្នុងវគ្គនេះរួចហើយ
 This course is full = វគ្គនេះពេញហើយ
 You are enrolled in {title} = អ្នកបានចុះឈ្មោះក្នុង {title}
+
+# General Business: sales pipeline
+Say why the deal was lost = សូមប្រាប់មូលហេតុដែលបាត់បង់កិច្ចព្រមព្រៀង
+This deal is closed = កិច្ចព្រមព្រៀងនេះបានបិទហើយ
+Choose a customer, or give the lead's company or contact = សូមជ្រើសអតិថិជន ឬផ្ដល់ក្រុមហ៊ុន ឬអ្នកទំនាក់ទំនងរបស់អតិថិជនសក្ដានុពល
+You own the deal {title} = អ្នកជាម្ចាស់កិច្ចព្រមព្រៀង {title}

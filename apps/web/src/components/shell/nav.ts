@@ -11,6 +11,7 @@ import {
   Clock,
   ClipboardList,
   Cpu,
+  Handshake,
   HardHat,
   LifeBuoy,
   Ticket,
@@ -131,12 +132,16 @@ export function businessNav(ctx: OrgContext): NavItem[] {
   if (!can('business.view')) return [];
   return [
     { href: 'business', label: tr('business.navOverview'), icon: LayoutDashboard, exact: true },
+    { href: 'business/deals', label: tr('business.navDeals'), icon: Handshake },
     { href: 'business/customers', label: tr('business.navCustomers'), icon: UserRound },
     { href: 'business/products', label: tr('business.navProducts'), icon: Package },
     { href: 'business/quotes', label: tr('business.navQuotes'), icon: FileSignature },
     { href: 'business/invoices', label: tr('business.navInvoices'), icon: Receipt },
     { href: 'business/expenses', label: tr('business.navExpenses'), icon: Banknote },
-    ...(can('business.manage') ? [{ href: 'business/settings', label: tr('business.navSettings'), icon: SlidersHorizontal }] : []),
+    ...(can('business.manage') ? [
+      { href: 'business/reports', label: tr('business.navReports'), icon: LineChart },
+      { href: 'business/settings', label: tr('business.navSettings'), icon: SlidersHorizontal },
+    ] : []),
   ];
 }
 

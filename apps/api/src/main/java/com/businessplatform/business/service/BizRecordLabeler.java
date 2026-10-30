@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.businessplatform.activity.RecordLabeler;
 import com.businessplatform.business.repository.CustomerRepository;
+import com.businessplatform.business.repository.DealRepositories.DealRepository;
 import com.businessplatform.business.repository.ExpenseCategoryRepository;
 import com.businessplatform.business.repository.ExpenseRepository;
 import com.businessplatform.business.repository.InvoiceRepository;
@@ -26,7 +27,7 @@ import lombok.RequiredArgsConstructor;
 public class BizRecordLabeler implements RecordLabeler {
 
     private static final Set<String> TYPES = Set.of(CustomerService.RECORD, ProductService.RECORD, QuoteService.RECORD,
-            InvoiceService.RECORD, ExpenseService.RECORD, ExpenseCategoryService.RECORD, BizSettingsService.RECORD);
+            InvoiceService.RECORD, ExpenseService.RECORD, ExpenseCategoryService.RECORD, BizSettingsService.RECORD, DealService.RECORD);
 
     private final CustomerRepository customers;
     private final ProductRepository products;
@@ -35,6 +36,7 @@ public class BizRecordLabeler implements RecordLabeler {
     private final ExpenseRepository expenses;
     private final ExpenseCategoryRepository categories;
     private final ExpenseTitles titles;
+    private final DealRepository deals;
 
     @Override
     public boolean handles(String recordType) {
@@ -47,6 +49,8 @@ public class BizRecordLabeler implements RecordLabeler {
         Map<UUID, Label> out = new HashMap<>();
         String base = "/" + ctx.slug() + "/business";
         switch (recordType) {
+            case DealService.RECORD -> deals.findAllById(ids).stream().filter(d -> d.getOrgId().equals(ctx.orgId()))
+                    .forEach(d -> out.put(d.getId(), new Label(d.getTitle(), base + "/deals/" + d.getId())));
             case CustomerService.RECORD -> customers.findAllById(ids).stream().filter(c -> c.getOrgId().equals(ctx.orgId()))
                     .forEach(c -> out.put(c.getId(), new Label(c.getName(), base + "/customers/" + c.getId())));
             case ProductService.RECORD -> products.findAllById(ids).stream().filter(p -> p.getOrgId().equals(ctx.orgId()))
