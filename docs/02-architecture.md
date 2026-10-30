@@ -166,6 +166,16 @@ medical, other; expiry; people file their own certificates, HR files IDs and con
 history (`pay_change`, written on every salary change with an optional reason). HR managers of a unit manage these for
 its people. The HR dashboard lists what ends within 30 days (and lately): contracts, probations, IDs, documents.
 
+### Offboarding (built)
+
+`offboarding`: people resign from their profile (REQUESTED; their manager and the Admins are told) or HR starts a
+departure (termination, end of contract, retirement …). HR accepts a resignation (IN_PROGRESS) and works through a
+checklist made from the organisation's `offboarding_template` (seeded with handover, exit interview, equipment, ID card
+and keys, access, final pay, certificate of employment, NSSF; due dates relative to the last day). The page shows what
+to hand over (direct reports, approvals waiting on them, units they head) and their leave balances for the final pay.
+On or after the last day, with every step done, HR completes it: `employee_profile.left_on` is set and the membership
+is suspended (access ends; owners must hand over first). HR managers of a unit handle its people; nobody their own.
+
 ### General Business permissions (built)
 
 `business.view` for Owners, Admins and Members with the module on; `business.manage` for Owners and Admins.

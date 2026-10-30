@@ -385,6 +385,13 @@ public class ApprovalService {
         return detail(ctx, r);
     }
 
+    /** How many open requests wait on this person's decision now (to hand over when they leave). */
+    @Transactional(readOnly = true)
+    public long waitingOn(UUID orgId, UUID userId) {
+        return steps.waiting().stream().filter(s -> userId.equals(s.getApproverId()))
+                .map(s -> requests.findById(s.getRequestId()).orElse(null)).filter(r -> r != null && r.getOrgId().equals(orgId)).count();
+    }
+
     // ── Reminders and escalation ─────────────────────────────────────────────────────
 
     /**

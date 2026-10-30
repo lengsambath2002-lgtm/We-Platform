@@ -66,6 +66,10 @@ public class EmployeeProfile {
     @Column(name = "emergency_relation")
     private String emergencyRelation;
 
+    /** The last working day of someone who left (offboarding completed). */
+    @Column(name = "left_on")
+    private java.time.LocalDate leftOn;
+
     // Personal details (private: the person and HR).
 
     @Column(name = "nickname")

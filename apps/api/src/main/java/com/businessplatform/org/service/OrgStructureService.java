@@ -518,6 +518,13 @@ public class OrgStructureService {
         return positions.findByIdAndOrgId(positionId, orgId).map(OrgPosition::getUnitId);
     }
 
+    /** The active units this person heads (to hand over when they leave). */
+    @Transactional(readOnly = true)
+    public List<String> unitsHeadedBy(UUID orgId, UUID userId) {
+        return units.findByOrgId(orgId).stream().filter(u -> !u.isArchived() && userId.equals(u.getHeadUserId()))
+                .map(OrgUnit::getName).sorted().toList();
+    }
+
     /** The member's primary place, if any (unit resolved from the position when only that is set). */
     @Transactional(readOnly = true)
     public Optional<Placement> primaryOf(UUID orgId, UUID membershipId) {
