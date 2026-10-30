@@ -34,6 +34,7 @@ const RECORDS: Record<string, { label: MessageKey; filter: AuditFilter }> = {
   business: { label: 'business.auditRecords', filter: { module: 'business' } },
   hr: { label: 'hr.auditRecords', filter: { module: 'hr' } },
   retail: { label: 'retail.auditRecords', filter: { module: 'retail' } },
+  service: { label: 'service.auditRecords', filter: { module: 'service' } },
   org: { label: 'collab.recOrg', filter: { module: 'org' } },
 };
 

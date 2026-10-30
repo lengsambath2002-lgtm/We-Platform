@@ -18,6 +18,7 @@ public class Module {
     public static final String BUSINESS = "business";
     public static final String HR = "hr";
     public static final String RETAIL = "retail";
+    public static final String SERVICE = "service";
 
     @Id
     private String key;
