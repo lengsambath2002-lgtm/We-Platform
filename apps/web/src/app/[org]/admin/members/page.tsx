@@ -1,6 +1,6 @@
 'use client';
 
-import { MailX, MapPinned, Send, UserPlus } from 'lucide-react';
+import { FileUp, MailX, MapPinned, Send, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -47,7 +47,10 @@ export default function MembersAdmin() {
   return (
     <>
       <PageHeader title={t('admin.membersTitle')} subtitle={t('admin.membersSubtitle')}
-        actions={<Button size="sm" onClick={() => setInviting(true)}><UserPlus className="size-4" />{t('org.invite')}</Button>} />
+        actions={<>
+          <Button variant="outline" size="sm" asChild><Link href={`/${slug}/admin/members/import`}><FileUp className="size-4" />{t('imports.open')}</Link></Button>
+          <Button size="sm" onClick={() => setInviting(true)}><UserPlus className="size-4" />{t('org.invite')}</Button>
+        </>} />
       {members.error ? <ErrorState error={members.error} retry={() => members.refetch()} /> : members.isPending ? <ListSkeleton /> : (
         <div className="overflow-x-auto rounded-lg border bg-card">
           <Table>

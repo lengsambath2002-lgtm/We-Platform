@@ -113,6 +113,17 @@ refuse, never the other way round.
 | Configure workflows | ✅ | ✅ | — | — |
 | View audit log | ✅ | ✅ | — | — |
 
+### People import (built)
+
+Admin › Members & roles › Import people takes a spreadsheet saved as CSV (parsed in the browser): one row per person
+with email, name, role, unit path ("Mobile Center > Mobile") and unit types, position, manager and 2nd approver emails,
+employment type, start date and unit head. `POST /people-import/preview` checks every row (bad values, duplicates,
+unknown managers, manager loops) and lists the units and positions it would create; `POST /people-import` applies all
+or nothing. People without an account get one (no usable password) and an email to choose one within 7 days; people
+with an account elsewhere are invited and placed by importing again after they accept; members are updated.
+Placements are made quietly and announced once (`StructureChanged`), and HR's details travel in `PeopleImported`.
+Importing the same file twice changes nothing. A 129-person company imports in about 2 seconds.
+
 ### Custom roles (built)
 
 Owner, Admin, Member and Guest stay the base roles. On top of them, Owners and Admins create custom roles (`org_role`:
