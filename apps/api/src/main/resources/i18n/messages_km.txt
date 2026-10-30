@@ -338,3 +338,18 @@ Work order for you: {number} on {date} = បញ្ជាការងារសម
 The resolution target can't be shorter than the response target = គោលដៅដោះស្រាយមិនអាចខ្លីជាងគោលដៅឆ្លើយតបបានទេ
 
 Choose a ticket = សូមជ្រើសរើសសំបុត្រ
+
+# HR: work schedules, attendance and overtime
+Another schedule has this name = មានកាលវិភាគផ្សេងទៀតប្រើឈ្មោះនេះរួចហើយ
+The day ends before it starts = ម៉ោងចប់មុនម៉ោងចាប់ផ្ដើម
+The break is longer than the day = ពេលសម្រាកវែងជាងថ្ងៃធ្វើការ
+Make another schedule the default instead = សូមកំណត់កាលវិភាគផ្សេងជាលំនាំដើមជំនួសវិញ
+Make another schedule the default first = សូមកំណត់កាលវិភាគផ្សេងជាលំនាំដើមជាមុនសិន
+You have clocked in today already = អ្នកបានចុះឈ្មោះចូលធ្វើការថ្ងៃនេះរួចហើយ
+Clock in first = សូមចុះឈ្មោះចូលធ្វើការជាមុនសិន
+You have clocked out today already = អ្នកបានចុះឈ្មោះចេញពីការងារថ្ងៃនេះរួចហើយ
+This day hasn't happened yet = ថ្ងៃនេះមិនទាន់មកដល់នៅឡើយទេ
+Clock-out is before clock-in = ម៉ោងចេញនៅមុនម៉ោងចូល
+Ask for overtime after you have worked it = សូមស្នើសុំម៉ោងបន្ថែម បន្ទាប់ពីអ្នកបានធ្វើការរួច
+At most 60 days back = មិនលើសពី 60 ថ្ងៃមុន
+You already asked for overtime on this day = អ្នកបានស្នើសុំម៉ោងបន្ថែមសម្រាប់ថ្ងៃនេះរួចហើយ

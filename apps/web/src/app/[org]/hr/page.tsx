@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/common/page-header';
 import { PersonAvatar } from '@/components/common/person';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
+import { TodayCard } from '@/components/hr/attendance-ui';
 import { BalanceCards, LeaveList, rangeText, typeName } from '@/components/hr/leave-ui';
 import { RequestLeaveDialog } from '@/components/hr/request-leave-dialog';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,7 @@ export default function HrHome() {
           </section>
         </div>
         <aside className="space-y-4" aria-label={t('hr.whoIsAway')}>
+          <TodayCard org={slug} />
           <section aria-labelledby="today-h" className="rounded-lg border bg-card p-4">
             <h2 id="today-h" className="mb-2 text-sm font-semibold">{t('hr.awayToday')}</h2>
             {away.error ? <ErrorState error={away.error} retry={() => away.refetch()} /> : away.isPending ? <ListSkeleton rows={2} />
