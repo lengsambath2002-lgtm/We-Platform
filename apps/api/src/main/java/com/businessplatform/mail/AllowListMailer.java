@@ -15,22 +15,37 @@ public class AllowListMailer implements Mailer {
     private final Mailer real;
     private final Mailer others;
     private final Set<String> allowed;
+    private final Set<String> never;
 
-    public AllowListMailer(Mailer real, Mailer others, String onlyTo) {
+    /** {@code onlyTo} empty = everyone (but {@code neverTo}). */
+    public AllowListMailer(Mailer real, Mailer others, String onlyTo, String neverTo) {
         this.real = real;
         this.others = others;
         this.allowed = parse(onlyTo);
+        this.never = parse(neverTo);
     }
 
-    /** Comma- or space-separated addresses, compared case-insensitively. */
-    static Set<String> parse(String onlyTo) {
-        return Arrays.stream(onlyTo.split("[,\\s]+")).map(s -> s.strip().toLowerCase(Locale.ROOT))
+    public AllowListMailer(Mailer real, Mailer others, String onlyTo) {
+        this(real, others, onlyTo, "");
+    }
+
+    /** Comma- or space-separated addresses, domains ("example.com") or domain endings (".test"), any case. */
+    static Set<String> parse(String list) {
+        return list == null ? Set.of() : Arrays.stream(list.split("[,\\s]+")).map(s -> s.strip().toLowerCase(Locale.ROOT))
                 .filter(s -> !s.isEmpty()).collect(Collectors.toUnmodifiableSet());
+    }
+
+    /** Whether the address is on the list: itself, its domain, or a domain ending (".test"). */
+    static boolean listed(Set<String> list, String address) {
+        String a = address.strip().toLowerCase(Locale.ROOT);
+        String domain = a.substring(a.indexOf('@') + 1);
+        return list.contains(a) || list.contains(domain) || list.stream().anyMatch(e -> e.startsWith(".") && domain.endsWith(e));
     }
 
     @Override
     public void send(MailMessage m) throws Exception {
-        if (allowed.contains(m.to().strip().toLowerCase(Locale.ROOT))) {
+        boolean ok = !listed(never, m.to()) && (allowed.isEmpty() || listed(allowed, m.to()));
+        if (ok) {
             real.send(m);
         } else {
             others.send(m);

@@ -42,4 +42,21 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     @Modifying
     @Query(value = "INSERT INTO notification_mute (membership_id, kind) VALUES (:membershipId, :kind)", nativeQuery = true)
     void mute(UUID membershipId, String kind);
+
+    /** The kinds a member doesn't want by email. */
+    @Query(value = "SELECT e.kind FROM notification_email_off e WHERE e.membership_id = :membershipId", nativeQuery = true)
+    List<String> emailOffKinds(UUID membershipId);
+
+    /** Of {@code userIds}, those who switched email off for {@code kind} in the organisation. */
+    @Query(value = "SELECT m.user_id FROM notification_email_off e JOIN membership m ON m.id = e.membership_id"
+            + " WHERE m.org_id = :orgId AND e.kind = :kind AND m.user_id IN :userIds", nativeQuery = true)
+    List<UUID> emailOff(UUID orgId, String kind, Collection<UUID> userIds);
+
+    @Modifying
+    @Query(value = "DELETE FROM notification_email_off WHERE membership_id = :membershipId", nativeQuery = true)
+    void clearEmailOff(UUID membershipId);
+
+    @Modifying
+    @Query(value = "INSERT INTO notification_email_off (membership_id, kind) VALUES (:membershipId, :kind)", nativeQuery = true)
+    void emailOffFor(UUID membershipId, String kind);
 }

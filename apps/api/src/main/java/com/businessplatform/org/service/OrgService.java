@@ -19,6 +19,7 @@ import com.businessplatform.activity.ActivityService;
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
 import com.businessplatform.common.i18n.Messages;
+import com.businessplatform.common.i18n.Text;
 import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.common.security.CurrentUser;
 import com.businessplatform.common.security.Tokens;
@@ -337,18 +338,16 @@ public class OrgService {
     private void sendInvitation(OrgContext ctx, Invitation i, String token) {
         String lang = users.findByEmail(i.getEmail()).map(AppUser::getLocale).orElse(Messages.requestLanguage());
         String inviter = users.findById(ctx.userId()).map(AppUser::getName).orElse("");
-        String role = switch (i.getRole()) {
-            case ADMIN -> messages.in(lang, "an admin", Map.of());
-            case GUEST -> messages.in(lang, "a guest", Map.of());
-            default -> messages.in(lang, "a member", Map.of());
+        Text role = switch (i.getRole()) {
+            case ADMIN -> Text.of("an admin");
+            case GUEST -> Text.of("a guest");
+            default -> Text.of("a member");
         };
-        Map<String, String> args = Map.of("inviter", inviter, "org", ctx.orgName(), "role", role, "email", i.getEmail());
-        mail.queue(MailService.compose(i.getEmail(),
-                messages.in(lang, "{inviter} invited you to {org} on Business Platform", args),
-                List.of(messages.in(lang, "{inviter} invited you to join {org} as {role}.", args),
-                        messages.in(lang, "Sign in or create an account with {email} to accept. The link works for 7 days.", args)),
-                messages.in(lang, "Accept the invitation", Map.of()), link(token),
-                messages.in(lang, "If you weren't expecting this, you can ignore this email.", Map.of())));
+        Map<String, Object> args = Map.of("inviter", inviter, "org", ctx.orgName(), "role", role, "email", i.getEmail());
+        mail.queue(mail.letter(i.getEmail(), lang, ctx.orgName(), Text.of("{inviter} invited you to {org} on Business Platform", args),
+                List.of(Text.of("{inviter} invited you to join {org} as {role}.", args),
+                        Text.of("Sign in or create an account with {email} to accept. The link works for 7 days.", args)),
+                Text.of("Accept the invitation"), link(token), Text.of("If you weren't expecting this, you can ignore this email.")));
     }
 
     @Transactional(readOnly = true)

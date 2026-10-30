@@ -6,7 +6,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.springframework.web.util.HtmlUtils;
+
+import com.businessplatform.common.i18n.Messages;
+import com.businessplatform.common.i18n.Text;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ public class MailService {
 
     private final ApplicationEventPublisher events;
     private final Mailer mailer;
+    private final Messages messages;
 
     /** Whether queued emails actually leave the server. */
     public boolean delivers() {
@@ -51,39 +54,25 @@ public class MailService {
     }
 
     /**
-     * A short email: paragraphs, then an optional button (text + link), then a note. All text is
-     * already translated; it is HTML-escaped here.
+     * A letter in both languages, as VirtualBiz writes them: English, then Khmer, in one shared layout; the subject in
+     * the reader's language ({@code lang}). {@code from}: the organisation (or null for the product) shown on top.
      */
-    public static MailMessage compose(String to, String subject, List<String> paragraphs, String action,
-            String link, String note) {
-        StringBuilder text = new StringBuilder();
-        StringBuilder html = new StringBuilder("<!doctype html><html><body style=\"margin:0;padding:24px;"
-                + "background:#f5f5f5;font-family:-apple-system,'Segoe UI',Roboto,'Noto Sans Khmer',sans-serif;"
-                + "color:#18181b\"><div style=\"max-width:520px;margin:0 auto;background:#fff;border-radius:8px;"
-                + "padding:24px;font-size:15px;line-height:1.6\"><p style=\"margin:0 0 16px;font-weight:600\">")
-                .append(PRODUCT).append("</p>");
-        for (String p : paragraphs) {
-            text.append(p).append("\n\n");
-            html.append("<p style=\"margin:0 0 12px\">").append(esc(p)).append("</p>");
+    public MailMessage letter(String to, String lang, String from, Text subject, List<Text> lines, Text action, String link,
+            Text note) {
+        Email e = new Email().preheader(messages.in(lang, lines.isEmpty() ? subject : lines.get(0))).badge(from == null ? PRODUCT : from);
+        for (String l : List.of("en", "km")) {
+            if ("km".equals(l)) {
+                e.divider();
+            }
+            e.heading(messages.in(l, subject));
+            lines.forEach(x -> e.line(messages.in(l, x)));
+            if (action != null && link != null) {
+                e.button(messages.in(l, action), link);
+            }
+            if (note != null) {
+                e.small(messages.in(l, note));
+            }
         }
-        if (link != null) {
-            text.append(action).append(":\n").append(link).append("\n\n");
-            html.append("<p style=\"margin:20px 0\"><a href=\"").append(esc(link))
-                    .append("\" style=\"display:inline-block;background:#18181b;color:#fff;text-decoration:none;"
-                            + "padding:10px 16px;border-radius:6px;font-weight:500\">")
-                    .append(esc(action)).append("</a></p><p style=\"margin:0 0 12px;font-size:13px;color:#71717a;"
-                            + "word-break:break-all\">").append(esc(link)).append("</p>");
-        }
-        if (note != null) {
-            text.append(note).append("\n\n");
-            html.append("<p style=\"margin:16px 0 0;font-size:13px;color:#71717a\">").append(esc(note)).append("</p>");
-        }
-        text.append("— ").append(PRODUCT).append('\n');
-        html.append("</div></body></html>");
-        return new MailMessage(to, subject, text.toString(), html.toString());
-    }
-
-    private static String esc(String s) {
-        return HtmlUtils.htmlEscape(s, "UTF-8");
+        return new MailMessage(to, messages.in(lang, subject), e.text(), e.html());
     }
 }

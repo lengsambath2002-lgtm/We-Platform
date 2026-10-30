@@ -20,7 +20,7 @@ export type NotificationKind =
   | 'project.added' | 'event.invited' | 'approval.requested' | 'approval.decided';
 
 export interface NotificationPrefs {
-  kinds: { kind: NotificationKind; inApp: boolean }[];
+  kinds: { kind: NotificationKind; inApp: boolean; email: boolean }[];
 }
 
 /** One audit log row; `record` is the record's current name and link (null when it is gone). */
@@ -82,6 +82,6 @@ export const collabApi = {
     http.patch<Comment>(`${o(org)}/tasks/${taskId}/comments/${id}`, { body, mentionIds }),
   deleteComment: (org: string, taskId: string, id: string) => http.delete<void>(`${o(org)}/tasks/${taskId}/comments/${id}`),
   deleteProject: (org: string, key: string) => http.delete<void>(`${o(org)}/projects/${key}`),
-  setNotificationPrefs: (org: string, muted: NotificationKind[]) =>
-    http.put<NotificationPrefs>(`${o(org)}/notifications/preferences`, { muted }),
+  setNotificationPrefs: (org: string, muted: NotificationKind[], emailOff: NotificationKind[]) =>
+    http.put<NotificationPrefs>(`${o(org)}/notifications/preferences`, { muted, emailOff }),
 };

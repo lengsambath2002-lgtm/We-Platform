@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
 import com.businessplatform.common.i18n.Messages;
+import com.businessplatform.org.repository.OrganisationRepository;
+import com.businessplatform.mail.MailService;
 import com.businessplatform.common.i18n.Text;
 import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.identity.repository.UserRepository;
@@ -42,6 +44,10 @@ public class NotificationService {
     private final UserRepository users;
     private final Messages messages;
     private final Clock clock;
+    private final MailService mail;
+    private final OrganisationRepository orgs;
+    @org.springframework.beans.factory.annotation.Value("${platform.app-url:http://localhost:3300}")
+    private String appUrl;
 
     /** The kind of a notification type (approvals group their steps). */
     public static String kindOf(String type) {
@@ -61,8 +67,21 @@ public class NotificationService {
             return;
         }
         Set<UUID> muting = new HashSet<>(notifications.muting(orgId, kindOf(type), wanted));
+        Set<UUID> noEmail = new HashSet<>(notifications.emailOff(orgId, kindOf(type), wanted));
         Map<UUID, String> language = new HashMap<>();
-        users.findAllById(wanted).forEach(u -> language.put(u.getId(), Messages.language(Locale.forLanguageTag(u.getLocale()))));
+        Map<UUID, String> address = new HashMap<>();
+        users.findAllById(wanted).forEach(u -> {
+            language.put(u.getId(), Messages.language(Locale.forLanguageTag(u.getLocale())));
+            if (u.getDisabledAt() == null) {
+                address.put(u.getId(), u.getEmail());
+            }
+        });
+        // By email too (in both languages, after the change is saved), unless switched off for this kind.
+        String org = orgs.findById(orgId).map(o -> o.getName()).orElse(null);
+        wanted.stream().filter(u -> !noEmail.contains(u) && address.containsKey(u)).forEach(u -> mail.queue(mail.letter(address.get(u),
+                language.getOrDefault(u, "en"), org, title, body == null ? List.of() : List.of(body), Text.of("Open in Business Platform"),
+                link == null ? null : appUrl + link, Text.of("You get this because of your notification settings in {org}.",
+                        Map.of("org", org == null ? "" : org)))));
         wanted.stream().filter(u -> !muting.contains(u)).forEach(u -> {
             String lang = language.getOrDefault(u, "en");
             String heading = messages.in(lang, title);
@@ -103,6 +122,18 @@ public class NotificationService {
     @Transactional
     public void markRead(UUID userId, UUID orgId, UUID id) {
         notifications.markRead(userId, orgId, id, clock.instant());
+    }
+
+    /** The kinds this member doesn't want by email. */
+    @Transactional(readOnly = true)
+    public Set<String> emailOff(UUID membershipId) {
+        return Set.copyOf(notifications.emailOffKinds(membershipId));
+    }
+
+    @Transactional
+    public void setEmailOff(UUID membershipId, Collection<String> kinds) {
+        notifications.clearEmailOff(membershipId);
+        kinds.stream().filter(KINDS::contains).distinct().forEach(k -> notifications.emailOffFor(membershipId, k));
     }
 
     /** The kinds this member switched off. */

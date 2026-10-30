@@ -40,6 +40,7 @@ services:
       PLATFORM_MAIL_FROM: ${PLATFORM_MAIL_FROM:-Business Platform <no-reply@localhost>}
       PLATFORM_MAIL_SECURITY: ${PLATFORM_MAIL_SECURITY:-starttls}
       PLATFORM_MAIL_ONLY_TO: ${PLATFORM_MAIL_ONLY_TO:-}
+      PLATFORM_MAIL_NEVER_TO: ${PLATFORM_MAIL_NEVER_TO:-.test,.example,.invalid,.localhost,example.com,example.org,example.net}
       PLATFORM_OIDC_SIGNING_KEY: ${PLATFORM_OIDC_SIGNING_KEY:-}
       PLATFORM_OIDC_CLIENTS: ${PLATFORM_OIDC_CLIENTS:-}
       PLATFORM_VIRTUALBIZ_URL: ${PLATFORM_VIRTUALBIZ_URL:-}
@@ -47,6 +48,14 @@ services:
       - files:/data/files
     ports:
       - "8280:8280"
+
+  # Catches every email locally (nothing reaches a real inbox): http://localhost:8025.
+  # Point the API at it with PLATFORM_MAIL_HOST=mailpit, PLATFORM_MAIL_PORT=1025, PLATFORM_MAIL_SECURITY=none.
+  mailpit:
+    image: axllent/mailpit:v1.20
+    ports:
+      - "8025:8025"
+      - "1025:1025"
 
   web:
     build:

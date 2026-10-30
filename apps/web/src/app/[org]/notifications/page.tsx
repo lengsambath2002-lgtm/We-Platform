@@ -36,18 +36,18 @@ const KIND_LABEL: Record<NotificationKind, MessageKey> = {
   'approval.decided': 'collab.kindApprovalDecided',
 };
 
-/** Which kinds of in-app notification I get in this organisation. */
+/** Which kinds of notification I get in this organisation, in the app and by email. */
 function Preferences({ org, orgName }: { org: string; orgName: string }) {
   const { t } = useT();
   const qc = useQueryClient();
   const { data, error, isPending, refetch } = useNotificationPrefs(org);
   const [saving, setSaving] = useState(false);
-  const toggle = async (kind: NotificationKind, on: boolean) => {
+  const toggle = async (kind: NotificationKind, channel: 'inApp' | 'email', on: boolean) => {
     if (!data) return;
-    const muted = data.kinds.filter((k) => (k.kind === kind ? !on : !k.inApp)).map((k) => k.kind);
+    const off = (c: 'inApp' | 'email') => data.kinds.filter((k) => (k.kind === kind && c === channel ? !on : !k[c])).map((k) => k.kind);
     setSaving(true);
     try {
-      qc.setQueryData(collabKeys.notificationPrefs(org), await collabApi.setNotificationPrefs(org, muted));
+      qc.setQueryData(collabKeys.notificationPrefs(org), await collabApi.setNotificationPrefs(org, off('inApp'), off('email')));
       toast.success(t('collab.prefsSaved'));
     } catch (e) { toast.error(errorMessage(e)); } finally { setSaving(false); }
   };
@@ -58,14 +58,16 @@ function Preferences({ org, orgName }: { org: string; orgName: string }) {
       {error ? <ErrorState error={error} retry={() => refetch()} className="mt-3" /> : isPending ? (
         <div className="mt-3 space-y-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-7" />)}</div>
       ) : (
-        <ul className="mt-3 space-y-1">
-          {data.kinds.map((k) => (
-            <li key={k.kind} className="flex items-center justify-between gap-3 py-1.5">
-              <label htmlFor={`kind-${k.kind}`} className="text-sm">{t(KIND_LABEL[k.kind])}</label>
-              <Switch id={`kind-${k.kind}`} checked={k.inApp} disabled={saving} onCheckedChange={(v) => void toggle(k.kind, v)} />
-            </li>
-          ))}
-        </ul>
+        <table className="mt-3 w-full text-sm">
+          <thead><tr className="text-xs text-muted-foreground"><th className="py-1 text-left font-normal" /><th className="w-14 py-1 font-normal">{t('collab.prefsApp')}</th><th className="w-14 py-1 font-normal">{t('collab.prefsEmail')}</th></tr></thead>
+          <tbody>{data.kinds.map((k) => (
+            <tr key={k.kind}>
+              <td className="py-1.5 pr-2">{t(KIND_LABEL[k.kind])}</td>
+              <td className="py-1.5 text-center"><Switch aria-label={`${t(KIND_LABEL[k.kind])} · ${t('collab.prefsApp')}`} checked={k.inApp} disabled={saving} onCheckedChange={(v) => void toggle(k.kind, 'inApp', v)} /></td>
+              <td className="py-1.5 text-center"><Switch aria-label={`${t(KIND_LABEL[k.kind])} · ${t('collab.prefsEmail')}`} checked={k.email} disabled={saving} onCheckedChange={(v) => void toggle(k.kind, 'email', v)} /></td>
+            </tr>
+          ))}</tbody>
+        </table>
       )}
     </section>
   );
