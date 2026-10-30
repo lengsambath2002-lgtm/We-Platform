@@ -14,6 +14,8 @@ public interface OvertimeRequestRepository extends JpaRepository<OvertimeRequest
 
     Optional<OvertimeRequest> findByIdAndOrgId(UUID id, UUID orgId);
 
+    long countByOrgIdAndStatus(UUID orgId, String status);
+
     List<OvertimeRequest> findByOrgIdAndUserIdOrderByWorkDateDesc(UUID orgId, UUID userId);
 
     List<OvertimeRequest> findByOrgIdAndStatusInOrderByWorkDateDesc(UUID orgId, Collection<String> statuses);

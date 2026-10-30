@@ -3,7 +3,7 @@
 // HR & Workforce: types, query hooks and calls (kept apart from queries.ts).
 import { useQuery } from '@tanstack/react-query';
 
-import { http } from './client';
+import { getAccessToken, http } from './client';
 import type { ApprovalStatus, PersonRef } from './types';
 
 export type EmploymentType = 'FULL_TIME' | 'PART_TIME' | 'CONTRACT' | 'INTERN';
@@ -287,3 +287,34 @@ export const attendanceApi = {
   requestOvertime: (org: string, body: unknown) => http.post<Overtime>(`${h(org)}/overtime`, body),
   withdrawOvertime: (org: string, id: string) => http.post<Overtime>(`${h(org)}/overtime/${id}/withdraw`),
 };
+
+// ── HR dashboard, org chart and reports ───────────────────────────────────────────────────────────────
+
+export interface HrDashboard {
+  headcount: number;
+  joinedLast90Days: number;
+  departments: { label: string; count: number }[];
+  today: { present: number; late: number; absent: number; onLeave: number; notIn: number; offToday: number };
+  pendingLeave: number;
+  pendingOvertime: number;
+  hiring: { openJobs: number; activeCandidates: number; onboarding: number };
+  payroll: { runId: string; month: string; status: 'DRAFT' | 'APPROVED' | 'PAID'; net: number; employerCost: number; people: number } | null;
+  reviews: { cycleId: string; name: string; total: number; reviewed: number }[];
+  trainingCompletedThisYear: number;
+}
+
+export interface ChartNode { person: PersonRef; title: string | null; department: string | null; managerId: string | null }
+
+export const useHrDashboard = (org: string, enabled = true) =>
+  useQuery({ queryKey: ['org', org, 'hr', 'dashboard'], queryFn: () => http.get<HrDashboard>(`${h(org)}/dashboard`), enabled });
+export const useOrgChart = (org: string) =>
+  useQuery({ queryKey: ['org', org, 'hr', 'org-chart'], queryFn: () => http.get<ChartNode[]>(`${h(org)}/org-chart`) });
+
+/** Downloads one of the HR reports (CSV). */
+export async function downloadHrReport(org: string, path: string, filename: string) {
+  const res = await fetch(`/api${h(org)}/reports/${path}`, { headers: { Authorization: `Bearer ${getAccessToken() ?? ''}` }, credentials: 'include' });
+  if (!res.ok) throw new Error(res.statusText);
+  const url = URL.createObjectURL(await res.blob());
+  Object.assign(document.createElement('a'), { href: url, download: filename }).click();
+  URL.revokeObjectURL(url);
+}
