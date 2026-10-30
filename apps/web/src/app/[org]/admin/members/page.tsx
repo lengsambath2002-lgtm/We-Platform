@@ -1,6 +1,6 @@
 'use client';
 
-import { MailX, Send, UserPlus } from 'lucide-react';
+import { MailX, MapPinned, Send, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/common/page-header';
 import { PersonAvatar } from '@/components/common/person';
 import { ErrorState, ListSkeleton, PermissionDenied } from '@/components/common/states';
 import { InviteDialog, ROLE_TEXT } from '@/components/org/invite-dialog';
+import { PlacementDialog } from '@/components/org/structure-ui';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -15,7 +16,8 @@ import { useT } from '@/i18n/provider';
 import { accountApi, type SentInvitation } from '@/lib/api/account';
 import { errorMessage } from '@/lib/api/client';
 import { orgApi, useInvitations, useMembers, useOrgMutation } from '@/lib/api/queries';
-import type { OrgRole } from '@/lib/api/types';
+import { useStructure } from '@/lib/api/structure';
+import type { Member, OrgRole } from '@/lib/api/types';
 import { useSession } from '@/lib/auth/session';
 import { day } from '@/lib/format';
 import { useOrg } from '@/lib/org-context';
@@ -34,6 +36,8 @@ export default function MembersAdmin() {
   const revoke = useOrgMutation(slug, (id: string) => orgApi.revokeInvitation(slug, id));
   const resend = useOrgMutation(slug, (id: string) => accountApi.resendInvitation(slug, id));
   const [resent, setResent] = useState<SentInvitation | null>(null);
+  const structure = useStructure(slug, allowed);
+  const [placing, setPlacing] = useState<Member | null>(null);
   if (!allowed) return <PermissionDenied />;
   const isOwner = org.role === 'OWNER';
   const change = (id: string, body: Record<string, unknown>, done: string) =>
@@ -44,10 +48,10 @@ export default function MembersAdmin() {
       <PageHeader title={t('admin.membersTitle')} subtitle={t('admin.membersSubtitle')}
         actions={<Button size="sm" onClick={() => setInviting(true)}><UserPlus className="size-4" />{t('org.invite')}</Button>} />
       {members.error ? <ErrorState error={members.error} retry={() => members.refetch()} /> : members.isPending ? <ListSkeleton /> : (
-        <div className="overflow-hidden rounded-lg border bg-card">
+        <div className="overflow-x-auto rounded-lg border bg-card">
           <Table>
             <TableHeader>
-              <TableRow><TableHead>{t('admin.colPerson')}</TableHead><TableHead className="w-40">{t('admin.colRole')}</TableHead><TableHead className="hidden md:table-cell">{t('admin.colJoined')}</TableHead><TableHead className="w-28 text-right">{t('admin.colAccess')}</TableHead></TableRow>
+              <TableRow><TableHead>{t('admin.colPerson')}</TableHead><TableHead className="table-cell">{t('structure.colPlace')}</TableHead><TableHead className="w-40">{t('admin.colRole')}</TableHead><TableHead className="hidden md:table-cell">{t('admin.colJoined')}</TableHead><TableHead className="w-28 text-right">{t('admin.colAccess')}</TableHead></TableRow>
             </TableHeader>
             <TableBody>
               {members.data.map((m) => {
@@ -60,6 +64,15 @@ export default function MembersAdmin() {
                         <PersonAvatar person={m} className="size-8" />
                         <span className="min-w-0"><span className="block truncate text-sm font-medium">{m.name}{me && ` ${t('common.you')}`}</span><span className="block truncate text-xs text-muted-foreground">{m.email}</span></span>
                       </span>
+                    </TableCell>
+                    <TableCell className="table-cell">
+                      {m.role !== 'GUEST' && m.status === 'ACTIVE' ? (
+                        <button type="button" disabled={!structure.data} onClick={() => setPlacing(m)} aria-label={t('structure.placeOf', { name: m.name })}
+                          className="flex max-w-40 items-center sm:max-w-56 gap-1.5 rounded-md px-1 py-0.5 text-left text-sm hover:bg-muted">
+                          <MapPinned className="size-3.5 shrink-0 text-muted-foreground" />
+                          <span className="min-w-0 truncate">{[m.title, m.unit].filter(Boolean).join(' · ') || <span className="text-muted-foreground">{t('structure.notPlaced')}</span>}</span>
+                        </button>
+                      ) : <span className="text-sm text-muted-foreground">—</span>}
                     </TableCell>
                     <TableCell>
                       {locked ? <span className="text-sm">{ROLE_TEXT[m.role]?.label}</span> : (
@@ -109,6 +122,7 @@ export default function MembersAdmin() {
         </ul>
       )}
       <InviteDialog org={slug} open={inviting} onOpenChange={setInviting} />
+      {placing && structure.data && <PlacementDialog org={slug} structure={structure.data} member={placing} onClose={() => setPlacing(null)} />}
       <InviteDialog org={slug} open={!!resent} onOpenChange={(v) => { if (!v) setResent(null); }} resent={resent} />
     </>
   );

@@ -26,9 +26,15 @@ public interface EmployeeProfileRepository extends JpaRepository<EmployeeProfile
 
     /** Creates the profiles of active non-guest members who have none (safe when two requests race). */
     @Modifying
-    @Query(value = "INSERT INTO employee_profile (id, org_id, membership_id, user_id)"
-            + " SELECT gen_random_uuid(), m.org_id, m.id, m.user_id FROM membership m"
+    @Query(value = "INSERT INTO employee_profile (id, org_id, membership_id, user_id, department)"
+            + " SELECT gen_random_uuid(), m.org_id, m.id, m.user_id, org_department_of(m.id) FROM membership m"
             + " WHERE m.org_id = :orgId AND m.status = 'ACTIVE' AND m.role <> 'GUEST'"
+            + " AND NOT EXISTS (SELECT 1 FROM employee_profile p WHERE p.membership_id = m.id)"
             + " ON CONFLICT DO NOTHING", nativeQuery = true)
     int createMissing(UUID orgId);
+
+    /** Each profile's department as the organisation structure gives it (membership id, department or null). */
+    @Query(value = "SELECT CAST(p.membership_id AS VARCHAR), org_department_of(p.membership_id) FROM employee_profile p"
+            + " WHERE p.org_id = :orgId", nativeQuery = true)
+    List<Object[]> structureDepartments(UUID orgId);
 }

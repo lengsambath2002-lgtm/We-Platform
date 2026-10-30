@@ -80,6 +80,21 @@ export function describe(a: ActivityItem, moduleName: (key: string) => string = 
     case 'retail.shop.linked': return tr('retail.actLinked', { name: s(d.name) });
     case 'retail.shop.unlinked': return d.reason === 'moved' ? tr('retail.actMoved', { name: s(d.name) }) : tr('retail.actUnlinked', { name: s(d.name) });
     case 'org.deleted': return tr('collab.actOrgDeleted', { name: s(d.name) });
+    case 'org.unit.created': return tr('structure.actUnitCreated', { name: s(d.name) });
+    case 'org.unit.updated': return tr('structure.actUnitUpdated', { name: s(d.name) });
+    case 'org.unit.archived': return tr('structure.actUnitArchived', { name: s(d.name) });
+    case 'org.unit.restored': return tr('structure.actUnitRestored', { name: s(d.name) });
+    case 'org.unit.deleted': return tr('structure.actUnitDeleted', { name: s(d.name) });
+    case 'org.position.created': return tr('structure.actPositionCreated', { title: s(d.title) });
+    case 'org.position.updated': return tr('structure.actPositionUpdated', { title: s(d.title) });
+    case 'org.position.archived': return tr('structure.actPositionArchived', { title: s(d.title) });
+    case 'org.position.restored': return tr('structure.actPositionRestored', { title: s(d.title) });
+    case 'org.position.deleted': return tr('structure.actPositionDeleted', { title: s(d.title) });
+    case 'org.member.placed':
+      if (d.position && d.unit) return tr('structure.actPlacedAsIn', { name: s(d.name), position: s(d.position), unit: s(d.unit) });
+      if (d.position) return tr('structure.actPlacedAs', { name: s(d.name), position: s(d.position) });
+      if (d.unit) return tr('structure.actPlacedIn', { name: s(d.name), unit: s(d.unit) });
+      return tr('structure.actPlaced', { name: s(d.name) });
     case 'org.team.created': return tr('collab.actTeamCreated', { name: s(d.name) });
     case 'org.team.updated': return tr('collab.actTeamUpdated', { name: s(d.name) });
     case 'org.team.deleted': return tr('collab.actTeamDeleted', { name: s(d.name) });

@@ -16,6 +16,7 @@ import { labels } from '@/i18n/core';
 import { useT } from '@/i18n/provider';
 import { EMPLOYMENT_TYPES, type EmploymentType, hrApi, type Profile, usePeople } from '@/lib/api/hr';
 import { useOrgMutation } from '@/lib/api/queries';
+import { unitTree, useStructure } from '@/lib/api/structure';
 
 export const EMPLOYMENT_LABEL = labels(EMPLOYMENT_TYPES, (e) => `hr.emp_${e}`);
 const NONE = '__none__';
@@ -30,7 +31,8 @@ const contactSchema = (t: ReturnType<typeof useT>['t']) => z.object({
 
 const profileSchema = (t: ReturnType<typeof useT>['t']) => contactSchema(t).extend({
   title: z.string().trim().max(80),
-  department: z.string().trim().max(80),
+  unitId: z.string(),
+  positionId: z.string(),
   managerId: z.string(),
   employmentType: z.string(),
   startDate: z.string(),
@@ -94,25 +96,26 @@ export function ContactDialog({ org, profile, onClose }: { org: string; profile:
   );
 }
 
-/** HR managers: the whole profile — job title, department, manager, employment, start date and contacts. */
+/** HR managers: the whole profile — unit and position (or job title), manager, employment, start date and contacts. */
 export function ProfileDialog({ org, profile, onClose }: { org: string; profile: Profile; onClose: () => void }) {
   const { t } = useT();
   const schema = useMemo(() => profileSchema(t), [t]);
   const people = usePeople(org);
-  const departments = [...new Set((people.data ?? []).map((p) => p.department).filter((d): d is string => !!d))].sort();
+  const structure = useStructure(org);
   const managers = (people.data ?? []).filter((p) => p.person.id !== profile.person.id);
   const [error, setError] = useState<string | null>(null);
   type Values = z.infer<typeof schema>;
   const form = useForm<Values>({
     resolver: zodResolver(schema),
     defaultValues: {
-      title: profile.title ?? '', department: profile.department ?? '', managerId: profile.manager?.id ?? NONE,
+      title: profile.title ?? '', unitId: profile.unitId ?? NONE, positionId: profile.positionId ?? NONE, managerId: profile.manager?.id ?? NONE,
       employmentType: profile.employmentType ?? NONE, startDate: profile.startDate ?? '',
       workPhone: profile.workPhone ?? '', emergencyName: profile.emergencyName ?? '', emergencyPhone: profile.emergencyPhone ?? '', emergencyRelation: profile.emergencyRelation ?? '',
     },
   });
   const save = useOrgMutation(org, (v: Values) => hrApi.updateProfile(org, profile.person.id, {
-    ...v, managerId: v.managerId === NONE ? null : v.managerId, employmentType: v.employmentType === NONE ? null : v.employmentType,
+    ...v, unitId: v.unitId === NONE ? null : v.unitId, positionId: v.positionId === NONE ? null : v.positionId,
+    managerId: v.managerId === NONE ? null : v.managerId, employmentType: v.employmentType === NONE ? null : v.employmentType,
     startDate: v.startDate || null,
   }));
   const onSubmit = form.handleSubmit(async (v) => {
@@ -127,18 +130,50 @@ export function ProfileDialog({ org, profile, onClose }: { org: string; profile:
           <form onSubmit={onSubmit} className="space-y-4" noValidate>
             {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField control={form.control} name="title" render={({ field }) => (
-                <FormItem><FormLabel>{t('hr.jobTitle')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
-              )} />
-              <FormField control={form.control} name="department" render={({ field }) => (
+              <FormField control={form.control} name="unitId" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('hr.department')}</FormLabel>
-                  <FormControl><Input list="hr-departments" {...field} /></FormControl>
-                  <datalist id="hr-departments">{departments.map((d) => <option key={d} value={d} />)}</datalist>
+                  <FormLabel>{t('structure.unit')}</FormLabel>
+                  <Select value={field.value} onValueChange={(u) => {
+                    field.onChange(u);
+                    const pos = structure.data?.positions.find((p) => p.id === form.getValues('positionId'));
+                    if (pos?.unitId && pos.unitId !== u) form.setValue('positionId', NONE);
+                  }}>
+                    <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value={NONE}>{t('structure.noUnit')}</SelectItem>
+                      {unitTree(structure.data?.units ?? []).filter(({ unit }) => !unit.archived || unit.id === profile.unitId)
+                        .map(({ unit, depth }) => <SelectItem key={unit.id} value={unit.id}>{'— '.repeat(depth)}{unit.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="positionId" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('structure.position')}</FormLabel>
+                  <Select value={field.value} onValueChange={(p) => {
+                    field.onChange(p);
+                    const pos = structure.data?.positions.find((x) => x.id === p);
+                    if (pos?.unitId) form.setValue('unitId', pos.unitId);
+                  }}>
+                    <FormControl><SelectTrigger className="w-full"><SelectValue /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value={NONE}>{t('structure.noPosition')}</SelectItem>
+                      {(structure.data?.positions ?? []).filter((p) => (!p.archived || p.id === profile.positionId)
+                        && (form.watch('unitId') === NONE || !p.unitId || p.unitId === form.watch('unitId')))
+                        .sort((a, b) => a.title.localeCompare(b.title))
+                        .map((p) => <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )} />
             </div>
+            {form.watch('positionId') === NONE && (
+              <FormField control={form.control} name="title" render={({ field }) => (
+                <FormItem><FormLabel>{t('hr.jobTitle')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            )}
             <FormField control={form.control} name="managerId" render={({ field }) => (
               <FormItem>
                 <FormLabel>{t('hr.manager')}</FormLabel>

@@ -68,6 +68,7 @@ export function globalNav(ctx: OrgContext): NavItem[] {
     { href: 'my-tasks', label: tr('shell.myTasks'), icon: CheckSquare, need: 'projects.view' },
     { href: 'projects', label: tr('shell.projects'), icon: FolderKanban, need: 'projects.view' },
     { href: 'calendar', label: tr('shell.calendar'), icon: CalendarDays, need: 'calendar.view' },
+    { href: 'structure', label: tr('structure.nav'), icon: Network, need: 'org.structure.view' },
     { href: 'teams', label: tr('shell.teams'), icon: Users, need: 'teams.view' },
     { href: 'approvals', label: tr('shell.approvals'), icon: BadgeCheck, need: 'approvals.view' },
     { href: 'documents', label: tr('documents.title'), icon: FileText, need: 'documents.view' },

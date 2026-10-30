@@ -71,6 +71,13 @@ public final class Permissions {
         if (ctx.isAdmin()) {
             p.add("documents.manage");
         }
+        // The organisation structure (units, positions, who sits where): everyone but guests reads it.
+        if (!ctx.isGuest()) {
+            p.add("org.structure.view");
+        }
+        if (ctx.isAdmin()) {
+            p.add("org.structure.manage");
+        }
         if (ctx.role() == com.businessplatform.org.domain.OrgRole.OWNER) {
             p.add("org.delete");
         }

@@ -37,8 +37,9 @@ public final class OrgPayloads {
     public record OrgContextResponse(OrgSummary org, List<String> permissions, List<ModuleState> modules) {
     }
 
+    /** {@code title}: the job title (the primary position's); {@code unit}: the primary unit's name. */
     public record MemberResponse(UUID membershipId, UUID userId, String name, String email, String avatarUrl,
-            OrgRole role, String status, String title, Instant joinedAt) {
+            OrgRole role, String status, String title, String unit, Instant joinedAt) {
     }
 
     public record UpdateMemberRequest(OrgRole role, @Pattern(regexp = "ACTIVE|SUSPENDED") String status,

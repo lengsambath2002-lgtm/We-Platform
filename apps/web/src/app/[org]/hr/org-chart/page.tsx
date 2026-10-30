@@ -4,6 +4,7 @@ import { Network } from 'lucide-react';
 import Link from 'next/link';
 
 import { PageHeader } from '@/components/common/page-header';
+import { Button } from '@/components/ui/button';
 import { PersonAvatar } from '@/components/common/person';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
 import { useT } from '@/i18n/provider';
@@ -32,7 +33,7 @@ function Branch({ node, byManager, slug, depth }: { node: ChartNode; byManager: 
 
 /** Who reports to whom, from the managers set on people's profiles. */
 export default function OrgChart() {
-  const { slug } = useOrg();
+  const { slug, can } = useOrg();
   const { t } = useT();
   const { data, error, isPending, refetch } = useOrgChart(slug);
   if (error) return <ErrorState error={error} retry={() => refetch()} />;
@@ -42,7 +43,8 @@ export default function OrgChart() {
   const top = data.filter((n) => !n.managerId);
   return (
     <>
-      <PageHeader title={t('hr.orgChartTitle')} subtitle={t('hr.orgChartSubtitle')} />
+      <PageHeader title={t('hr.orgChartTitle')} subtitle={t('hr.orgChartSubtitle')}
+        actions={can('org.structure.view') && <Button variant="outline" size="sm" asChild><Link href={`/${slug}/structure`}><Network className="size-4" />{t('structure.title')}</Link></Button>} />
       {data.length === 0 ? <EmptyState icon={Network} title={t('hr.nobodyToShow')} /> : (
         <ul className="space-y-3" aria-label={t('hr.orgChartTitle')}>
           {top.map((n) => <Branch key={n.person.id} node={n} byManager={byManager} slug={slug} depth={0} />)}
