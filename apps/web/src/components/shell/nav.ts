@@ -15,6 +15,7 @@ import {
   HardHat,
   LifeBuoy,
   Ticket,
+  Truck,
   Contact,
   FileSignature,
   FileText,
@@ -100,7 +101,7 @@ export const moduleHref = (key: string) => (['projects', 'business', 'education'
 
 /** Modules with a home page and sub-pages listed under it in the sidebar. */
 export const subNav = (key: string, ctx: OrgContext): NavItem[] => (key === 'hr' ? hrNav(ctx) : key === 'business' ? businessNav(ctx)
-  : key === 'education' ? educationNav(ctx) : key === 'service' ? serviceNav(ctx) : []);
+  : key === 'education' ? educationNav(ctx) : key === 'service' ? serviceNav(ctx) : key === 'retail' ? retailNav(ctx) : []);
 
 /**
  * Service & Operations' pages for the sidebar and its tabs, filtered by permission (the server re-checks):
@@ -166,6 +167,18 @@ export function educationNav(ctx: OrgContext): NavItem[] {
     { href: 'education/timetable', label: tr('education.navTimetable'), icon: CalendarClock },
     { href: 'education/reports', label: tr('education.navReports'), icon: LineChart },
     ...(manage ? [{ href: 'education/settings', label: tr('education.navSettings'), icon: SlidersHorizontal }] : []),
+  ];
+}
+
+/** Retail &amp; Commerce: the VirtualBiz shops, and purchasing (suppliers, purchase orders). */
+export function retailNav(ctx: OrgContext): NavItem[] {
+  const can = (p: string) => ctx.permissions.includes(p);
+  if (!can('retail.view')) return [];
+  return [
+    { href: 'retail', label: tr('retail.navShops'), icon: Store, exact: true },
+    { href: 'retail/purchasing', label: tr('retail.navPurchasing'), icon: LayoutDashboard },
+    { href: 'retail/purchase-orders', label: tr('retail.navOrders'), icon: ClipboardList },
+    { href: 'retail/suppliers', label: tr('retail.navSuppliers'), icon: Truck },
   ];
 }
 

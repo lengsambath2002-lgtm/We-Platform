@@ -412,3 +412,20 @@ Say why the deal was lost = សូមប្រាប់មូលហេតុដ�
 This deal is closed = កិច្ចព្រមព្រៀងនេះបានបិទហើយ
 Choose a customer, or give the lead's company or contact = សូមជ្រើសអតិថិជន ឬផ្ដល់ក្រុមហ៊ុន ឬអ្នកទំនាក់ទំនងរបស់អតិថិជនសក្ដានុពល
 You own the deal {title} = អ្នកជាម្ចាស់កិច្ចព្រមព្រៀង {title}
+
+# Retail: suppliers and purchase orders
+Only a draft order can be changed = មានតែការបញ្ជាទិញព្រាងប៉ុណ្ណោះដែលអាចកែប្រែបាន
+Only a draft order can be deleted; cancel it instead = មានតែការបញ្ជាទិញព្រាងប៉ុណ្ណោះដែលអាចលុបបាន។ សូមបោះបង់វាជំនួសវិញ
+This order is placed already = ការបញ្ជាទិញនេះបានដាក់រួចហើយ
+This supplier is archived = អ្នកផ្គត់ផ្គង់នេះត្រូវបានរក្សាទុកក្នុងបណ្ណសារ
+Only an order nothing has arrived for can be cancelled = មានតែការបញ្ជាទិញដែលមិនទាន់មានទំនិញមកដល់ប៉ុណ្ណោះដែលអាចបោះបង់បាន
+This order has payments; it can't be cancelled = ការបញ្ជាទិញនេះមានការបង់ប្រាក់ ដូច្នេះមិនអាចបោះបង់បានទេ
+Only an order that is waiting for goods can receive them = មានតែការបញ្ជាទិញដែលកំពុងរង់ចាំទំនិញប៉ុណ្ណោះដែលអាចទទួលបាន
+Goods can't arrive in the future = ទំនិញមិនអាចមកដល់នៅពេលអនាគតបានទេ
+A line isn't on this order = បន្ទាត់មួយមិនមាននៅក្នុងការបញ្ជាទិញនេះទេ
+More arrived than was ordered = ទំនិញមកដល់ច្រើនជាងបានបញ្ជាទិញ
+Enter what arrived = សូមបញ្ចូលអ្វីដែលបានមកដល់
+Only a placed order can be paid = មានតែការបញ្ជាទិញដែលបានដាក់ប៉ុណ្ណោះដែលអាចបង់បាន
+More than is left to pay = ច្រើនជាងចំនួនដែលនៅសល់ត្រូវបង់
+Choose a supplier = សូមជ្រើសអ្នកផ្គត់ផ្គង់
+Choose one of the organisation's shops = សូមជ្រើសហាងមួយរបស់ស្ថាប័ន
