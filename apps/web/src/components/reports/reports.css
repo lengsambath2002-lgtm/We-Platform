@@ -58,3 +58,12 @@
   --rv-sales: #3b82f6;
   --rv-expenses: #ea580c;
 }
+
+/* Education: attendance rate (one series, the primary blue family). */
+.report-viz {
+  --rv-attendance: #2563eb;
+}
+
+.dark .report-viz {
+  --rv-attendance: #3b82f6;
+}

@@ -6,13 +6,20 @@ import {
   Briefcase,
   CalendarCheck2,
   CalendarDays,
+  CalendarClock,
   CheckSquare,
+  ClipboardList,
+  Cpu,
+  HardHat,
+  LifeBuoy,
+  Ticket,
   Contact,
   FileSignature,
   FileText,
   FolderKanban,
   GitBranch,
   GraduationCap,
+  Hammer,
   Inbox,
   Package,
   Receipt,
@@ -26,6 +33,13 @@ import {
   UserRound,
   Users,
   Wrench,
+  ClipboardCheck,
+  HeartHandshake,
+  LineChart,
+  Presentation,
+  School,
+  Sheet,
+  Wallet,
 } from 'lucide-react';
 
 import { currentLocale, tr } from '@/i18n/core';
@@ -77,11 +91,36 @@ export const MODULE_ICON: Record<string, LucideIcon> = {
   service: Wrench,
 };
 
-/** Where a switched-on module lives: built modules (projects, business, HR, retail) have their own pages, the others a "planned" page. */
-export const moduleHref = (key: string) => (['projects', 'business', 'hr', 'retail'].includes(key) ? key : `m/${key}`);
+/** Where a switched-on module lives: built modules (projects, business, education, HR, retail, service) have their own pages, the others a "planned" page. */
+export const moduleHref = (key: string) => (['projects', 'business', 'education', 'hr', 'retail', 'service'].includes(key) ? key : `m/${key}`);
 
 /** Modules with a home page and sub-pages listed under it in the sidebar. */
-export const subNav = (key: string, ctx: OrgContext): NavItem[] => (key === 'hr' ? hrNav(ctx) : key === 'business' ? businessNav(ctx) : []);
+export const subNav = (key: string, ctx: OrgContext): NavItem[] => (key === 'hr' ? hrNav(ctx) : key === 'business' ? businessNav(ctx)
+  : key === 'education' ? educationNav(ctx) : key === 'service' ? serviceNav(ctx) : []);
+
+/**
+ * Service & Operations' pages for the sidebar and its tabs, filtered by permission (the server re-checks):
+ * dispatchers and Admins get everything; technicians their dashboard, tickets, bookings and their work orders.
+ */
+export function serviceNav(ctx: OrgContext): NavItem[] {
+  const can = (p: string) => ctx.permissions.includes(p);
+  if (!can('service.view')) return [];
+  const manage = can('service.manage');
+  return [
+    { href: 'service', label: tr('service.navDashboard'), icon: LayoutDashboard, exact: true },
+    ...(manage ? [{ href: 'service/requests', label: tr('service.navRequests'), icon: LifeBuoy }] : []),
+    { href: 'service/tickets', label: tr('service.navTickets'), icon: Ticket },
+    { href: 'service/bookings', label: tr('service.navBookings'), icon: CalendarClock },
+    { href: 'service/work-orders', label: manage ? tr('service.navWorkOrders') : tr('service.navMyWorkOrders'), icon: ClipboardList },
+    ...(manage ? [
+      { href: 'service/technicians', label: tr('service.navTechnicians'), icon: HardHat },
+      { href: 'service/assets', label: tr('service.navAssets'), icon: Cpu },
+      { href: 'service/maintenance', label: tr('service.navMaintenance'), icon: Hammer },
+      { href: 'service/reports', label: tr('service.navReports'), icon: BarChart3 },
+    ] : []),
+    ...(can('service.admin') ? [{ href: 'service/settings', label: tr('service.navSettings'), icon: SlidersHorizontal }] : []),
+  ];
+}
 
 /** General Business's pages for the sidebar and its tabs, filtered by permission (the server re-checks). */
 export function businessNav(ctx: OrgContext): NavItem[] {
@@ -95,6 +134,30 @@ export function businessNav(ctx: OrgContext): NavItem[] {
     { href: 'business/invoices', label: tr('business.navInvoices'), icon: Receipt },
     { href: 'business/expenses', label: tr('business.navExpenses'), icon: Banknote },
     ...(can('business.manage') ? [{ href: 'business/settings', label: tr('business.navSettings'), icon: SlidersHorizontal }] : []),
+  ];
+}
+
+/**
+ * Education's pages for the sidebar and its tabs, filtered by permission (the server re-checks): admins see
+ * everything; teachers their classes' pages, without fees and the academic structure.
+ */
+export function educationNav(ctx: OrgContext): NavItem[] {
+  const can = (p: string) => ctx.permissions.includes(p);
+  if (!can('education.view')) return [];
+  const manage = can('education.manage');
+  return [
+    { href: 'education', label: tr('education.navHome'), icon: LayoutDashboard, exact: true },
+    { href: 'education/students', label: tr('education.navStudents'), icon: GraduationCap },
+    { href: 'education/parents', label: tr('education.navParents'), icon: HeartHandshake },
+    { href: 'education/teachers', label: tr('education.navTeachers'), icon: Presentation },
+    { href: 'education/classes', label: tr('education.navClasses'), icon: School },
+    { href: 'education/attendance', label: tr('education.navAttendance'), icon: ClipboardCheck },
+    { href: 'education/exams', label: tr('education.navExams'), icon: ClipboardList },
+    { href: 'education/gradebook', label: tr('education.navGradebook'), icon: Sheet },
+    ...(manage ? [{ href: 'education/fees', label: tr('education.navFees'), icon: Wallet }] : []),
+    { href: 'education/timetable', label: tr('education.navTimetable'), icon: CalendarClock },
+    { href: 'education/reports', label: tr('education.navReports'), icon: LineChart },
+    ...(manage ? [{ href: 'education/settings', label: tr('education.navSettings'), icon: SlidersHorizontal }] : []),
   ];
 }
 

@@ -32,8 +32,10 @@ const RECORDS: Record<string, { label: MessageKey; filter: AuditFilter }> = {
   projects: { label: 'collab.recProjects', filter: { recordType: 'project' } },
   events: { label: 'collab.recEvents', filter: { module: 'calendar' } },
   business: { label: 'business.auditRecords', filter: { module: 'business' } },
+  education: { label: 'education.auditRecords', filter: { module: 'education' } },
   hr: { label: 'hr.auditRecords', filter: { module: 'hr' } },
   retail: { label: 'retail.auditRecords', filter: { module: 'retail' } },
+  service: { label: 'service.auditRecords', filter: { module: 'service' } },
   org: { label: 'collab.recOrg', filter: { module: 'org' } },
 };
 

@@ -19,7 +19,7 @@ class ArchitectureTest {
         noClasses().that().resideInAnyPackage("..common..", "..identity..", "..org..", "..module..", "..workflow..",
                 "..calendar..", "..activity..", "..notification..", "..file..", "..document..", "..oidc..")
                 .should().dependOnClassesThat().resideInAnyPackage("..project..", "..overview..", "..report..", "..hr..",
-                        "..retail..", "..business..")
+                        "..retail..", "..business..", "..education..", "..ops..")
                 .check(CLASSES);
     }
 
@@ -43,7 +43,22 @@ class ArchitectureTest {
                 .check(CLASSES);
         noClasses().that().resideInAPackage("..business..")
                 .should().dependOnClassesThat().resideInAnyPackage("..project..", "..hr..", "..retail..", "..overview..",
-                        "..report..")
+                        "..report..", "..ops..")
+                .check(CLASSES);
+        // Service & Operations (package ops): its own customers, never General Business's.
+        noClasses().that().resideInAPackage("..ops..")
+                .should().dependOnClassesThat().resideInAnyPackage("..project..", "..hr..", "..retail..", "..business..",
+                        "..overview..", "..report..")
+                .check(CLASSES);
+        noClasses().that().resideInAnyPackage("..project..", "..hr..", "..retail..")
+                .should().dependOnClassesThat().resideInAPackage("..ops..")
+                .check(CLASSES);
+        noClasses().that().resideInAPackage("..education..")
+                .should().dependOnClassesThat().resideInAnyPackage("..project..", "..hr..", "..retail..", "..business..",
+                        "..overview..", "..report..")
+                .check(CLASSES);
+        noClasses().that().resideInAnyPackage("..project..", "..hr..", "..retail..", "..business..", "..overview..", "..report..")
+                .should().dependOnClassesThat().resideInAPackage("..education..")
                 .check(CLASSES);
     }
 

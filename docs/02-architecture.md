@@ -135,6 +135,32 @@ once on the document's taxable sum). Quotes are numbered Q-0001 at creation, inv
 a per-organisation counter taken with one atomic upsert (`biz_sequence`), so numbers never repeat. Screens show
 riel beside USD at 1 USD = 4,100 KHR, rounded to 100 (`apps/web/src/lib/money.ts`).
 
+### Service & Operations permissions (built)
+
+Module roles live in the module (`svc_staff`): **Dispatcher** or **Technician**, added by Admins. Owners and Admins get
+`service.view`, `service.manage`, `service.admin`; dispatchers `service.view` + `service.manage`; technicians
+`service.view` + `service.technician` (through the core's `PermissionSource` hook). Members without a role and guests
+get nothing (FORBIDDEN). The API enforces every row (`com.businessplatform.ops.service.OpsAccess`; the package is `ops`
+because `..service..` would match every module's service layer in the architecture tests).
+
+| Action | Owner / Admin | Dispatcher | Technician |
+|---|---|---|---|
+| Dashboard | everyone's | everyone's | their own tickets and work orders |
+| Customers, sites, assets, maintenance plans, reports | ✅ | ✅ | — |
+| Take requests, triage, edit, assign, close and reopen tickets | ✅ | ✅ | — |
+| See, comment on, add files to, and move tickets (in progress, waiting, resolved) | ✅ | ✅ | the ones assigned to them |
+| Create, edit, schedule and cancel work orders | ✅ | ✅ | — |
+| Start, hold, tick the checklist, record parts / labour, complete with sign-off | ✅ | ✅ | their own work orders only |
+| Decide work order approvals (default "Work order approval": an Admin) | the workflow's approvers | — | — |
+| Service staff, SLA targets, approval threshold, labour rate | ✅ | — | — |
+
+Tickets are TCK-0001 and work orders WO-0001, from a per-organisation counter taken with one atomic upsert
+(`svc_sequence`). SLA due and warn (75%) times are set from the priority's policy; breached / at risk are derived on
+the server. Work order totals are computed only by the API (each line half-up to cents); a draft whose total is above
+the threshold is scheduled only after approval. Maintenance plans generate their next work order `leadDays` before it
+is due, hourly (`platform.service.maintenance-cron`) or with "Generate now", at most once per plan and due date.
+Bookings stay in VirtualBiz: the Bookings page links to the organisation's shops through Retail & Commerce.
+
 ## 6. Core user journeys (MVP first)
 
 1. **Sign up → create organisation** (name, slug, branch optional) → lands on Overview with the Projects module on.

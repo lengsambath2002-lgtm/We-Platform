@@ -5,13 +5,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.businessplatform.support.IntegrationTest;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /** One organisation never sees another's data; invitations only work for the invited email. */
 class OrgIsolationTest extends IntegrationTest {
+
+    @Autowired
+    private JdbcTemplate jdbc;
 
     @Test
     void an_outsider_gets_not_found_for_everything_in_another_organisation() throws Exception {
@@ -69,7 +74,10 @@ class OrgIsolationTest extends IntegrationTest {
         String slug = newOrg(owner);
         ok(call(owner, HttpMethod.PUT, "/api/orgs/" + slug + "/modules/projects", Map.of("enabled", false)));
         assertThat(code(call(owner, HttpMethod.GET, "/api/orgs/" + slug + "/projects", null))).isEqualTo("MODULE_DISABLED");
-        assertThat(code(call(owner, HttpMethod.PUT, "/api/orgs/" + slug + "/modules/education", Map.of("enabled", true))))
+        // A registry entry that isn't built yet can't be switched on (a test-only entry: every real module is built).
+        jdbc.update("INSERT INTO module (key, name_en, name_km, kind, status, sort_order)"
+                + " VALUES ('future-test', 'Future', 'Future', 'INDUSTRY', 'COMING_SOON', 99) ON CONFLICT DO NOTHING");
+        assertThat(code(call(owner, HttpMethod.PUT, "/api/orgs/" + slug + "/modules/future-test", Map.of("enabled", true))))
                 .isEqualTo("INVALID_STATE");
     }
 }
