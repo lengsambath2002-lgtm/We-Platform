@@ -71,6 +71,11 @@ public class WorkflowService {
         w.setName(in.name().strip());
         w.setModuleKey(in.moduleKey());
         w.setActive(in.active() == null || in.active());
+        if (in.remindAfterHours() != null && in.escalateAfterHours() != null && in.escalateAfterHours() <= in.remindAfterHours()) {
+            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "escalateAfterHours", "Escalate after the reminder");
+        }
+        w.setRemindAfterHours(in.remindAfterHours());
+        w.setEscalateAfterHours(in.escalateAfterHours());
         definitions.saveAndFlush(w);
         stepDefs.deleteByWorkflowId(w.getId());
         stepDefs.flush();
@@ -159,6 +164,6 @@ public class WorkflowService {
         return new WorkflowResponse(w.getId(), w.getName(), w.getModuleKey(), w.isActive(),
                 steps.stream().map(s -> new StepView(s.getStepOrder(), s.getApproverType(), s.getApproverUser(),
                         s.getApproverUser() == null ? null : names.get(s.getApproverUser()), s.getApproverRole()))
-                        .toList());
+                        .toList(), w.getRemindAfterHours(), w.getEscalateAfterHours());
     }
 }

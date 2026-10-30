@@ -34,8 +34,11 @@ export function ApprovalSteps({ detail }: { detail: ApprovalDetail }) {
                 <p className="text-xs text-muted-foreground">
                   {s.decidedBy && s.decidedAt
                     ? t(s.status === 'APPROVED' ? 'approvals.approvedBy' : s.status === 'REJECTED' ? 'approvals.rejectedBy' : 'approvals.changesRequestedBy', { name: s.decidedBy.name, ago: ago(s.decidedAt) })
+                      + (s.actingFor ? t('approvals.onBehalfOf', { name: s.actingFor.name }) : '')
                     : t(current ? 'approvals.waitingDecision' : 'approvals.notReached')}
                 </p>
+                {current && s.delegate && <p className="text-xs text-primary">{t('approvals.actingNow', { name: s.delegate.name })}</p>}
+                {s.escalated && <p className="text-xs text-warning">{t('approvals.escalated')}</p>}
               </div>
             </li>
           );
@@ -47,7 +50,7 @@ export function ApprovalSteps({ detail }: { detail: ApprovalDetail }) {
           <ol className="space-y-2">
             {detail.history.map((h, i) => (
               <li key={i} className="text-sm">
-                <span className="font-medium">{h.actor.name}</span> {ACTION[h.action] ? t(ACTION[h.action]) : h.action.toLowerCase()}
+                <span className="font-medium">{h.actor.name}{h.actingFor ? t('approvals.onBehalfOf', { name: h.actingFor.name }) : ''}</span> {ACTION[h.action] ? t(ACTION[h.action]) : h.action.toLowerCase()}
                 {h.step && h.action !== 'SUBMIT' ? t('approvals.inStep', { n: h.step }) : ''} <span className="text-xs text-muted-foreground">{ago(h.at)}</span>
                 {h.comment && <p className="mt-0.5 whitespace-pre-wrap rounded-md bg-muted px-2 py-1 text-sm">{h.comment}</p>}
               </li>

@@ -146,6 +146,16 @@ person approve once), a missing 2nd approver drops that level, and for leave and
 them is approved at once (`AUTO_APPROVE` in the history) instead of going to the other Admins. Tested against a real
 129-person company chart (centers → teams, 1st and 2nd managers): every line matched.
 
+### Acting approvers, reminders and escalation (built)
+
+`approval_delegation`: while someone is away (first and last day, Asia/Phnom_Penh), their delegate decides their
+approval steps for them; people set their own, Admins and HR managers set anyone's, and one person has at most one
+for any day. The delegate sees those requests in their inbox, sees the record as the approver would, and decides
+"for" them (`on_behalf_of` on the step and in the history); it starts and stops by date, one hop only. A workflow may
+remind the approver (and their delegate) after `remind_after_hours`, again every period, and escalate after
+`escalate_after_hours`: the organisation's Admins are told and may then decide too (`ApprovalReminderJob`, hourly,
+`platform.approvals.reminder-cron`).
+
 ### General Business permissions (built)
 
 `business.view` for Owners, Admins and Members with the module on; `business.manage` for Owners and Admins.

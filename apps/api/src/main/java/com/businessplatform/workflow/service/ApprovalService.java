@@ -66,6 +66,8 @@ public class ApprovalService {
     private final OrgAccess access;
     private final ModuleService modules;
     private final List<RecordResolver> resolvers;
+    private final DelegationService delegations;
+    private final com.businessplatform.org.repository.OrganisationRepository orgs;
     private final WorkflowRepositories.Definitions definitions;
     private final WorkflowRepositories.StepDefs stepDefs;
     private final WorkflowRepositories.Requests requests;
@@ -171,6 +173,7 @@ public class ApprovalService {
             s.setRequestId(r.getId());
             s.setStepOrder((short) (line.size() + 1));
             s.setStatus(line.isEmpty() ? "PENDING" : "WAITING");
+            s.setActivatedAt(line.isEmpty() ? clock.instant() : null);
             s.setApproverId(approver);
             s.setApproverRole(role);
             line.add(s);
@@ -210,7 +213,8 @@ public class ApprovalService {
                 }
                 yield requests.findTop200ByOrgIdOrderByUpdatedAtDesc(ctx.orgId());
             }
-            case "inbox" -> requests.inbox(ctx.orgId(), ctx.userId(), roleKeys(ctx)).stream()
+            case "inbox" -> requests.inbox(ctx.orgId(), ctx.userId(), orNone(delegations.actingAs(ctx.orgId(), ctx.userId())),
+                    roleKeys(ctx), ctx.isAdmin()).stream()
                     .filter(r -> !r.getRequesterId().equals(ctx.userId())).toList();
             default -> throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "box", "inbox, sent or all");
         };
@@ -281,6 +285,8 @@ public class ApprovalService {
         }
         step.setDecidedBy(ctx.userId());
         step.setDecidedAt(clock.instant());
+        // An acting approver (or an Admin after escalation) decides for the named approver.
+        step.setOnBehalfOf(step.getApproverId() != null && !step.getApproverId().equals(ctx.userId()) ? step.getApproverId() : null);
         String verb;
         switch (action) {
             case "APPROVE" -> {
@@ -289,6 +295,7 @@ public class ApprovalService {
                         .filter(s -> s.getStepOrder() == step.getStepOrder() + 1).findFirst();
                 if (next.isPresent()) {
                     next.get().setStatus("PENDING");
+                    next.get().setActivatedAt(clock.instant());
                     r.setCurrentStep(next.get().getStepOrder());
                     verb = "approval.step.approved";
                 } else {
@@ -310,7 +317,7 @@ public class ApprovalService {
             }
             default -> throw new IllegalStateException(action);
         }
-        log(r, ctx.userId(), action, step.getStepOrder(), comment);
+        log(r, ctx.userId(), action, step.getStepOrder(), comment, step.getOnBehalfOf());
         if (!r.open()) {
             closed(ctx, r);
         }
@@ -346,6 +353,10 @@ public class ApprovalService {
         step.setStatus("PENDING");
         step.setDecidedBy(null);
         step.setDecidedAt(null);
+        step.setActivatedAt(clock.instant());
+        step.setRemindedAt(null);
+        step.setEscalatedAt(null);
+        step.setOnBehalfOf(null);
         r.setStatus(ApprovalRequest.PENDING);
         String comment = in == null || in.comment() == null || in.comment().isBlank() ? null : in.comment().strip();
         log(r, ctx.userId(), "RESUBMIT", step.getStepOrder(), comment);
@@ -374,6 +385,56 @@ public class ApprovalService {
         return detail(ctx, r);
     }
 
+    // ── Reminders and escalation ─────────────────────────────────────────────────────
+
+    /**
+     * Run hourly: reminds the approver (and whoever acts for them) of a step that has waited past its workflow's
+     * reminder time, again every such period; once it waits past the escalation time, the organisation's Admins may
+     * decide it too and are told. Returns how many steps were reminded and escalated.
+     */
+    @Transactional
+    public int[] remindAndEscalate() {
+        java.time.Instant now = clock.instant();
+        int reminded = 0;
+        int escalated = 0;
+        Map<UUID, Optional<WorkflowDefinition>> wfs = new java.util.HashMap<>();
+        for (ApprovalStep s : steps.waiting()) {
+            ApprovalRequest r = requests.findById(s.getRequestId()).orElse(null);
+            WorkflowDefinition w = r == null ? null : wfs.computeIfAbsent(r.getWorkflowId(), definitions::findById).orElse(null);
+            if (w == null) {
+                continue;
+            }
+            long waited = java.time.Duration.between(s.getActivatedAt(), now).toHours();
+            String slug = orgs.findById(r.getOrgId()).map(o -> o.getSlug()).orElse("");
+            String link = "/" + slug + "/approvals/" + r.getId();
+            Map<String, Object> about = Map.of("title", r.getTitle(), "hours", waited);
+            if (w.getEscalateAfterHours() != null && s.getEscalatedAt() == null && waited >= w.getEscalateAfterHours()) {
+                s.setEscalatedAt(now);
+                escalated++;
+                List<UUID> admins = memberships.findByOrgIdOrderByCreatedAt(r.getOrgId()).stream()
+                        .filter(m -> Membership.ACTIVE.equals(m.getStatus()) && m.getRole().isAdmin())
+                        .map(Membership::getUserId).filter(u -> !u.equals(r.getRequesterId())).toList();
+                notifications.send(r.getOrgId(), admins, null, "approval.escalated",
+                        Text.of("Escalated to you: {title} has waited {hours} hours", about), Text.raw(r.getSummary()), link);
+                continue;
+            }
+            Integer every = w.getRemindAfterHours();
+            if (every != null && waited >= every
+                    && (s.getRemindedAt() == null || java.time.Duration.between(s.getRemindedAt(), now).toHours() >= every)) {
+                s.setRemindedAt(now);
+                reminded++;
+                Collection<UUID> to = s.getApproverId() != null
+                        ? Stream.concat(Stream.of(s.getApproverId()), delegations.actingFor(r.getOrgId(), s.getApproverId()).stream()).toList()
+                        : memberships.findByOrgIdOrderByCreatedAt(r.getOrgId()).stream()
+                                .filter(m -> Membership.ACTIVE.equals(m.getStatus()) && m.getRole().isAdmin())
+                                .map(Membership::getUserId).filter(u -> !u.equals(r.getRequesterId())).toList();
+                notifications.send(r.getOrgId(), to, null, "approval.reminder",
+                        Text.of("Reminder: {title} is waiting for your approval", about), Text.raw(r.getSummary()), link);
+            }
+        }
+        return new int[] { reminded, escalated };
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────────────
 
     private void closed(OrgContext ctx, ApprovalRequest r) {
@@ -391,8 +452,9 @@ public class ApprovalService {
         List<ApprovalStep> ss = steps.findByRequestIdOrderByStepOrder(r.getId());
         List<ApprovalAction> history = actions.findByRequestIdOrderByCreatedAt(r.getId());
         Map<UUID, PersonView> ps = persons(Stream.of(
-                ss.stream().flatMap(s -> Stream.of(s.getApproverId(), s.getDecidedBy())),
-                history.stream().map(ApprovalAction::getActorId), Stream.of(r.getRequesterId()))
+                ss.stream().flatMap(s -> Stream.of(s.getApproverId(), s.getDecidedBy(), s.getOnBehalfOf(),
+                        s.getApproverId() == null ? null : delegations.actingFor(ctx.orgId(), s.getApproverId()).orElse(null))),
+                history.stream().flatMap(a -> Stream.of(a.getActorId(), a.getOnBehalfOf())), Stream.of(r.getRequesterId()))
                 .flatMap(Function.identity()).filter(Objects::nonNull).collect(Collectors.toSet()));
         WorkflowDefinition w = definitions.findById(r.getWorkflowId()).orElseThrow();
         boolean pending = ApprovalRequest.PENDING.equals(r.getStatus());
@@ -400,15 +462,36 @@ public class ApprovalService {
         return new ApprovalDetail(summary(r, view, ps), r.getSummary(), w.getName(),
                 ss.stream().map(s -> new StepState(s.getStepOrder(), s.getApproverId() == null ? null : ps.get(s.getApproverId()),
                         s.getApproverRole(), s.getStatus(), s.getDecidedBy() == null ? null : ps.get(s.getDecidedBy()),
-                        s.getDecidedAt())).toList(),
+                        s.getDecidedAt(), s.getOnBehalfOf() == null ? null : ps.get(s.getOnBehalfOf()), s.getEscalatedAt() != null,
+                        "PENDING".equals(s.getStatus()) && s.getApproverId() != null
+                                ? delegations.actingFor(ctx.orgId(), s.getApproverId()).map(ps::get).orElse(null) : null)).toList(),
                 history.stream().map(a -> new ActionView(ps.get(a.getActorId()), a.getAction(),
-                        a.getStepOrder() == null ? null : (int) a.getStepOrder(), a.getComment(), a.getCreatedAt())).toList(),
+                        a.getStepOrder() == null ? null : (int) a.getStepOrder(), a.getComment(), a.getCreatedAt(),
+                        a.getOnBehalfOf() == null ? null : ps.get(a.getOnBehalfOf()))).toList(),
                 pending && canDecide(ctx, r, current(r)),
                 mine && ApprovalRequest.CHANGES_REQUESTED.equals(r.getStatus()), mine && r.open());
     }
 
     private Optional<RecordResolver.RecordView> visible(OrgContext ctx, ApprovalRequest r) {
-        return resolver(r.getModuleKey(), r.getRecordType()).view(ctx, r.getRecordType(), r.getRecordId());
+        RecordResolver resolver = resolver(r.getModuleKey(), r.getRecordType());
+        Optional<RecordResolver.RecordView> own = resolver.view(ctx, r.getRecordType(), r.getRecordId());
+        if (own.isPresent()) {
+            return own;
+        }
+        // Someone acting for an approver of the request (today, or when they decided for them) sees it as that
+        // approver does, never more.
+        List<ApprovalStep> ss = steps.findByRequestIdOrderByStepOrder(r.getId());
+        Set<UUID> bosses = new HashSet<>(delegations.actingAs(ctx.orgId(), ctx.userId()));
+        ss.stream().filter(s -> ctx.userId().equals(s.getDecidedBy()) && s.getOnBehalfOf() != null).forEach(s -> bosses.add(s.getOnBehalfOf()));
+        for (UUID boss : bosses) {
+            if (ss.stream().anyMatch(s -> boss.equals(s.getApproverId()))) {
+                Optional<RecordResolver.RecordView> as = access.asMember(ctx, boss).flatMap(c -> resolver.view(c, r.getRecordType(), r.getRecordId()));
+                if (as.isPresent()) {
+                    return as.map(v -> new RecordResolver.RecordView(v.title(), v.link(), false));
+                }
+            }
+        }
+        return own;
     }
 
     private ApprovalStep current(ApprovalRequest r) {
@@ -420,11 +503,25 @@ public class ApprovalService {
         return "PENDING".equals(step.getStatus()) && !r.getRequesterId().equals(ctx.userId()) && canAct(ctx, step);
     }
 
-    private static boolean canAct(OrgContext ctx, ApprovalStep step) {
+    /**
+     * The step's approver, whoever acts for them today, the role's members, and (once the step is escalated)
+     * the organisation's Admins.
+     */
+    private boolean canAct(OrgContext ctx, ApprovalStep step) {
         if (step.getApproverId() != null) {
-            return step.getApproverId().equals(ctx.userId());
+            if (step.getApproverId().equals(ctx.userId())
+                    || delegations.actingFor(ctx.orgId(), step.getApproverId()).map(ctx.userId()::equals).orElse(false)) {
+                return true;
+            }
+        } else if (roleKeys(ctx).contains(step.getApproverRole())) {
+            return true;
         }
-        return roleKeys(ctx).contains(step.getApproverRole());
+        return step.getEscalatedAt() != null && ctx.isAdmin();
+    }
+
+    /** An IN list must not be empty. */
+    private static List<UUID> orNone(List<UUID> ids) {
+        return ids.isEmpty() ? List.of(new UUID(0, 0)) : ids;
     }
 
     /** ADMIN steps accept Owners too (an Owner can do whatever an Admin can). */
@@ -440,7 +537,7 @@ public class ApprovalService {
         ApprovalStep step = current(r);
         Collection<UUID> to;
         if (step.getApproverId() != null) {
-            to = List.of(step.getApproverId());
+            to = Stream.concat(Stream.of(step.getApproverId()), delegations.actingFor(ctx.orgId(), step.getApproverId()).stream()).toList();
         } else {
             Set<OrgRole> roles = "OWNER".equals(step.getApproverRole()) ? Set.of(OrgRole.OWNER)
                     : Set.of(OrgRole.OWNER, OrgRole.ADMIN);
@@ -458,7 +555,12 @@ public class ApprovalService {
     }
 
     private void log(ApprovalRequest r, UUID actor, String action, Short step, String comment) {
+        log(r, actor, action, step, comment, null);
+    }
+
+    private void log(ApprovalRequest r, UUID actor, String action, Short step, String comment, UUID onBehalfOf) {
         ApprovalAction a = new ApprovalAction();
+        a.setOnBehalfOf(onBehalfOf);
         a.setId(Ids.next());
         a.setRequestId(r.getId());
         a.setActorId(actor);

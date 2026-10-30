@@ -150,6 +150,8 @@ export function describe(a: ActivityItem, moduleName: (key: string) => string = 
     case 'approval.step.approved': return tr('tasks.actStepApproved');
     case 'approval.approved': return tr('tasks.actApproved');
     case 'approval.auto_approved': return tr('tasks.actAutoApproved');
+    case 'approval.delegated': return tr('tasks.actDelegated', { delegate: s(d.delegate), name: s(d.name), from: day(s(d.from)), to: day(s(d.to)) });
+    case 'approval.delegation.ended': return tr('tasks.actDelegationEnded', { delegate: s(d.delegate), name: s(d.name) });
     case 'approval.rejected': return d.comment ? tr('tasks.actRejectedWithComment', { comment: s(d.comment) }) : tr('tasks.actRejected');
     case 'approval.changes_requested': return tr('tasks.actChangesRequested', { comment: s(d.comment) });
     case 'approval.resubmitted': return tr('tasks.actResubmitted');

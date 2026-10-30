@@ -125,6 +125,17 @@ public class OrgAccess {
         return false;
     }
 
+    /**
+     * Another active member's context in the same organisation (an acting approver sees a record as the person they
+     * act for). Empty for anyone who isn't an active member.
+     */
+    @Transactional(readOnly = true)
+    public java.util.Optional<OrgContext> asMember(OrgContext ctx, UUID userId) {
+        return memberships.findByOrgIdAndUserId(ctx.orgId(), userId).filter(x -> Membership.ACTIVE.equals(x.getStatus()))
+                .map(m -> new OrgContext(ctx.orgId(), ctx.slug(), ctx.orgName(), userId, m.getId(), m.getRole(),
+                        m.getRole() == OrgRole.MEMBER ? grantsOf(ctx.orgId(), m) : Grants.NONE));
+    }
+
     /** {@link #require} plus organisation Owner or Admin. */
     public OrgContext requireAdmin(String slug) {
         OrgContext ctx = require(slug);

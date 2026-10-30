@@ -43,10 +43,17 @@ function Editor({ org, wf, onClose }: { org: string; wf: Workflow | 'new'; onClo
   const people = (members.data ?? []).filter((m) => m.status === 'ACTIVE' && m.role !== 'GUEST');
   const [name, setName] = useState(wf === 'new' ? '' : wf.name);
   const [active, setActive] = useState(wf === 'new' ? true : wf.active);
+  const [remind, setRemind] = useState(wf === 'new' || wf.remindAfterHours == null ? '' : String(wf.remindAfterHours));
+  const [escalate, setEscalate] = useState(wf === 'new' || wf.escalateAfterHours == null ? '' : String(wf.escalateAfterHours));
+  const hours = (v: string) => (v.trim() === '' ? null : Number(v));
   const [steps, setSteps] = useState<Step[]>(wf === 'new' ? [{ type: 'PROJECT_LEAD', userId: null, role: null }]
     : wf.steps.map((s) => ({ type: s.type, userId: s.userId, role: s.role })));
-  const save = useOrgMutation(org, () => orgApi.saveWorkflow(org, wf === 'new' ? null : wf.id, { name: name.trim(), moduleKey, steps, active }));
-  const valid = name.trim().length >= 2 && steps.length > 0 && steps.every((s) => (s.type !== 'USER' || s.userId) && fits(moduleKey, s));
+  const save = useOrgMutation(org, () => orgApi.saveWorkflow(org, wf === 'new' ? null : wf.id, {
+    name: name.trim(), moduleKey, steps, active, remindAfterHours: hours(remind), escalateAfterHours: hours(escalate),
+  }));
+  const okHours = (v: string, max: number) => v.trim() === '' || (/^\d+$/.test(v.trim()) && Number(v) >= 1 && Number(v) <= max);
+  const valid = name.trim().length >= 2 && steps.length > 0 && steps.every((s) => (s.type !== 'USER' || s.userId) && fits(moduleKey, s))
+    && okHours(remind, 720) && okHours(escalate, 2160);
   const set = (i: number, s: Step) => setSteps((x) => x.map((y, j) => (j === i ? s : y)));
 
   return (
@@ -89,6 +96,11 @@ function Editor({ org, wf, onClose }: { org: string; wf: Workflow | 'new'; onClo
             ))}
           </ol>
           {steps.length < 5 && <Button variant="outline" size="sm" onClick={() => setSteps((x) => [...x, { type: 'ORG_ROLE', role: 'ADMIN', userId: null }])}><Plus className="size-4" />{t('admin.addStep')}</Button>}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5"><Label htmlFor="wf-remind">{t('admin.remindAfter')}</Label><Input id="wf-remind" type="number" min={1} max={720} value={remind} onChange={(e) => setRemind(e.target.value)} /></div>
+            <div className="space-y-1.5"><Label htmlFor="wf-escalate">{t('admin.escalateAfter')}</Label><Input id="wf-escalate" type="number" min={1} max={2160} value={escalate} onChange={(e) => setEscalate(e.target.value)} /></div>
+            <p className="col-span-2 text-xs text-muted-foreground">{t('admin.remindHint')}</p>
+          </div>
           <label className="flex items-center gap-2 text-sm"><Checkbox checked={active} onCheckedChange={(v) => setActive(v === true)} />{t('admin.offerWorkflow')}</label>
         </div>
         <DialogFooter>

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import com.businessplatform.workflow.domain.ApprovalAction;
+import com.businessplatform.workflow.domain.ApprovalDelegation;
 import com.businessplatform.workflow.domain.ApprovalRequest;
 import com.businessplatform.workflow.domain.ApprovalStep;
 import com.businessplatform.workflow.domain.WorkflowDefinition;
@@ -59,10 +60,15 @@ public final class WorkflowRepositories {
         List<ApprovalRequest> findTop200ByOrgIdOrderByUpdatedAtDesc(UUID orgId);
 
         /** Open requests whose current step waits on {@code userId} or on one of {@code roles}. */
-        @Query("SELECT r FROM ApprovalRequest r, ApprovalStep s WHERE s.requestId = r.id AND r.orgId = :orgId"
+        /**
+         * Open requests whose current step waits on {@code userId}, on someone they act for ({@code forUsers}), on
+         * one of {@code roles}, or (for Admins: {@code escalated}) on anyone after escalation.
+         */
+        @Query("SELECT DISTINCT r FROM ApprovalRequest r, ApprovalStep s WHERE s.requestId = r.id AND r.orgId = :orgId"
                 + " AND r.status = 'PENDING' AND s.stepOrder = r.currentStep AND s.status = 'PENDING'"
-                + " AND (s.approverId = :userId OR s.approverRole IN :roles) ORDER BY r.updatedAt ASC")
-        List<ApprovalRequest> inbox(UUID orgId, UUID userId, List<String> roles);
+                + " AND (s.approverId = :userId OR s.approverId IN :forUsers OR s.approverRole IN :roles"
+                + " OR (:escalated = true AND s.escalatedAt IS NOT NULL)) ORDER BY r.updatedAt ASC")
+        List<ApprovalRequest> inbox(UUID orgId, UUID userId, List<UUID> forUsers, List<String> roles, boolean escalated);
 
         /** Removes the requests about records that are gone (their steps and actions go with them). */
         @Modifying
@@ -74,10 +80,26 @@ public final class WorkflowRepositories {
     public interface Steps extends JpaRepository<ApprovalStep, UUID> {
 
         List<ApprovalStep> findByRequestIdOrderByStepOrder(UUID requestId);
+
+        /** Every step waiting for a decision now (for reminders and escalation). */
+        @Query("SELECT s FROM ApprovalStep s, ApprovalRequest r WHERE s.requestId = r.id AND r.status = 'PENDING'"
+                + " AND s.stepOrder = r.currentStep AND s.status = 'PENDING' AND s.activatedAt IS NOT NULL")
+        List<ApprovalStep> waiting();
     }
 
     public interface Actions extends JpaRepository<ApprovalAction, UUID> {
 
         List<ApprovalAction> findByRequestIdOrderByCreatedAt(UUID requestId);
+    }
+
+    public interface Delegations extends JpaRepository<ApprovalDelegation, UUID> {
+
+        List<ApprovalDelegation> findByOrgIdAndRevokedAtIsNullOrderByStartsOn(UUID orgId);
+
+        List<ApprovalDelegation> findByOrgIdAndUserIdAndRevokedAtIsNull(UUID orgId, UUID userId);
+
+        List<ApprovalDelegation> findByOrgIdAndDelegateIdAndRevokedAtIsNull(UUID orgId, UUID delegateId);
+
+        Optional<ApprovalDelegation> findByIdAndOrgId(UUID id, UUID orgId);
     }
 }
