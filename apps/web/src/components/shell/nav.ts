@@ -6,13 +6,20 @@ import {
   Briefcase,
   CalendarCheck2,
   CalendarDays,
+  CalendarClock,
   CheckSquare,
+  ClipboardList,
+  Cpu,
+  HardHat,
+  LifeBuoy,
+  Ticket,
   Contact,
   FileSignature,
   FileText,
   FolderKanban,
   GitBranch,
   GraduationCap,
+  Hammer,
   Inbox,
   Package,
   Receipt,
@@ -86,12 +93,36 @@ export const MODULE_ICON: Record<string, LucideIcon> = {
   service: Wrench,
 };
 
-/** Where a switched-on module lives: built modules (projects, business, education, HR, retail) have their own pages, the others a "planned" page. */
-export const moduleHref = (key: string) => (['projects', 'business', 'education', 'hr', 'retail'].includes(key) ? key : `m/${key}`);
+/** Where a switched-on module lives: built modules (projects, business, education, HR, retail, service) have their own pages, the others a "planned" page. */
+export const moduleHref = (key: string) => (['projects', 'business', 'education', 'hr', 'retail', 'service'].includes(key) ? key : `m/${key}`);
 
 /** Modules with a home page and sub-pages listed under it in the sidebar. */
 export const subNav = (key: string, ctx: OrgContext): NavItem[] => (key === 'hr' ? hrNav(ctx) : key === 'business' ? businessNav(ctx)
-  : key === 'education' ? educationNav(ctx) : []);
+  : key === 'education' ? educationNav(ctx) : key === 'service' ? serviceNav(ctx) : []);
+
+/**
+ * Service & Operations' pages for the sidebar and its tabs, filtered by permission (the server re-checks):
+ * dispatchers and Admins get everything; technicians their dashboard, tickets, bookings and their work orders.
+ */
+export function serviceNav(ctx: OrgContext): NavItem[] {
+  const can = (p: string) => ctx.permissions.includes(p);
+  if (!can('service.view')) return [];
+  const manage = can('service.manage');
+  return [
+    { href: 'service', label: tr('service.navDashboard'), icon: LayoutDashboard, exact: true },
+    ...(manage ? [{ href: 'service/requests', label: tr('service.navRequests'), icon: LifeBuoy }] : []),
+    { href: 'service/tickets', label: tr('service.navTickets'), icon: Ticket },
+    { href: 'service/bookings', label: tr('service.navBookings'), icon: CalendarClock },
+    { href: 'service/work-orders', label: manage ? tr('service.navWorkOrders') : tr('service.navMyWorkOrders'), icon: ClipboardList },
+    ...(manage ? [
+      { href: 'service/technicians', label: tr('service.navTechnicians'), icon: HardHat },
+      { href: 'service/assets', label: tr('service.navAssets'), icon: Cpu },
+      { href: 'service/maintenance', label: tr('service.navMaintenance'), icon: Hammer },
+      { href: 'service/reports', label: tr('service.navReports'), icon: BarChart3 },
+    ] : []),
+    ...(can('service.admin') ? [{ href: 'service/settings', label: tr('service.navSettings'), icon: SlidersHorizontal }] : []),
+  ];
+}
 
 /** General Business's pages for the sidebar and its tabs, filtered by permission (the server re-checks). */
 export function businessNav(ctx: OrgContext): NavItem[] {
