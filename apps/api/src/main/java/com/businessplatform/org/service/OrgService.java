@@ -59,6 +59,7 @@ public class OrgService {
     private final org.springframework.core.env.Environment env;
     private final MailService mail;
     private final Messages messages;
+    private final List<PermissionSource> permissionSources;
 
     /** Addresses the web app uses for its own pages (/{slug} would shadow them). */
     private static final Set<String> RESERVED_SLUGS = Set.of("account", "onboarding", "invite", "sign-in", "sign-up",
@@ -101,8 +102,10 @@ public class OrgService {
                 .map(m -> new ModuleState(m.getKey(), m.getNameEn(), m.getNameKm(), m.getKind(), modules.available(m),
                         on.contains(m.getKey())))
                 .toList();
+        List<String> permissions = new java.util.ArrayList<>(Permissions.of(ctx, on));
+        permissionSources.forEach(s -> s.permissions(ctx, on).stream().filter(p -> !permissions.contains(p)).forEach(permissions::add));
         return new OrgContextResponse(new OrgSummary(ctx.orgId(), ctx.slug(), ctx.orgName(), ctx.role()),
-                Permissions.of(ctx, on), states);
+                permissions, states);
     }
 
     @Transactional

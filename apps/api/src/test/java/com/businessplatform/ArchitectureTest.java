@@ -19,7 +19,7 @@ class ArchitectureTest {
         noClasses().that().resideInAnyPackage("..common..", "..identity..", "..org..", "..module..", "..workflow..",
                 "..calendar..", "..activity..", "..notification..", "..file..", "..document..", "..oidc..")
                 .should().dependOnClassesThat().resideInAnyPackage("..project..", "..overview..", "..report..", "..hr..",
-                        "..retail..", "..business..")
+                        "..retail..", "..business..", "..education..")
                 .check(CLASSES);
     }
 
@@ -44,6 +44,13 @@ class ArchitectureTest {
         noClasses().that().resideInAPackage("..business..")
                 .should().dependOnClassesThat().resideInAnyPackage("..project..", "..hr..", "..retail..", "..overview..",
                         "..report..")
+                .check(CLASSES);
+        noClasses().that().resideInAPackage("..education..")
+                .should().dependOnClassesThat().resideInAnyPackage("..project..", "..hr..", "..retail..", "..business..",
+                        "..overview..", "..report..")
+                .check(CLASSES);
+        noClasses().that().resideInAnyPackage("..project..", "..hr..", "..retail..", "..business..", "..overview..", "..report..")
+                .should().dependOnClassesThat().resideInAPackage("..education..")
                 .check(CLASSES);
     }
 
