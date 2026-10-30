@@ -168,6 +168,10 @@ export interface Workflow {
   moduleKey: string;
   active: boolean;
   steps: { order: number; type: 'USER' | 'ORG_ROLE' | 'PROJECT_LEAD' | 'MANAGER' | 'SECOND_MANAGER'; userId: string | null; userName: string | null; role: string | null }[];
+  /** Remind the approver after this many hours waiting; null = never. */
+  remindAfterHours: number | null;
+  /** Let Admins decide after this many hours waiting; null = never. */
+  escalateAfterHours: number | null;
 }
 
 export interface ApprovalSummary {
@@ -189,8 +193,15 @@ export interface ApprovalDetail {
   summary: ApprovalSummary;
   text: string | null;
   workflowName: string;
-  steps: { order: number; approver: { id: string; name: string } | null; role: string | null; status: string; decidedBy: { id: string; name: string } | null; decidedAt: string | null }[];
-  history: { actor: { id: string; name: string }; action: string; step: number | null; comment: string | null; at: string }[];
+  steps: {
+    order: number; approver: { id: string; name: string } | null; role: string | null; status: string; decidedBy: { id: string; name: string } | null; decidedAt: string | null;
+    /** The approver a stand-in (or an Admin after escalation) decided for. */
+    actingFor: { id: string; name: string } | null;
+    escalated: boolean;
+    /** Who acts for the approver today (pending steps). */
+    delegate: { id: string; name: string } | null;
+  }[];
+  history: { actor: { id: string; name: string }; action: string; step: number | null; comment: string | null; at: string; actingFor: { id: string; name: string } | null }[];
   canDecide: boolean;
   canResubmit: boolean;
   canWithdraw: boolean;

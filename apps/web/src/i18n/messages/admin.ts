@@ -51,6 +51,9 @@ export const en = {
   stepKind_USER: 'A specific person',
   stepKind_MANAGER: "The requester's manager (else any admin)",
   stepKind_SECOND_MANAGER: "The requester's 2nd approver (skipped if none or the same person)",
+  remindAfter: 'Remind after (hours)',
+  escalateAfter: 'Escalate to Admins after (hours)',
+  remindHint: 'Empty = never. The approver (and whoever acts for them) is reminded again every period; after escalation the Admins can decide too.',
   workflowModule: 'Used for',
 };
 
@@ -103,5 +106,8 @@ export const km: Record<keyof typeof en, string> = {
   stepKind_USER: 'បុគ្គលជាក់លាក់ម្នាក់',
   stepKind_MANAGER: 'អ្នកគ្រប់គ្រងរបស់អ្នកស្នើសុំ (បើគ្មាន អ្នកគ្រប់គ្រងណាម្នាក់)',
   stepKind_SECOND_MANAGER: 'អ្នកអនុម័តទី ២ របស់អ្នកស្នើសុំ (រំលងបើគ្មាន ឬជាមនុស្សតែមួយ)',
+  remindAfter: 'រំលឹកក្រោយ (ម៉ោង)',
+  escalateAfter: 'បញ្ជូនបន្តទៅអ្នកគ្រប់គ្រងក្រោយ (ម៉ោង)',
+  remindHint: 'ទទេ = មិនដែល។ អ្នកអនុម័ត (និងអ្នកជំនួស) ត្រូវបានរំលឹកម្ដងទៀតរៀងរាល់រយៈពេល ក្រោយការបញ្ជូនបន្ត អ្នកគ្រប់គ្រងក៏អាចសម្រេចបានដែរ។',
   workflowModule: 'ប្រើសម្រាប់',
 };

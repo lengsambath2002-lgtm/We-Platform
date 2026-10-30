@@ -21,14 +21,33 @@ public final class WorkflowPayloads {
             @Pattern(regexp = "OWNER|ADMIN") String role) {
     }
 
+    /** {@code remindAfterHours} / {@code escalateAfterHours}: remind the approver, then let Admins decide (null = never). */
     public record WorkflowRequest(@NotBlank @Size(min = 2, max = 120) String name,
-            @NotBlank String moduleKey, @NotEmpty @Size(max = 5) List<@Valid StepInput> steps, Boolean active) {
+            @NotBlank String moduleKey, @NotEmpty @Size(max = 5) List<@Valid StepInput> steps, Boolean active,
+            @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(720) Integer remindAfterHours,
+            @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(2160) Integer escalateAfterHours) {
     }
 
     public record StepView(int order, String type, UUID userId, String userName, String role) {
     }
 
-    public record WorkflowResponse(UUID id, String name, String moduleKey, boolean active, List<StepView> steps) {
+    public record WorkflowResponse(UUID id, String name, String moduleKey, boolean active, List<StepView> steps,
+            Integer remindAfterHours, Integer escalateAfterHours) {
+    }
+
+    /** {@code userId}: whose approvals are handed over (empty = the caller's own; others need Admin or HR manager). */
+    public record DelegationRequest(UUID userId, @jakarta.validation.constraints.NotNull UUID delegateId,
+            @jakarta.validation.constraints.NotNull java.time.LocalDate startsOn,
+            @jakarta.validation.constraints.NotNull java.time.LocalDate endsOn, @Size(max = 300) String reason) {
+    }
+
+    /** {@code active}: covers today. */
+    public record DelegationView(UUID id, PersonView user, PersonView delegate, java.time.LocalDate startsOn,
+            java.time.LocalDate endsOn, String reason, boolean active, boolean canRevoke) {
+    }
+
+    /** {@code mine}: handed over by me or to me; {@code all}: everyone's, for Admins and HR managers. */
+    public record DelegationsView(List<DelegationView> mine, List<DelegationView> all, boolean canManage) {
     }
 
     public record SubmitRequest(@NotNull UUID workflowId, @NotBlank String moduleKey, @NotBlank String recordType,
@@ -41,11 +60,12 @@ public final class WorkflowPayloads {
     public record PersonView(UUID id, String name) {
     }
 
+    /** {@code actingFor}: the approver a delegate decided for; {@code escalated}: Admins may decide too. */
     public record StepState(int order, PersonView approver, String role, String status, PersonView decidedBy,
-            Instant decidedAt) {
+            Instant decidedAt, PersonView actingFor, boolean escalated, PersonView delegate) {
     }
 
-    public record ActionView(PersonView actor, String action, Integer step, String comment, Instant at) {
+    public record ActionView(PersonView actor, String action, Integer step, String comment, Instant at, PersonView actingFor) {
     }
 
     public record ApprovalSummary(UUID id, String title, String moduleKey, String recordType, UUID recordId,

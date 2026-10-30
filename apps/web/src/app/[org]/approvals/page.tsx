@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
+import { AwayPanel } from '@/components/approvals/away-panel';
 import { RecordKind } from '@/components/approvals/record-kind';
 import { ApprovalBadge } from '@/components/common/badges';
 import { PageHeader } from '@/components/common/page-header';
@@ -61,6 +62,7 @@ function Approvals() {
           ))}
         </ul>
       )}
+      <AwayPanel org={slug} />
     </>
   );
 }

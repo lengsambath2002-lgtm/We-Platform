@@ -36,6 +36,9 @@ public class ApprovalAction {
 
     private String comment;
 
+    @Column(name = "on_behalf_of")
+    private UUID onBehalfOf;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 }

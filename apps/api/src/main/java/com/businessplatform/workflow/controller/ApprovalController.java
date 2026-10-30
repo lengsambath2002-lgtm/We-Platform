@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import com.businessplatform.common.api.ApiResponse;
 import com.businessplatform.workflow.payload.WorkflowPayloads.*;
 import com.businessplatform.workflow.service.ApprovalService;
+import com.businessplatform.workflow.service.DelegationService;
 import com.businessplatform.workflow.service.WorkflowService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,6 +25,7 @@ public class ApprovalController {
 
     private final WorkflowService workflows;
     private final ApprovalService approvals;
+    private final DelegationService delegations;
 
     @GetMapping("/workflows")
     public ResponseEntity<ApiResponse<List<WorkflowResponse>>> workflows(@PathVariable String org) {
@@ -52,6 +54,22 @@ public class ApprovalController {
     public ResponseEntity<ApiResponse<ApprovalDetail>> submit(@PathVariable String org,
             @Valid @RequestBody SubmitRequest in) {
         return ResponseEntity.status(201).body(ApiResponse.ok(approvals.submit(org, in)));
+    }
+
+    @GetMapping("/approvals/delegations")
+    public ResponseEntity<ApiResponse<DelegationsView>> delegations(@PathVariable String org) {
+        return ResponseEntity.ok(ApiResponse.ok(delegations.list(org)));
+    }
+
+    @PostMapping("/approvals/delegations")
+    public ResponseEntity<ApiResponse<DelegationView>> delegate(@PathVariable String org, @Valid @RequestBody DelegationRequest in) {
+        return ResponseEntity.status(201).body(ApiResponse.ok(delegations.create(org, in)));
+    }
+
+    @DeleteMapping("/approvals/delegations/{id}")
+    public ResponseEntity<ApiResponse<Void>> endDelegation(@PathVariable String org, @PathVariable UUID id) {
+        delegations.revoke(org, id);
+        return ResponseEntity.ok(ApiResponse.ok(null));
     }
 
     @GetMapping("/approvals/{id}")

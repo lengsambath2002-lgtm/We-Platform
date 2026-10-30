@@ -43,4 +43,19 @@ public class ApprovalStep {
 
     @Column(name = "decided_at")
     private Instant decidedAt;
+
+    /** When the step started waiting for a decision (reminders and escalation count from here). */
+    @Column(name = "activated_at")
+    private Instant activatedAt;
+
+    @Column(name = "reminded_at")
+    private Instant remindedAt;
+
+    /** Set once the step waited too long: the organisation's Admins may then decide too. */
+    @Column(name = "escalated_at")
+    private Instant escalatedAt;
+
+    /** The approver an acting approver decided for. */
+    @Column(name = "on_behalf_of")
+    private UUID onBehalfOf;
 }

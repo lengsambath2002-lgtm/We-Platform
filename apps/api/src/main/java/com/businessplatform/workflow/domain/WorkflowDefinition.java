@@ -34,6 +34,14 @@ public class WorkflowDefinition {
     @Column(nullable = false)
     private boolean active = true;
 
+    /** Remind the approver after this many hours waiting (null = never). */
+    @Column(name = "remind_after_hours")
+    private Integer remindAfterHours;
+
+    /** Let the organisation's Admins decide after this many hours waiting (null = never). */
+    @Column(name = "escalate_after_hours")
+    private Integer escalateAfterHours;
+
     @Column(name = "created_by", nullable = false)
     private UUID createdBy;
 
