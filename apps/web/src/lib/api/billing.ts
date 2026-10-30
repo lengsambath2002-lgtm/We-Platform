@@ -38,3 +38,25 @@ export const daysUntil = (iso: string | null) => (iso ? Math.max(0, Math.ceil((n
 export interface ModuleInfo { key: string; nameEn: string; nameKm: string; kind: string; status: string; sortOrder: number }
 /** The platform's module registry (for plan editing). */
 export const useModuleCatalogue = () => useQuery({ queryKey: ['modules'], queryFn: () => http.get<ModuleInfo[]>('/modules') });
+
+export interface PayTo { sellerName: string; sellerAddress: string; sellerTaxId: string | null; bankName: string | null; bankAccountName: string | null; bankAccountNumber: string | null; khqr: boolean }
+export type InvoiceStatus = 'OPEN' | 'PAID' | 'VOID';
+export interface Invoice {
+  id: string; orgId: string; orgName: string; number: string; planCode: string; billingCycle: Cycle; seats: number; unitPrice: number; amount: number;
+  periodStart: string; periodEnd: string; status: InvoiceStatus; issuedAt: string; dueAt: string; overdue: boolean; khqr: string | null;
+  claimedAt: string | null; claimReference: string | null; paidAt: string | null; paymentMethod: string | null; paymentReference: string | null;
+  voidReason: string | null; payTo: PayTo;
+}
+
+export const useInvoices = (org: string, enabled = true) =>
+  useQuery({ queryKey: ['org', org, 'invoices'], queryFn: () => http.get<Invoice[]>(`/orgs/${encodeURIComponent(org)}/invoices`), enabled });
+export const useInvoice = (org: string, id: string) =>
+  useQuery({ queryKey: ['org', org, 'invoices', id], queryFn: () => http.get<Invoice>(`/orgs/${encodeURIComponent(org)}/invoices/${id}`) });
+export const usePlatformInvoices = (status: string) =>
+  useQuery({ queryKey: ['platform', 'invoices', status], queryFn: () => http.get<Invoice[]>(`/platform/invoices${status ? `?status=${status}` : ''}`) });
+
+export const invoiceApi = {
+  claim: (org: string, id: string, reference: string) => http.post<Invoice>(`/orgs/${encodeURIComponent(org)}/invoices/${id}/claim`, { reference }),
+  record: (id: string, method: string, reference: string | null) => http.post<Invoice>(`/platform/invoices/${id}/payment`, { method, reference }),
+  void: (id: string, reason: string) => http.post<Invoice>(`/platform/invoices/${id}/void`, { reason }),
+};

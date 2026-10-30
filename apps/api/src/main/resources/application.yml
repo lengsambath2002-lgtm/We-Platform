@@ -50,6 +50,20 @@ platform:
     # so made-up accounts (imports, demos, tests) never bounce back into the sending mailbox.
     never-to: ${PLATFORM_MAIL_NEVER_TO:.test,.example,.invalid,.localhost,example.com,example.org,example.net}
 
+  # SaaS billing (docs/ops/billing.md): the seller on invoices, how to pay, when invoices are due and the grace period.
+  billing:
+    seller-name: ${PLATFORM_BILLING_SELLER_NAME:Business Platform}
+    seller-address: ${PLATFORM_BILLING_SELLER_ADDRESS:Phnom Penh, Cambodia}
+    seller-tax-id: ${PLATFORM_BILLING_SELLER_TAX_ID:}
+    bank-name: ${PLATFORM_BILLING_BANK_NAME:}
+    bank-account-name: ${PLATFORM_BILLING_BANK_ACCOUNT_NAME:}
+    bank-account-number: ${PLATFORM_BILLING_BANK_ACCOUNT_NUMBER:}
+    # A Bakong account ID (name@bank) makes every invoice carry a KHQR code for its amount.
+    bakong-account-id: ${PLATFORM_BILLING_BAKONG_ACCOUNT_ID:}
+    merchant-city: ${PLATFORM_BILLING_MERCHANT_CITY:Phnom Penh}
+    due-days: ${PLATFORM_BILLING_DUE_DAYS:7}
+    grace-days: ${PLATFORM_BILLING_GRACE_DAYS:14}
+
   # OpenID Connect provider for VirtualBiz single sign-on (docs/integrations/virtualbiz-sso.md).
   oidc:
     # RSA private key, PKCS#8 PEM, base64-encoded (see README). Generated at start-up when environment=local.

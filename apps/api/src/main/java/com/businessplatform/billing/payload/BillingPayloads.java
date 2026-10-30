@@ -59,4 +59,31 @@ public final class BillingPayloads {
     public record SubscriptionBrief(UUID orgId, String planCode, String status, String billingCycle, Instant trialEndsAt,
             Instant currentPeriodEnd, String note) {
     }
+
+    /** How to pay: the seller and bank on invoices (empty fields are not set up). */
+    public record PayTo(String sellerName, String sellerAddress, String sellerTaxId, String bankName, String bankAccountName,
+            String bankAccountNumber, boolean khqr) {
+    }
+
+    /**
+     * {@code khqr}: the KHQR string to show as a QR code (scanned by any Cambodian banking app), when set up;
+     * {@code overdue}: open and past its due date; {@code claimed}: the organisation said it paid.
+     */
+    public record InvoiceView(UUID id, UUID orgId, String orgName, String number, String planCode, String billingCycle, int seats,
+            BigDecimal unitPrice, BigDecimal amount, Instant periodStart, Instant periodEnd, String status, Instant issuedAt,
+            Instant dueAt, boolean overdue, String khqr, Instant claimedAt, String claimReference, Instant paidAt,
+            String paymentMethod, String paymentReference, String voidReason, PayTo payTo) {
+    }
+
+    /** The organisation says it paid (bank transfer or KHQR), with the reference the bank gave. */
+    public record ClaimRequest(@NotBlank @Size(max = 120) String reference) {
+    }
+
+    /** The platform records a payment it received. */
+    public record PaymentRequest(@NotNull @Pattern(regexp = "BANK_TRANSFER|KHQR|ABA_PAYWAY|CASH|OTHER") String method,
+            @Size(max = 120) String reference) {
+    }
+
+    public record VoidRequest(@NotBlank @Size(max = 300) String reason) {
+    }
 }

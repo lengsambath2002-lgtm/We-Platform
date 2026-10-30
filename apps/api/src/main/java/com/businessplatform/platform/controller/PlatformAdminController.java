@@ -80,6 +80,24 @@ public class PlatformAdminController {
     }
 
     /** {@code status}: ACTIVE, DISABLED or SUPER_ADMIN (all when absent). */
+    @GetMapping("/invoices")
+    public ResponseEntity<ApiResponse<List<com.businessplatform.billing.payload.BillingPayloads.InvoiceView>>> invoices(
+            @RequestParam(required = false) String status) {
+        return ResponseEntity.ok(ApiResponse.ok(admin.invoices(status)));
+    }
+
+    @PostMapping("/invoices/{id}/payment")
+    public ResponseEntity<ApiResponse<com.businessplatform.billing.payload.BillingPayloads.InvoiceView>> payment(@PathVariable UUID id,
+            @Valid @RequestBody com.businessplatform.billing.payload.BillingPayloads.PaymentRequest in) {
+        return ResponseEntity.ok(ApiResponse.ok(admin.recordPayment(id, in)));
+    }
+
+    @PostMapping("/invoices/{id}/void")
+    public ResponseEntity<ApiResponse<com.businessplatform.billing.payload.BillingPayloads.InvoiceView>> voidInvoice(@PathVariable UUID id,
+            @Valid @RequestBody com.businessplatform.billing.payload.BillingPayloads.VoidRequest in) {
+        return ResponseEntity.ok(ApiResponse.ok(admin.voidInvoice(id, in)));
+    }
+
     @GetMapping("/plans")
     public ResponseEntity<ApiResponse<List<com.businessplatform.billing.payload.BillingPayloads.PlanView>>> plans() {
         return ResponseEntity.ok(ApiResponse.ok(admin.plans()));
