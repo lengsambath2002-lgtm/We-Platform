@@ -119,6 +119,8 @@ const ACTIONS: Record<string, MessageKey> = {
   'user.viewed': 'platform.act_user_viewed',
   'org.subscription.set': 'platform.act_org_subscription_set',
   'plan.saved': 'platform.act_plan_saved',
+  'invoice.paid': 'platform.act_invoice_paid',
+  'invoice.voided': 'platform.act_invoice_voided',
 };
 
 /** "Sok suspended Angkor Coffee": who did what to which organisation or account, with links. */

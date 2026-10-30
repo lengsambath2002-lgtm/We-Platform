@@ -61,6 +61,7 @@ public class PlatformAdminService {
     private final AccountService accounts;
     private final Clock clock;
     private final com.businessplatform.billing.service.SubscriptionService subscriptions;
+    private final com.businessplatform.billing.service.PlatformInvoiceService invoiceService;
 
     /** The signed-in super admin's id; NOT_FOUND for anyone else. */
     public UUID requireSuperAdmin() {
@@ -189,6 +190,30 @@ public class PlatformAdminService {
         subscriptions.set(o.getId(), in, me);
         record(me, "org.subscription.set", PlatformAudit.ORGANISATION, o.getId(), Map.of("plan", in.planCode(), "status", in.status()));
         return detail(o);
+    }
+
+    @Transactional(readOnly = true)
+    public List<com.businessplatform.billing.payload.BillingPayloads.InvoiceView> invoices(String status) {
+        requireSuperAdmin();
+        return invoiceService.all(status);
+    }
+
+    @Transactional
+    public com.businessplatform.billing.payload.BillingPayloads.InvoiceView recordPayment(UUID id,
+            com.businessplatform.billing.payload.BillingPayloads.PaymentRequest in) {
+        UUID me = requireSuperAdmin();
+        var v = invoiceService.record(id, in, me);
+        record(me, "invoice.paid", PlatformAudit.ORGANISATION, v.orgId(), Map.of("invoice", v.number(), "method", in.method()));
+        return v;
+    }
+
+    @Transactional
+    public com.businessplatform.billing.payload.BillingPayloads.InvoiceView voidInvoice(UUID id,
+            com.businessplatform.billing.payload.BillingPayloads.VoidRequest in) {
+        UUID me = requireSuperAdmin();
+        var v = invoiceService.voidInvoice(id, in, me);
+        record(me, "invoice.voided", PlatformAudit.ORGANISATION, v.orgId(), Map.of("invoice", v.number()));
+        return v;
     }
 
     private OrgDetail detail(Organisation o) {

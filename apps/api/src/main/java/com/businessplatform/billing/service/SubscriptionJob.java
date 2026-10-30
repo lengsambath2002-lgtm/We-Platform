@@ -13,12 +13,14 @@ import lombok.extern.slf4j.Slf4j;
 public class SubscriptionJob {
 
     private final SubscriptionService subscriptions;
+    private final PlatformInvoiceService invoices;
 
     @Scheduled(cron = "${platform.billing.cron:0 10 * * * *}", zone = "Asia/Phnom_Penh")
     public void run() {
         int n = subscriptions.expire();
-        if (n > 0) {
-            log.info("Billing: {} subscription(s) moved to Free", n);
+        int[] r = invoices.run();
+        if (n + r[0] + r[1] + r[2] > 0) {
+            log.info("Billing: {} trial/cancelled to Free, {} renewed, {} late, {} unpaid to Free", n, r[0], r[1], r[2]);
         }
     }
 }

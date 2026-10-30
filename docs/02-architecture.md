@@ -145,7 +145,17 @@ choose a plan; a cancelled paid plan runs to the end of its period. The plan is 
 are locked (`ModuleEntitlements`; switched-on data is kept), invitations and imports stop at the member limit (pending
 invitations count), uploads stop at the storage limit (`StorageQuota`). Owners and the billing role change the plan;
 Admins see it. Super admins edit plans and set any organisation's subscription (contracts, complimentary, longer
-trials). Organisations that existed before plans are complimentary Premium. Next: invoices and payment.
+trials). Organisations that existed before plans are complimentary Premium.
+
+### Invoices and payment (built)
+
+`billing_invoice` (`PlatformInvoice`, `PlatformInvoiceService`): choosing a paid plan, and each renewal, issues an
+invoice (`INV-yyyy-nnnnn`, seats = active non-guest members) with the seller's bank details and, when a Bakong account
+is configured, a KHQR code for the exact amount (`billing/khqr/KhqrBuilder`, from VirtualBiz). Owners get it by email.
+The Owner (or billing role) says "we paid" with the transfer reference; super admins confirm it (**Platform → Invoices**:
+record payment or void). Unpaid after the due date the subscription is `PAST_DUE` (banner); after the grace period it
+moves to Free and the invoice is voided. Payments are confirmed by a person: automatic Bakong / ABA PayWay confirmation
+needs merchant credentials. See `docs/ops/billing.md`.
 
 ### Custom roles (built)
 

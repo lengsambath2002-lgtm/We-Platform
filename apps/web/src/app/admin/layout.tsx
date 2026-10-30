@@ -17,6 +17,7 @@ const NAV: { href: string; label: MessageKey; exact?: boolean }[] = [
   { href: '/admin/organisations', label: 'platform.navOrgs' },
   { href: '/admin/users', label: 'platform.navUsers' },
   { href: '/admin/plans', label: 'platform.navPlans' },
+  { href: '/admin/invoices', label: 'platform.navInvoices' },
   { href: '/admin/audit', label: 'platform.navAudit' },
 ];
 

@@ -54,6 +54,7 @@ public class SubscriptionService implements ModuleEntitlements, StorageQuota {
     private final InvitationRepository invitations;
     private final ActivityService activity;
     private final Clock clock;
+    private final PlatformInvoiceService invoices;
 
     // ── What the plan allows ─────────────────────────────────────────────────────────
 
@@ -153,11 +154,14 @@ public class SubscriptionService implements ModuleEntitlements, StorageQuota {
         s.setCancelAtPeriodEnd(false);
         s.setTrialEndsAt(null);
         if (paid(p)) {
+            // A new period starts now, invoiced now (an earlier open invoice is replaced).
             s.setStatus(Subscription.ACTIVE);
             s.setCurrentPeriodEnd(periodEnd(now, in.cycle()));
+            invoices.issue(ctx.orgId(), p, in.cycle(), now, s.getCurrentPeriodEnd(), "Replaced by a plan change");
         } else {
             s.setStatus(Subscription.ACTIVE);
             s.setCurrentPeriodEnd(null);
+            invoices.voidOpen(ctx.orgId(), "Moved to a free plan");
         }
         s.setUpdatedBy(ctx.userId());
         s.setUpdatedAt(now);
@@ -286,7 +290,7 @@ public class SubscriptionService implements ModuleEntitlements, StorageQuota {
         return ctx;
     }
 
-    private static boolean canManage(OrgContext ctx) {
+    static boolean canManage(OrgContext ctx) {
         return ctx.role() == OrgRole.OWNER || ctx.grants().orgWide().contains(RoleCatalogue.BILLING);
     }
 
@@ -319,7 +323,7 @@ public class SubscriptionService implements ModuleEntitlements, StorageQuota {
         activity.record(s.getOrgId(), "org", "organisation", s.getOrgId(), null, "org.plan.changed", Map.of("to", Plan.FREE));
     }
 
-    private static boolean paid(Plan p) {
+    static boolean paid(Plan p) {
         return p.getPriceMonthly().signum() > 0 || p.getPriceYearly().signum() > 0;
     }
 

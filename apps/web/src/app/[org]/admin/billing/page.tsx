@@ -1,6 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
+import Link from 'next/link';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
@@ -12,7 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { tr } from '@/i18n/core';
 import type { MessageKey } from '@/i18n/messages';
 import { useT } from '@/i18n/provider';
-import { type Cycle, type Plan, billingApi, daysUntil, useSubscription } from '@/lib/api/billing';
+import { type Cycle, type Plan, billingApi, daysUntil, useInvoices, useSubscription } from '@/lib/api/billing';
 import { errorMessage } from '@/lib/api/client';
 import { useOrgMutation } from '@/lib/api/queries';
 import { day } from '@/lib/format';
@@ -28,6 +29,7 @@ export default function BillingPage() {
   const { t, locale } = useT();
   const allowed = can('billing.view');
   const { data: s, error, isPending, refetch } = useSubscription(slug, allowed);
+  const invoices = useInvoices(slug, allowed);
   const [cycle, setCycle] = useState<Cycle | null>(null);
   const change = useOrgMutation(slug, (v: { code: string; cycle: Cycle }) => billingApi.change(slug, v.code, v.cycle));
   const cancel = useOrgMutation(slug, () => billingApi.cancel(slug));
@@ -109,6 +111,21 @@ export default function BillingPage() {
         })}
       </ul>
       {!s.canManage && <p className="mt-4 text-sm text-muted-foreground">{t('billing.ownersOnly')}</p>}
+
+      <section aria-labelledby="inv-h" className="mt-8">
+        <h2 id="inv-h" className="mb-3 text-base font-semibold">{t('billing.invoices')}</h2>
+        {(invoices.data ?? []).length === 0 ? <p className="text-sm text-muted-foreground">{t('billing.noInvoices')}</p> : (
+          <ul className="divide-y rounded-lg border bg-card">{invoices.data!.map((i) => (
+            <li key={i.id}><Link href={`/${slug}/admin/billing/invoices/${i.id}`} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm hover:bg-muted/50">
+              <span className="flex-1 font-medium">{i.number}</span>
+              <span className="text-muted-foreground">{day(i.issuedAt)}</span>
+              <span className="tabular">{usd(i.amount)}</span>
+              <span className={cn('rounded-full px-2 py-0.5 text-xs', i.status === 'PAID' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : i.overdue ? 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300' : 'bg-muted')}>
+                {tr((i.status === 'OPEN' && i.overdue ? 'billing.inv_OVERDUE' : `billing.inv_${i.status}`) as MessageKey)}</span>
+            </Link></li>
+          ))}</ul>
+        )}
+      </section>
     </>
   );
 }
