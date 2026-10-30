@@ -47,6 +47,7 @@ import com.businessplatform.org.domain.Membership;
 import com.businessplatform.org.domain.OrgRole;
 import com.businessplatform.org.repository.MembershipRepository;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.org.service.RoleCatalogue;
 
 import lombok.RequiredArgsConstructor;
 
@@ -141,20 +142,21 @@ public class TimekeepingService {
         WorkSchedule s = scheduleOf(ctx, p);
         List<DayRow> days = days(ctx, p, s, month.atDay(1), month.atEndOfMonth());
         return new Timesheet(profiles.persons(List.of(who)).get(who), schedules.view(ctx, s), month.toString(), days,
-                totals(days, s), HrAccess.manages(ctx));
+                totals(days, s), HrAccess.managesPerson(ctx, who));
     }
 
-    /** HR managers: everyone's {@code date} (default today), by name. */
+    /** HR managers: everyone's {@code date} (default today), by name; a unit's HR manager sees their units' people. */
     @Transactional
     public List<BoardRow> board(String slug, LocalDate date) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireTeam(slug);
+        Set<UUID> scope = ctx.scopeOf(RoleCatalogue.HR);
         LocalDate day = date == null ? LeaveService.today(clock) : date;
         profileRows.createMissing(ctx.orgId());
         Set<UUID> active = memberships.findByOrgIdOrderByCreatedAt(ctx.orgId()).stream()
                 .filter(m -> Membership.ACTIVE.equals(m.getStatus()) && m.getRole() != OrgRole.GUEST)
                 .map(Membership::getUserId).collect(Collectors.toSet());
         List<EmployeeProfile> people = profileRows.findByOrgId(ctx.orgId()).stream()
-                .filter(p -> active.contains(p.getUserId())).toList();
+                .filter(p -> active.contains(p.getUserId()) && (scope == null || scope.contains(p.getUserId()))).toList();
         Map<UUID, WorkSchedule> scheduleOf = schedules.forPeople(ctx, people);
         Map<UUID, PersonRef> refs = profiles.persons(people.stream().map(EmployeeProfile::getUserId).toList());
         Inputs inputs = inputs(ctx, null, day, day);
@@ -173,7 +175,10 @@ public class TimekeepingService {
      */
     @Transactional
     public DayRow correct(String slug, UUID userId, LocalDate date, AttendanceEdit in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireTeam(slug);
+        if (!HrAccess.managesPerson(ctx, userId)) {
+            throw BusinessException.forbidden();
+        }
         EmployeeProfile p = profiles.profile(ctx, userId);
         if (date.isAfter(LeaveService.today(clock))) {
             throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "date", "This day hasn't happened yet");
@@ -220,7 +225,7 @@ public class TimekeepingService {
 
     /** The person, their manager, or an HR manager. */
     boolean mayView(OrgContext ctx, UUID who) {
-        return who.equals(ctx.userId()) || HrAccess.manages(ctx)
+        return who.equals(ctx.userId()) || HrAccess.managesPerson(ctx, who)
                 || profiles.managerOf(ctx.orgId(), who).map(ctx.userId()::equals).orElse(false);
     }
 

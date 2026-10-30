@@ -18,6 +18,7 @@ import com.businessplatform.org.domain.Membership;
 import com.businessplatform.org.repository.MembershipRepository;
 import com.businessplatform.org.service.OrgAccess;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.org.service.RoleCatalogue;
 
 import lombok.RequiredArgsConstructor;
 
@@ -103,6 +104,10 @@ public class OpsAccess {
         boolean tech = s.map(x -> Staff.TECHNICIAN.equals(x.getRole())).orElse(false);
         if (ctx.isAdmin()) {
             return Optional.of(new Who(ctx, ADMIN, tech));
+        }
+        // A custom role with Service management makes a member a dispatcher, whatever their staff row says.
+        if (ctx.can(RoleCatalogue.SERVICE)) {
+            return Optional.of(new Who(ctx, Staff.DISPATCHER, tech));
         }
         return s.map(x -> new Who(ctx, x.getRole(), tech));
     }

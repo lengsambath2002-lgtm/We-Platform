@@ -1,6 +1,7 @@
 'use client';
 
 import { MailX, MapPinned, Send, UserPlus } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -80,6 +81,9 @@ export default function MembersAdmin() {
                           <SelectTrigger size="sm" className="w-full" aria-label={t('admin.roleOf', { name: m.name })}><SelectValue /></SelectTrigger>
                           <SelectContent>{ROLES.filter((r) => isOwner || r !== 'OWNER').map((r) => <SelectItem key={r} value={r}>{ROLE_TEXT[r]!.label}</SelectItem>)}</SelectContent>
                         </Select>
+                      )}
+                      {m.role === 'MEMBER' && m.customRoles.length > 0 && (
+                        <Link href={`/${slug}/admin/roles`} className="mt-1 block truncate text-xs text-primary hover:underline">{m.customRoles.join(', ')}</Link>
                       )}
                     </TableCell>
                     <TableCell className="hidden text-sm text-muted-foreground md:table-cell">{day(m.joinedAt)}</TableCell>

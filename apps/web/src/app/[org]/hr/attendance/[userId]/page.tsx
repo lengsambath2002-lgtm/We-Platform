@@ -30,6 +30,7 @@ function PersonAttendance() {
   const month = /^\d{4}-\d{2}$/.test(params.get('month') ?? '') ? params.get('month')! : orgToday().slice(0, 7);
   const sheet = useTimesheet(slug, userId, month);
   const manage = can('hr.manage');
+  const team = can('hr.team');
   const schedules = useSchedules(slug);
   const [correcting, setCorrecting] = useState<AttendanceDay | null>(null);
   const assign = useOrgMutation(slug, (id: string | null) => attendanceApi.assignSchedule(slug, userId, id));
@@ -37,8 +38,8 @@ function PersonAttendance() {
 
   return (
     <>
-      <Link href={`/${slug}/hr/${manage ? 'attendance/board' : 'people'}`} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="size-4" />{t(manage ? 'hr.boardTitle' : 'hr.navPeople')}
+      <Link href={`/${slug}/hr/${team ? 'attendance/board' : 'people'}`} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="size-4" />{t(team ? 'hr.boardTitle' : 'hr.navPeople')}
       </Link>
       {sheet.error ? <ErrorState error={sheet.error} retry={() => sheet.refetch()} /> : sheet.isPending ? <ListSkeleton rows={8} /> : (
         <>

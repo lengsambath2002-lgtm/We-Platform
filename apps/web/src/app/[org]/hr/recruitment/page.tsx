@@ -149,7 +149,7 @@ function Recruitment() {
   const params = useSearchParams();
   const router = useRouter();
   if (!can('hr.recruit')) return <PermissionDenied />;
-  const manage = can('hr.manage');
+  const manage = can('hr.recruit.manage');
   const tabs = ['openings', 'interviews', ...(manage ? ['hires', 'onboarding'] : [])];
   const tab = tabs.includes(params.get('tab') ?? '') ? params.get('tab')! : 'openings';
   return (

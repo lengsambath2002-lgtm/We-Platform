@@ -121,7 +121,7 @@ function Payroll() {
   const { t } = useT();
   const params = useSearchParams();
   const router = useRouter();
-  if (!can('hr.manage')) return <PermissionDenied />;
+  if (!can('hr.payroll')) return <PermissionDenied />;
   const tab = params.get('tab') === 'people' ? 'people' : params.get('tab') === 'settings' ? 'settings' : 'runs';
   return (
     <>

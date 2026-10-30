@@ -25,6 +25,7 @@ import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.identity.repository.UserRepository;
 import com.businessplatform.org.service.OrgAccess;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.org.service.RoleCatalogue;
 
 import lombok.RequiredArgsConstructor;
 
@@ -87,10 +88,13 @@ public class ActivityService {
         return activities.findByOrgIdAndRecordIdInOrderByCreatedAtDesc(orgId, recordIds, PageRequest.of(0, limit));
     }
 
-    /** The organisation's audit log, newest first (Owners and Admins). */
+    /** The organisation's audit log, newest first (Owners and Admins, and members with a role that allows it). */
     @Transactional(readOnly = true)
     public PageResponse<AuditEntry> audit(String slug, AuditFilter f, int page, int size) {
-        OrgContext ctx = access.requireAdmin(slug);
+        OrgContext ctx = access.require(slug);
+        if (!ctx.can(RoleCatalogue.AUDIT)) {
+            throw BusinessException.forbidden();
+        }
         if (f.from() != null && f.to() != null && f.to().isBefore(f.from())) {
             throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "to", "The end is before the start");
         }

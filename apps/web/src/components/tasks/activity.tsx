@@ -95,6 +95,12 @@ export function describe(a: ActivityItem, moduleName: (key: string) => string = 
       if (d.position) return tr('structure.actPlacedAs', { name: s(d.name), position: s(d.position) });
       if (d.unit) return tr('structure.actPlacedIn', { name: s(d.name), unit: s(d.unit) });
       return tr('structure.actPlaced', { name: s(d.name) });
+    case 'org.role.created': return tr('roles.actCreated', { name: s(d.name) });
+    case 'org.role.updated': return tr('roles.actUpdated', { name: s(d.name) });
+    case 'org.role.deleted': return tr('roles.actDeleted', { name: s(d.name) });
+    case 'org.role.granted': return d.unit ? tr('roles.actGrantedIn', { role: s(d.role), name: s(d.name), unit: s(d.unit) })
+      : tr('roles.actGranted', { role: s(d.role), name: s(d.name) });
+    case 'org.role.revoked': return tr('roles.actRevoked', { role: s(d.role), name: s(d.name) });
     case 'org.team.created': return tr('collab.actTeamCreated', { name: s(d.name) });
     case 'org.team.updated': return tr('collab.actTeamUpdated', { name: s(d.name) });
     case 'org.team.deleted': return tr('collab.actTeamDeleted', { name: s(d.name) });

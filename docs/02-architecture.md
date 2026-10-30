@@ -113,6 +113,19 @@ refuse, never the other way round.
 | Configure workflows | ✅ | ✅ | — | — |
 | View audit log | ✅ | ✅ | — | — |
 
+### Custom roles (built)
+
+Owner, Admin, Member and Guest stay the base roles. On top of them, Owners and Admins create custom roles (`org_role`:
+a name and permission codes from `RoleCatalogue`) and grant them to members (`org_role_grant`), never to guests;
+Owners and Admins already hold every permission and only they manage roles, so a role can't be used to hand out more
+access. Grantable: `org.structure.manage`, `documents.manage`, `activity.view`, `hr.manage`, `hr.payroll`,
+`hr.recruit`, `business.manage`, `retail.manage`, `education.manage`, `service.manage` (a dispatcher). `hr.manage`
+can be granted for one unit: it then covers the active members placed in that unit or below it (never the holder's
+own record) for profiles and private details, leave balances, the attendance board and corrections (`hr.team` in the
+client); moving people, leave requests, schedules, reviews, training, settings and the dashboard need it
+organisation-wide. Payroll is its own permission, apart from managing people. `OrgAccess` resolves the caller's grants
+into `OrgContext` (`can`, `canFor`, `canSome`, `scopeOf`), which every module's access helper checks.
+
 ### General Business permissions (built)
 
 `business.view` for Owners, Admins and Members with the module on; `business.manage` for Owners and Admins.

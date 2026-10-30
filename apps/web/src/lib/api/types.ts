@@ -55,6 +55,8 @@ export interface Member {
   title: string | null;
   /** The primary unit's name in the organisation structure. */
   unit: string | null;
+  /** Custom roles held (listed for Owners and Admins only). */
+  customRoles: string[];
   joinedAt: string;
 }
 

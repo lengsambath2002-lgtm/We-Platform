@@ -23,6 +23,7 @@ import com.businessplatform.module.domain.Module;
 import com.businessplatform.module.service.ModuleService;
 import com.businessplatform.org.service.OrgAccess;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.org.service.RoleCatalogue;
 
 import lombok.RequiredArgsConstructor;
 
@@ -59,7 +60,7 @@ public class EducationAccess {
     public record Edu(OrgContext ctx, UUID teacherId) {
 
         public boolean admin() {
-            return ctx.isAdmin();
+            return ctx.can(RoleCatalogue.EDUCATION);
         }
 
         public UUID orgId() {
@@ -98,7 +99,7 @@ public class EducationAccess {
         }
         UUID teacher = teachers.findByOrgIdAndUserId(ctx.orgId(), ctx.userId()).filter(Teacher::isActive).map(Teacher::getId)
                 .orElse(null);
-        if (!ctx.isAdmin() && teacher == null) {
+        if (!ctx.can(RoleCatalogue.EDUCATION) && teacher == null) {
             return Optional.empty();
         }
         return Optional.of(new Edu(ctx, teacher));
