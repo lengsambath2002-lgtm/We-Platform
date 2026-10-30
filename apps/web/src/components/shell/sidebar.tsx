@@ -66,7 +66,7 @@ export function SidebarNav({ ctx, collapsed = false, onNavigate }: { ctx: OrgCon
           {modules.map((m) => (
             <div key={m.key} className="space-y-0.5">
               <Item org={org} collapsed={collapsed} onNavigate={onNavigate}
-                item={{ href: moduleHref(m.key), label: moduleName(m), icon: MODULE_ICON[m.key] ?? MODULE_ICON.business, exact: m.key === 'hr' || m.key === 'business' }} />
+                item={{ href: moduleHref(m.key), label: moduleName(m), icon: MODULE_ICON[m.key] ?? MODULE_ICON.business, exact: ['hr', 'business', 'education'].includes(m.key) }} />
               {subNav(m.key, ctx).slice(1).map((i) => (
                 <Item key={i.href} org={org} collapsed={collapsed} onNavigate={onNavigate} item={{ ...i, sub: true }} />
               ))}

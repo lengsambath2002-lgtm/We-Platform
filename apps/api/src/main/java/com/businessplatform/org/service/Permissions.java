@@ -31,6 +31,12 @@ public final class Permissions {
                 p.add("business.manage");
             }
         }
+        // Education: admins run the school; members who teach get theirs from the module (a PermissionSource),
+        // everyone else has no access to it.
+        if (modules.contains(Module.EDUCATION) && ctx.isAdmin()) {
+            p.add("education.view");
+            p.add("education.manage");
+        }
         // HR: everyone but guests sees their own profile and leave and the team's leave; admins run HR.
         if (modules.contains(Module.HR) && !ctx.isGuest()) {
             p.add("hr.view");

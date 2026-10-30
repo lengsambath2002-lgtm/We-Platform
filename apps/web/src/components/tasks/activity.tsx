@@ -1,6 +1,7 @@
 import { METHOD_LABEL } from '@/components/business/ui';
 import { PRIORITY_LABEL, STATUS_LABEL } from '@/components/common/badges';
 import { PersonAvatar } from '@/components/common/person';
+import { describeEducation } from '@/components/education/activity';
 import { tr } from '@/i18n/core';
 import type { PaymentMethod } from '@/lib/api/business';
 import type { ActivityItem, Priority, TaskStatus } from '@/lib/api/types';
@@ -130,7 +131,7 @@ export function describe(a: ActivityItem, moduleName: (key: string) => string = 
     case 'approval.changes_requested': return tr('tasks.actChangesRequested', { comment: s(d.comment) });
     case 'approval.resubmitted': return tr('tasks.actResubmitted');
     case 'approval.withdrawn': return tr('tasks.actWithdrawn');
-    default: return a.verb;
+    default: return a.verb.startsWith('education.') ? describeEducation(a) : a.verb;
   }
 }
 

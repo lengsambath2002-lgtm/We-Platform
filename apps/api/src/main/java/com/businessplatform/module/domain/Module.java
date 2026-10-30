@@ -16,6 +16,7 @@ public class Module {
 
     public static final String PROJECTS = "projects";
     public static final String BUSINESS = "business";
+    public static final String EDUCATION = "education";
     public static final String HR = "hr";
     public static final String RETAIL = "retail";
 
