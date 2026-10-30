@@ -50,7 +50,7 @@ function CreateOrg() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-lg">{t('auth.createOrgTitle')}</CardTitle>
-          <CardDescription>{t('auth.createOrgLead')}</CardDescription>
+          <CardDescription>{t('auth.createOrgLead')} {t('billing.trialNote', { days: 14 })}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>

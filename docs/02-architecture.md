@@ -135,6 +135,18 @@ be demoted, suspended or leave before handing over. Admins have full rights as B
 included); a narrower Payroll or HR role is a custom role. Still to come with plans and billing: modules a company is
 allowed (set by the platform) apart from those it switches on, and a billing role.
 
+### Plans and subscriptions (built)
+
+`billing` (core). `plan`: price per member (guests free) per month and per year, member limit, storage, included
+modules, trial days, public or not; seeded Free (5 members, 1 GB, Projects and Business), Standard and Premium (every
+module; 20 GB and 200 GB). `subscription`, one per organisation: TRIALING, ACTIVE, PAST_DUE, CANCELLED or COMPLIMENTARY.
+New organisations get a 14-day Standard trial and move to Free when it ends (`SubscriptionJob`, hourly) unless they
+choose a plan; a cancelled paid plan runs to the end of its period. The plan is enforced in the core: modules outside it
+are locked (`ModuleEntitlements`; switched-on data is kept), invitations and imports stop at the member limit (pending
+invitations count), uploads stop at the storage limit (`StorageQuota`). Owners and the billing role change the plan;
+Admins see it. Super admins edit plans and set any organisation's subscription (contracts, complimentary, longer
+trials). Organisations that existed before plans are complimentary Premium. Next: invoices and payment.
+
 ### Custom roles (built)
 
 Owner, Admin, Member and Guest stay the base roles. On top of them, Owners and Admins create custom roles (`org_role`:

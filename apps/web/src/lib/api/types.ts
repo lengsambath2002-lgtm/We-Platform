@@ -36,6 +36,8 @@ export interface ModuleState {
   kind: 'CORE' | 'INDUSTRY';
   available: boolean;
   enabled: boolean;
+  /** The organisation's plan includes it (otherwise it is locked, even if switched on). */
+  inPlan: boolean;
 }
 
 export interface OrgContext {

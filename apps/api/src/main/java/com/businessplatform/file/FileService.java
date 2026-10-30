@@ -41,10 +41,13 @@ public class FileService {
     private final StoredFileRepository files;
     private final Clock clock;
     private final Path root;
+    private final java.util.List<StorageQuota> quotas;
 
-    public FileService(StoredFileRepository files, Clock clock, @Value("${platform.files.dir}") String dir) {
+    public FileService(StoredFileRepository files, Clock clock, @Value("${platform.files.dir}") String dir,
+            java.util.List<StorageQuota> quotas) {
         this.files = files;
         this.clock = clock;
+        this.quotas = quotas;
         this.root = Path.of(dir).toAbsolutePath().normalize();
     }
 
@@ -57,6 +60,7 @@ public class FileService {
         if (!ALLOWED.contains(type)) {
             throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "file", "This file type is not allowed");
         }
+        quotas.forEach(q -> q.require(orgId, upload.getSize()));
         StoredFile f = new StoredFile();
         f.setId(Ids.next());
         f.setOrgId(orgId);

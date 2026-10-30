@@ -27,6 +27,12 @@ public class ModuleService {
     private final OrgModuleRepository orgModules;
     private final Clock clock;
     private final List<ModuleGate> gates;
+    private final List<ModuleEntitlements> entitlements;
+
+    /** Whether the organisation's plan includes the module. */
+    public boolean inPlan(UUID orgId, String key) {
+        return entitlements.stream().allMatch(e -> e.allows(orgId, key));
+    }
 
     @Transactional(readOnly = true)
     public List<Module> registry() {
@@ -48,11 +54,15 @@ public class ModuleService {
         return m.available() && gates.stream().filter(g -> g.moduleKey().equals(m.getKey())).allMatch(ModuleGate::ready);
     }
 
-    /** Switched-on modules that are usable on this server (one whose gate is closed counts as off). */
+    /**
+     * Switched-on modules that are usable on this server (one whose gate is closed counts as off) and included in the
+     * organisation's plan (one left out by a downgrade is locked, its data kept, until the plan includes it again).
+     */
     @Transactional(readOnly = true)
     public Set<String> enabled(UUID orgId) {
         return orgModules.findByOrgId(orgId).stream().filter(OrgModule::isEnabled).map(OrgModule::getModuleKey)
                 .filter(key -> gates.stream().noneMatch(g -> g.moduleKey().equals(key) && !g.ready()))
+                .filter(key -> inPlan(orgId, key))
                 .collect(Collectors.toSet());
     }
 
@@ -72,6 +82,9 @@ public class ModuleService {
         }
         if (on) {
             gates.stream().filter(g -> g.moduleKey().equals(key)).forEach(ModuleGate::requireReady);
+            if (!inPlan(orgId, key)) {
+                throw BusinessException.field(ErrorCode.INVALID_STATE, "module", "Your plan doesn't include this module. Upgrade to use it");
+            }
         }
         OrgModule om = orgModules.findById(new OrgModule.Key(orgId, key)).orElseGet(() -> {
             OrgModule n = new OrgModule();

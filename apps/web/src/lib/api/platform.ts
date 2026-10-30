@@ -46,6 +46,7 @@ export interface PlatformOrgDetail {
   deletedBy: PlatformPerson | null;
   members: { userId: string; name: string; email: string; role: string; status: string; disabled: boolean; joinedAt: string }[];
   modules: { key: string; nameEn: string; nameKm: string; available: boolean; enabled: boolean }[];
+  subscription: import('./billing').SubscriptionBrief | null;
 }
 
 export interface PlatformUser {

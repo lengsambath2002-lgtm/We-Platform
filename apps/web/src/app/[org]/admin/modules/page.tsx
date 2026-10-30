@@ -41,9 +41,10 @@ export default function ModulesAdmin() {
                   <p className="flex flex-wrap items-center gap-2 font-medium">
                     {name} <span className="text-sm font-normal text-muted-foreground" lang={locale === 'km' ? 'en' : 'km'}>{locale === 'km' ? m.nameEn : m.nameKm}</span>
                     {!m.available && <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] font-normal text-muted-foreground">{t('admin.comingSoon')}</span>}
+                    {m.available && !m.inPlan && <Link href={`/${slug}/admin/billing`} className="rounded bg-amber-50 px-1.5 py-0.5 text-[11px] font-normal text-amber-800 hover:underline dark:bg-amber-950 dark:text-amber-300">{t('billing.notInPlan')} · {t('billing.upgrade')}</Link>}
                   </p>
                   {m.available && (
-                    <Switch className="shrink-0" checked={m.enabled} disabled={toggle.isPending} aria-label={t('admin.toggleModule', { name })}
+                    <Switch className="shrink-0" checked={m.enabled} disabled={toggle.isPending || !m.inPlan} aria-label={t('admin.toggleModule', { name })}
                       onCheckedChange={(on) => toggle.mutateAsync({ key: m.key, on })
                         .then(() => toast.success(t(on ? 'admin.switchedOn' : 'admin.switchedOff', { name })))
                         .catch((e) => toast.error(errorMessage(e)))} />

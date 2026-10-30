@@ -117,6 +117,8 @@ const ACTIONS: Record<string, MessageKey> = {
   'user.super_admin.revoked': 'platform.act_user_super_admin_revoked',
   'org.viewed': 'platform.act_org_viewed',
   'user.viewed': 'platform.act_user_viewed',
+  'org.subscription.set': 'platform.act_org_subscription_set',
+  'plan.saved': 'platform.act_plan_saved',
 };
 
 /** "Sok suspended Angkor Coffee": who did what to which organisation or account, with links. */

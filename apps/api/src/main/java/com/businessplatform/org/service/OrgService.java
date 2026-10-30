@@ -62,6 +62,7 @@ public class OrgService {
     private final List<PermissionSource> permissionSources;
     private final OrgStructureService structure;
     private final CustomRoleService customRoles;
+    private final com.businessplatform.billing.service.SubscriptionService subscriptions;
 
     /** Addresses the web app uses for its own pages (/{slug} would shadow them). */
     private static final Set<String> RESERVED_SLUGS = Set.of("account", "onboarding", "invite", "sign-in", "sign-up",
@@ -81,6 +82,7 @@ public class OrgService {
         o.setPrimaryOwnerId(me);
         orgs.save(o);
         memberships.save(membership(o.getId(), me, OrgRole.OWNER));
+        subscriptions.startTrial(o.getId(), me);
         modules.set(o.getId(), Module.PROJECTS, true, me);
         return new OrgSummary(o.getId(), o.getSlug(), o.getName(), OrgRole.OWNER);
     }
@@ -103,7 +105,7 @@ public class OrgService {
         Set<String> on = modules.enabled(ctx.orgId());
         List<ModuleState> states = modules.registry().stream()
                 .map(m -> new ModuleState(m.getKey(), m.getNameEn(), m.getNameKm(), m.getKind(), modules.available(m),
-                        on.contains(m.getKey())))
+                        on.contains(m.getKey()), modules.inPlan(ctx.orgId(), m.getKey())))
                 .toList();
         List<String> permissions = new java.util.ArrayList<>(Permissions.of(ctx, on));
         // Deleting the organisation and handing over primary ownership: the primary owner only.
@@ -211,6 +213,13 @@ public class OrgService {
         if (losesOwner && memberships.countByOrgIdAndRoleAndStatus(ctx.orgId(), OrgRole.OWNER, Membership.ACTIVE) <= 1) {
             throw BusinessException.field(ErrorCode.INVALID_STATE, "role", "An organisation needs at least one owner");
         }
+        boolean takesSeat = (m.getRole() == OrgRole.GUEST && in.role() != null && in.role() != OrgRole.GUEST
+                && Membership.ACTIVE.equals(in.status() == null ? m.getStatus() : in.status()))
+                || (Membership.SUSPENDED.equals(m.getStatus()) && Membership.ACTIVE.equals(in.status())
+                        && (in.role() == null ? m.getRole() : in.role()) != OrgRole.GUEST);
+        if (takesSeat) {
+            subscriptions.requireSeats(ctx.orgId(), 1);
+        }
         if (in.role() != null) {
             m.setRole(in.role());
         }
@@ -284,6 +293,9 @@ public class OrgService {
             throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "role", "Invite as Admin, Member or Guest");
         }
         String email = in.email().strip().toLowerCase(java.util.Locale.ROOT);
+        if (in.role() != OrgRole.GUEST) {
+            subscriptions.requireSeats(ctx.orgId(), 1);
+        }
         users.findByEmail(email).ifPresent(u -> {
             if (memberships.existsByOrgIdAndUserIdAndStatus(ctx.orgId(), u.getId(), Membership.ACTIVE)) {
                 throw BusinessException.field(ErrorCode.CONFLICT, "email", "Already a member");

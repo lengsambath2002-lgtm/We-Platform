@@ -40,7 +40,7 @@ public final class PlatformPayloads {
 
     public record OrgDetail(OrgRow org, Person createdBy, Instant suspendedAt, Person suspendedBy,
             String suspendedReason, Instant deletedAt, Person deletedBy, List<MemberRow> members,
-            List<ModuleRow> modules) {
+            List<ModuleRow> modules, com.businessplatform.billing.payload.BillingPayloads.SubscriptionBrief subscription) {
     }
 
     /** {@code status}: ACTIVE, DISABLED or LOCKED (too many wrong passwords, for a few minutes). */

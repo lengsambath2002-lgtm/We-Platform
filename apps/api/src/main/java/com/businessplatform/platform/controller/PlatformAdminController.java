@@ -1,5 +1,6 @@
 package com.businessplatform.platform.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
@@ -79,6 +80,23 @@ public class PlatformAdminController {
     }
 
     /** {@code status}: ACTIVE, DISABLED or SUPER_ADMIN (all when absent). */
+    @GetMapping("/plans")
+    public ResponseEntity<ApiResponse<List<com.businessplatform.billing.payload.BillingPayloads.PlanView>>> plans() {
+        return ResponseEntity.ok(ApiResponse.ok(admin.plans()));
+    }
+
+    @PutMapping("/plans/{code}")
+    public ResponseEntity<ApiResponse<com.businessplatform.billing.payload.BillingPayloads.PlanView>> savePlan(@PathVariable String code,
+            @Valid @RequestBody com.businessplatform.billing.payload.BillingPayloads.PlanRequest in) {
+        return ResponseEntity.ok(ApiResponse.ok(admin.savePlan(code, in)));
+    }
+
+    @PutMapping("/orgs/{id}/subscription")
+    public ResponseEntity<ApiResponse<OrgDetail>> subscription(@PathVariable UUID id,
+            @Valid @RequestBody com.businessplatform.billing.payload.BillingPayloads.AdminSubscriptionRequest in) {
+        return ResponseEntity.ok(ApiResponse.ok(admin.setSubscription(id, in)));
+    }
+
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<PageResponse<UserRow>>> users(@RequestParam(required = false) String q,
             @RequestParam(required = false) String status, @RequestParam(defaultValue = "0") int page,

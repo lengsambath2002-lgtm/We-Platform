@@ -29,8 +29,9 @@ public final class OrgPayloads {
     public record OrgSummary(UUID id, String slug, String name, OrgRole role) {
     }
 
+    /** {@code inPlan}: the organisation's plan includes it (otherwise it is locked, even if switched on). */
     public record ModuleState(String key, String nameEn, String nameKm, String kind, boolean available,
-            boolean enabled) {
+            boolean enabled, boolean inPlan) {
     }
 
     /** Everything the shell needs: who I am here, what I may do, which modules are on. */

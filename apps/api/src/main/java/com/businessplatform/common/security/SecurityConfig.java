@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(a -> a
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/invitations/*").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/plans").permitAll()
                         // OpenID Connect: metadata, keys and the authorize page's check are public; the token and
                         // shop-link endpoints authenticate the client themselves (HTTP Basic / body credentials).
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/oidc/.well-known/openid-configuration",
