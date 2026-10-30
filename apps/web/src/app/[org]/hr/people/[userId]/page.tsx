@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, Lock, Mail, Pencil, Phone } from 'lucide-react';
+import { ChevronRight, DoorOpen, Lock, Mail, Pencil, Phone } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -9,10 +9,12 @@ import { PersonAvatar } from '@/components/common/person';
 import { ErrorState, ListSkeleton } from '@/components/common/states';
 import { BalanceCards } from '@/components/hr/leave-ui';
 import { ContactDialog, EMPLOYMENT_LABEL, ProfileDialog } from '@/components/hr/profile-dialogs';
+import { ResignDialog } from '@/components/hr/offboarding-ui';
 import { RecordSections } from '@/components/hr/records-ui';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/provider';
 import { useBalances, useProfile } from '@/lib/api/hr';
+import { useMyOffboarding } from '@/lib/api/offboarding';
 import { day } from '@/lib/format';
 import { useOrg } from '@/lib/org-context';
 
@@ -31,7 +33,8 @@ export default function ProfilePage() {
   const { t } = useT();
   const { userId } = useParams<{ userId: string }>();
   const { data: p, error, isPending, refetch } = useProfile(slug, userId);
-  const [editing, setEditing] = useState<'all' | 'contact' | null>(null);
+  const [editing, setEditing] = useState<'all' | 'contact' | 'resign' | null>(null);
+  const mine = useMyOffboarding(slug, !!p?.canEditContact);
   const showBalances = !!p && (p.canEditContact || p.canEdit);
   const balances = useBalances(slug, p?.canEditContact ? '' : userId, new Date().getFullYear(), showBalances);
   if (error) return <ErrorState error={error} retry={() => refetch()} />;
@@ -52,6 +55,9 @@ export default function ProfilePage() {
         <div className="flex flex-wrap gap-2">
           {p.canEdit && <Button size="sm" variant="outline" onClick={() => setEditing('all')}><Pencil className="size-4" />{t('hr.editProfile')}</Button>}
           {!p.canEdit && p.canEditContact && <Button size="sm" variant="outline" onClick={() => setEditing('contact')}><Pencil className="size-4" />{t('hr.editContact')}</Button>}
+          {p.canEdit && !p.canEditContact && <Button size="sm" variant="ghost" asChild><Link href={`/${slug}/hr/offboarding?person=${p.person.id}`}><DoorOpen className="size-4" />{t('offboarding.startForPerson')}</Link></Button>}
+          {p.canEditContact && mine.data === null && <Button size="sm" variant="ghost" onClick={() => setEditing('resign')}><DoorOpen className="size-4" />{t('offboarding.resign')}</Button>}
+          {p.canEditContact && mine.data && <Button size="sm" variant="ghost" asChild><Link href={`/${slug}/hr/offboarding/${mine.data.summary.id}`}><DoorOpen className="size-4" />{t('offboarding.resignedStatus', { date: day(mine.data.summary.lastDay) })}</Link></Button>}
         </div>
       </div>
       <div className="grid gap-6 md:grid-cols-[1fr_280px]">
@@ -115,6 +121,7 @@ export default function ProfilePage() {
       </div>
       {editing === 'all' && <ProfileDialog org={slug} profile={p} onClose={() => setEditing(null)} />}
       {editing === 'contact' && <ContactDialog org={slug} profile={p} onClose={() => setEditing(null)} />}
+      {editing === 'resign' && <ResignDialog org={slug} onClose={() => setEditing(null)} />}
     </div>
   );
 }

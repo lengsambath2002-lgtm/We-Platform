@@ -149,6 +149,11 @@ export function describe(a: ActivityItem, moduleName: (key: string) => string = 
     case 'approval.requested': return tr('tasks.actApprovalRequested', { workflow: s(d.workflow) });
     case 'approval.step.approved': return tr('tasks.actStepApproved');
     case 'approval.approved': return tr('tasks.actApproved');
+    case 'offboarding.resigned': return tr('offboarding.actResigned', { name: s(d.name), lastDay: day(s(d.lastDay)) });
+    case 'offboarding.started': return tr('offboarding.actStarted', { name: s(d.name), lastDay: day(s(d.lastDay)) });
+    case 'offboarding.accepted': return tr('offboarding.actAccepted', { name: s(d.name), lastDay: day(s(d.lastDay)) });
+    case 'offboarding.cancelled': return tr('offboarding.actCancelled', { name: s(d.name) });
+    case 'offboarding.completed': return tr('offboarding.actCompleted', { name: s(d.name), lastDay: day(s(d.lastDay)) });
     case 'approval.auto_approved': return tr('tasks.actAutoApproved');
     case 'approval.delegated': return tr('tasks.actDelegated', { delegate: s(d.delegate), name: s(d.name), from: day(s(d.from)), to: day(s(d.to)) });
     case 'approval.delegation.ended': return tr('tasks.actDelegationEnded', { delegate: s(d.delegate), name: s(d.name) });

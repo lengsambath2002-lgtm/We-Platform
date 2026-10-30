@@ -219,6 +219,23 @@ public class OrgService {
                 customRoles.roleNames(ctx.orgId()).getOrDefault(m.getId(), List.of()));
     }
 
+    /**
+     * Someone left (HR completed their offboarding; the caller was checked there): their membership is suspended,
+     * so they lose access at once. Owners must hand over first.
+     */
+    @Transactional
+    public void endMembership(OrgContext ctx, UUID userId) {
+        Membership m = memberships.findByOrgIdAndUserId(ctx.orgId(), userId).orElseThrow(BusinessException::notFound);
+        if (m.getRole() == OrgRole.OWNER) {
+            throw new BusinessException(ErrorCode.INVALID_STATE, "Make someone else an owner before an owner leaves", List.of());
+        }
+        if (Membership.ACTIVE.equals(m.getStatus())) {
+            m.setStatus(Membership.SUSPENDED);
+            AppUser who = users.findById(userId).orElseThrow();
+            audit(ctx, "member", userId, "org.member.updated", Map.of("name", who.getName(), "status", Membership.SUSPENDED));
+        }
+    }
+
     // ── Invitations ──────────────────────────────────────────────────────────────────
 
     @Transactional

@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  DoorOpen,
   KeyRound,
   Banknote,
   BarChart3,
@@ -201,6 +202,7 @@ export function hrNav(ctx: OrgContext): NavItem[] {
     { href: 'hr/reviews', label: tr('hr.navReviews'), icon: ClipboardCheck },
     { href: 'hr/training', label: tr('hr.navTraining'), icon: GraduationCap },
     ...(can('hr.recruit') ? [{ href: 'hr/recruitment', label: tr('hr.navRecruitment'), icon: Briefcase }] : []),
+    ...(can('hr.team') ? [{ href: 'hr/offboarding', label: tr('offboarding.nav'), icon: DoorOpen }] : []),
     ...(can('hr.manage') ? [{ href: 'hr/dashboard', label: tr('hr.navDashboard'), icon: LayoutDashboard }] : []),
     ...(can('hr.team') ? [{ href: 'hr/attendance/board', label: tr('hr.navTeamAttendance'), icon: UsersRound }] : []),
     ...(can('hr.manage') ? [{ href: 'hr/requests', label: tr('hr.navRequests'), icon: Inbox }] : []),
