@@ -116,6 +116,17 @@ class PeopleImportTest extends IntegrationTest {
     }
 
     @Test
+    void a_unit_name_may_contain_a_slash() throws Exception {
+        User owner = signUp("Imp Owner3");
+        String org = newOrg(owner);
+        String a = "s-" + UUID.randomUUID().toString().substring(0, 8) + "@import.test";
+        JsonNode p = ok(call(owner, HttpMethod.POST, "/api/orgs/" + org + "/people-import/preview", Map.of("rows", List.of(
+                row("A", a, "Dispatch Center > Other Outsourcing / Dispatch", "CENTER > TEAM", null, null, null, false))))).path("data");
+        assertThat(p.path("newUnits").get(1).asText()).isEqualTo("Dispatch Center › Other Outsourcing / Dispatch");
+        assertThat(p.path("newUnits")).hasSize(2);
+    }
+
+    @Test
     void managers_that_go_round_in_a_circle_are_refused() throws Exception {
         User owner = signUp("Imp Owner2");
         String org = newOrg(owner);

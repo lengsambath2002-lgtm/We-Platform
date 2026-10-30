@@ -421,7 +421,8 @@ public class OrgImportService {
         if (path == null || path.isBlank()) {
             return List.of();
         }
-        return java.util.Arrays.stream(path.split("[>›/]")).map(String::strip).filter(s -> !s.isEmpty()).toList();
+        // Only ">" and "›" separate levels: names may contain "/" (e.g. "Other Outsourcing / Dispatch").
+        return java.util.Arrays.stream(path.split("[>›]")).map(String::strip).filter(s -> !s.isEmpty()).toList();
     }
 
     private static String key(List<String> path) {
