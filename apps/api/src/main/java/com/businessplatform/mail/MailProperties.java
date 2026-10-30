@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  */
 @ConfigurationProperties("platform.mail")
 public record MailProperties(String host, Integer port, String username, String password, String from,
-        String security, String onlyTo) {
+        String security, String onlyTo, String neverTo) {
 
     public boolean configured() {
         return host != null && !host.isBlank();
@@ -17,5 +17,9 @@ public record MailProperties(String host, Integer port, String username, String 
 
     public boolean restricted() {
         return onlyTo != null && !onlyTo.isBlank();
+    }
+
+    public boolean excluding() {
+        return neverTo != null && !neverTo.isBlank();
     }
 }

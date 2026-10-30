@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.businessplatform.common.error.BusinessException;
 import com.businessplatform.common.error.ErrorCode;
 import com.businessplatform.common.i18n.Messages;
+import com.businessplatform.common.i18n.Text;
 import com.businessplatform.common.persistence.Ids;
 import com.businessplatform.common.security.Tokens;
 import com.businessplatform.identity.domain.AppUser;
@@ -101,15 +102,11 @@ public class AccountService {
         }
         resets.retireAll(userId, now);
         String lang = u.getLocale();
-        mail.queue(MailService.compose(u.getEmail(),
-                messages.in(lang, "Your Business Platform password was changed", Map.of()),
-                List.of(messages.in(lang,
-                        "The password of your account ({email}) was just changed, and your other devices were signed out.",
+        mail.queue(mail.letter(u.getEmail(), lang, null, Text.of("Your Business Platform password was changed"),
+                List.of(Text.of("The password of your account ({email}) was just changed, and your other devices were signed out.",
                         Map.of("email", u.getEmail()))),
-                messages.in(lang, "Reset your password", Map.of()), appUrl + "/forgot-password",
-                messages.in(lang,
-                        "If it wasn't you, reset your password now and tell your organisation's administrator.",
-                        Map.of())));
+                Text.of("Reset your password"), appUrl + "/forgot-password",
+                Text.of("If it wasn't you, reset your password now and tell your organisation's administrator.")));
     }
 
     /**
@@ -137,14 +134,11 @@ public class AccountService {
             r.setExpiresAt(now.plus(RESET_TTL));
             resets.save(r);
             String lang = u.getLocale();
-            mail.queue(MailService.compose(u.getEmail(),
-                    messages.in(lang, "Reset your Business Platform password", Map.of()),
-                    List.of(messages.in(lang, "Someone asked to reset the password of your account ({email}).",
-                            Map.of("email", u.getEmail())),
-                            messages.in(lang, "The link works once, within 30 minutes.", Map.of())),
-                    messages.in(lang, "Choose a new password", Map.of()), appUrl + "/reset-password?token=" + token,
-                    messages.in(lang, "If it wasn't you, ignore this email: your password stays the same.",
-                            Map.of())));
+            mail.queue(mail.letter(u.getEmail(), lang, null, Text.of("Reset your Business Platform password"),
+                    List.of(Text.of("Someone asked to reset the password of your account ({email}).", Map.of("email", u.getEmail())),
+                            Text.of("The link works once, within 30 minutes.")),
+                    Text.of("Choose a new password"), appUrl + "/reset-password?token=" + token,
+                    Text.of("If it wasn't you, ignore this email: your password stays the same.")));
         });
     }
 
@@ -189,11 +183,11 @@ public class AccountService {
         resets.save(r);
         Map<String, String> args = Map.of("org", org, "by", by, "email", email);
         String lang = u.getLocale();
-        mail.queue(MailService.compose(email, messages.in(lang, "{by} added you to {org} on Business Platform", args),
-                List.of(messages.in(lang, "{by} added you to {org}. Your account uses {email}.", args),
-                        messages.in(lang, "Choose a password to sign in. The link works once, within 7 days.", args)),
-                messages.in(lang, "Choose a password", Map.of()), appUrl + "/reset-password?token=" + token,
-                messages.in(lang, "If you don't work with {org}, you can ignore this email.", args)));
+        mail.queue(mail.letter(email, lang, org, Text.of("{by} added you to {org} on Business Platform", args),
+                List.of(Text.of("{by} added you to {org}. Your account uses {email}.", args),
+                        Text.of("Choose a password to sign in. The link works once, within 7 days.", args)),
+                Text.of("Choose a password"), appUrl + "/reset-password?token=" + token,
+                Text.of("If you don't work with {org}, you can ignore this email.", args)));
         return u;
     }
 

@@ -46,6 +46,9 @@ platform:
     security: ${PLATFORM_MAIL_SECURITY:starttls}
     # Development/test servers on a real mailbox: only these addresses (comma-separated) get real email.
     only-to: ${PLATFORM_MAIL_ONLY_TO:}
+    # Never email these addresses, domains or domain endings, whatever else is set: reserved test domains by default,
+    # so made-up accounts (imports, demos, tests) never bounce back into the sending mailbox.
+    never-to: ${PLATFORM_MAIL_NEVER_TO:.test,.example,.invalid,.localhost,example.com,example.org,example.net}
 
   # OpenID Connect provider for VirtualBiz single sign-on (docs/integrations/virtualbiz-sso.md).
   oidc:

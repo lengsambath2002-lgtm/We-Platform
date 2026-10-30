@@ -380,11 +380,10 @@ public class PayrollService {
             if (u != null) {
                 String lang = u.getLocale();
                 Map<String, String> args = Map.of("month", month, "org", ctx.orgName());
-                mail.queue(MailService.compose(u.getEmail(),
-                        messages.in(lang, "Your payslip for {month} from {org}", args),
-                        List.of(messages.in(lang, "{org} has paid your salary for {month}. Your payslip is ready to view.", args)),
-                        messages.in(lang, "View your payslip", Map.of()), base + link,
-                        messages.in(lang, "Payslips are private: only you and your organisation's HR can see them.", Map.of())));
+                mail.queue(mail.letter(u.getEmail(), lang, ctx.orgName(), Text.of("Your payslip for {month} from {org}", args),
+                        List.of(Text.of("{org} has paid your salary for {month}. Your payslip is ready to view.", args)),
+                        Text.of("View your payslip"), base + link,
+                        Text.of("Payslips are private: only you and your organisation's HR can see them.")));
             }
         }
         return detail(ctx, r);

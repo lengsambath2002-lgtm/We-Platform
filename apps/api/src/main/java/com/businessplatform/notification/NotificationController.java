@@ -37,13 +37,14 @@ public class NotificationController {
     public record Inbox(List<Item> items, long unread, int page, int size, long total) {
     }
 
-    public record Kind(String kind, boolean inApp) {
+    public record Kind(String kind, boolean inApp, boolean email) {
     }
 
     public record Preferences(List<Kind> kinds) {
     }
 
-    public record PreferencesRequest(@NotNull @Size(max = 20) List<String> muted) {
+    /** {@code muted}: kinds not wanted in the app; {@code emailOff}: kinds not wanted by email (null = unchanged). */
+    public record PreferencesRequest(@NotNull @Size(max = 20) List<String> muted, @Size(max = 20) List<String> emailOff) {
     }
 
     /** Newest first, a page at a time ({@code unread=true}: only unread ones). */
@@ -71,7 +72,7 @@ public class NotificationController {
     @GetMapping("/preferences")
     public ResponseEntity<ApiResponse<Preferences>> preferences(@PathVariable String org) {
         OrgContext ctx = access.require(org);
-        return ResponseEntity.ok(ApiResponse.ok(preferences(notifications.muted(ctx.membershipId()))));
+        return ResponseEntity.ok(ApiResponse.ok(preferences(notifications.muted(ctx.membershipId()), notifications.emailOff(ctx.membershipId()))));
     }
 
     /** Replaces the kinds I don't want in this organisation. */
@@ -80,10 +81,13 @@ public class NotificationController {
             @Valid @RequestBody PreferencesRequest in) {
         OrgContext ctx = access.require(org);
         notifications.setMuted(ctx.membershipId(), in.muted());
-        return ResponseEntity.ok(ApiResponse.ok(preferences(notifications.muted(ctx.membershipId()))));
+        if (in.emailOff() != null) {
+            notifications.setEmailOff(ctx.membershipId(), in.emailOff());
+        }
+        return ResponseEntity.ok(ApiResponse.ok(preferences(notifications.muted(ctx.membershipId()), notifications.emailOff(ctx.membershipId()))));
     }
 
-    private static Preferences preferences(Set<String> muted) {
-        return new Preferences(NotificationService.KINDS.stream().map(k -> new Kind(k, !muted.contains(k))).toList());
+    private static Preferences preferences(Set<String> muted, Set<String> emailOff) {
+        return new Preferences(NotificationService.KINDS.stream().map(k -> new Kind(k, !muted.contains(k), !emailOff.contains(k))).toList());
     }
 }

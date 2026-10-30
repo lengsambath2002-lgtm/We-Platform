@@ -514,3 +514,5 @@ You have more members than this plan allows. Remove some first = អ្នកម
 There is no paid plan to cancel = គ្មានគម្រោងបង់ប្រាក់ដើម្បីលុបចោលទេ
 Plan codes are capital letters, digits or _ = លេខកូដគម្រោងជាអក្សរធំ លេខ ឬ _
 Unknown plan = គម្រោងមិនស្គាល់
+Open in Business Platform = បើកក្នុង Business Platform
+You get this because of your notification settings in {org}. = អ្នកទទួលបាននេះដោយសារការកំណត់ការជូនដំណឹងរបស់អ្នកក្នុង {org}។
