@@ -102,6 +102,8 @@ jobs:
           DATABASE_URL: jdbc:postgresql://localhost:5432/business_platform
           # platform.spec.ts signs this address up as the super admin.
           PLATFORM_SUPER_ADMINS: root@e2e.test
+          # The browser tests sign up and create organisations at once; they can't open emailed links.
+          PLATFORM_AUTH_REQUIRE_VERIFIED_EMAIL: "false"
           # Retail & Commerce is available only with VirtualBiz configured (retail-purchasing.spec.ts).
           PLATFORM_VIRTUALBIZ_URL: http://localhost:3000
         run: |

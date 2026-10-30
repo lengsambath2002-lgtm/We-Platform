@@ -53,6 +53,7 @@ public class OrgService {
     private final InvitationRepository invitations;
     private final TeamRepository teams;
     private final UserRepository users;
+    private final com.businessplatform.identity.service.EmailVerificationService verification;
     private final ModuleService modules;
     private final OrgAccess access;
     private final ActivityService activity;
@@ -72,6 +73,7 @@ public class OrgService {
     @Transactional
     public OrgSummary create(CreateOrgRequest in) {
         UUID me = CurrentUser.id();
+        verification.require(me);
         if (RESERVED_SLUGS.contains(in.slug()) || orgs.existsBySlug(in.slug())) {
             throw BusinessException.field(ErrorCode.CONFLICT, "slug", "This address is taken");
         }
@@ -290,6 +292,7 @@ public class OrgService {
     @Transactional
     public InvitationResponse invite(String slug, InviteRequest in) {
         OrgContext ctx = access.requireAdmin(slug);
+        verification.require(ctx.userId());
         if (in.role() == OrgRole.OWNER) {
             throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "role", "Invite as Admin, Member or Guest");
         }
@@ -383,6 +386,8 @@ public class OrgService {
         if (!me.getEmail().equalsIgnoreCase(i.getEmail())) {
             throw BusinessException.field(ErrorCode.FORBIDDEN, "email", "This invitation is for another email address");
         }
+        // The invitation reached this inbox: the address is theirs.
+        verification.markVerified(me);
         Membership m = memberships.findByOrgIdAndUserId(i.getOrgId(), me.getId()).orElse(null);
         if (m == null) {
             m = memberships.save(membership(i.getOrgId(), me.getId(), i.getRole()));

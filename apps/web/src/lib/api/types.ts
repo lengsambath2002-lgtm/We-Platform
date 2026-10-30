@@ -14,6 +14,8 @@ export interface User {
   avatarUrl: string | null;
   /** May open the platform console (/admin). */
   superAdmin: boolean;
+  /** Opened the emailed "confirm your email" link (or an invitation or password-reset link). */
+  emailVerified: boolean;
 }
 
 export interface Session {

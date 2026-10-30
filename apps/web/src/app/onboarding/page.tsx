@@ -7,6 +7,7 @@ import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { VerifyEmailNotice } from '@/components/account/verify-email-notice';
 import { applyServerErrors } from '@/components/forms/server-errors';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -47,42 +48,45 @@ function CreateOrg() {
 
   return (
     <div className="grid min-h-dvh place-items-center px-4 py-10">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-lg">{t('auth.createOrgTitle')}</CardTitle>
-          <CardDescription>{t('auth.createOrgLead')} {t('billing.trialNote', { days: 14 })}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={onSubmit} className="space-y-4" noValidate>
-              {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
-              <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('auth.orgName')}</FormLabel>
-                  <FormControl>
-                    <Input autoFocus {...field} onChange={(e) => {
-                      field.onChange(e);
-                      if (!slugTouched) form.setValue('slug', slugify(e.target.value));
-                    }} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="slug" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('auth.webAddress')}</FormLabel>
-                  <FormControl><Input {...field} onChange={(e) => { setSlugTouched(true); field.onChange(e.target.value.toLowerCase()); }} /></FormControl>
-                  <FormDescription>business-platform/<b>{form.watch('slug') || t('auth.slugPlaceholder')}</b></FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? t('common.creating') : t('auth.createOrg')}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+      <div className="w-full max-w-md">
+        <VerifyEmailNotice />
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">{t('auth.createOrgTitle')}</CardTitle>
+            <CardDescription>{t('auth.createOrgLead')} {t('billing.trialNote', { days: 14 })}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={onSubmit} className="space-y-4" noValidate>
+                {error && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+                <FormField control={form.control} name="name" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('auth.orgName')}</FormLabel>
+                    <FormControl>
+                      <Input autoFocus {...field} onChange={(e) => {
+                        field.onChange(e);
+                        if (!slugTouched) form.setValue('slug', slugify(e.target.value));
+                      }} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="slug" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('auth.webAddress')}</FormLabel>
+                    <FormControl><Input {...field} onChange={(e) => { setSlugTouched(true); field.onChange(e.target.value.toLowerCase()); }} /></FormControl>
+                    <FormDescription>business-platform/<b>{form.watch('slug') || t('auth.slugPlaceholder')}</b></FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                  {form.formState.isSubmitting ? t('common.creating') : t('auth.createOrg')}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

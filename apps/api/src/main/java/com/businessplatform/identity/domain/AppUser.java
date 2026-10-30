@@ -50,6 +50,10 @@ public class AppUser {
     private boolean superAdmin;
 
     /** Set by a super admin: the account cannot sign in until enabled again. */
+    /** When the account confirmed its email (an emailed link); null until then. */
+    @Column(name = "email_verified_at")
+    private Instant emailVerifiedAt;
+
     @Column(name = "disabled_at")
     private Instant disabledAt;
 

@@ -30,7 +30,8 @@ import lombok.RequiredArgsConstructor;
 /**
  * Sign-up, sign-in, refresh (rotating, reuse revokes every session) and sign-out. Five wrong
  * passwords lock the account for 15 minutes. Wrong email and wrong password answer the same. A new
- * account takes the request language ({@code en} or {@code km}). A disabled account cannot sign in or refresh.
+ * account takes the request language ({@code en} or {@code km}) and is emailed a link to confirm its address. A
+ * disabled account cannot sign in or refresh.
  */
 @Service
 @RequiredArgsConstructor
@@ -45,6 +46,7 @@ public class AuthService {
     private final TokenService tokens;
     private final AuthProperties props;
     private final SuperAdmins superAdmins;
+    private final EmailVerificationService verification;
     private final Clock clock;
 
     @Transactional
@@ -62,6 +64,7 @@ public class AuthService {
         u.setLocale(Messages.requestLanguage());
         u.setSuperAdmin(superAdmins.listed(email));
         users.save(u);
+        verification.send(u);
         return start(u, userAgent, ip);
     }
 
@@ -123,7 +126,8 @@ public class AuthService {
     }
 
     public static UserResponse toUser(AppUser u) {
-        return new UserResponse(u.getId(), u.getName(), u.getEmail(), u.getLocale(), u.getAvatarUrl(), u.isSuperAdmin());
+        return new UserResponse(u.getId(), u.getName(), u.getEmail(), u.getLocale(), u.getAvatarUrl(), u.isSuperAdmin(),
+                u.getEmailVerifiedAt() != null);
     }
 
     /** A new signed-in device. */

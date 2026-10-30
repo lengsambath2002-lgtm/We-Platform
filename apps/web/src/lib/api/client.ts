@@ -126,6 +126,8 @@ export function errorMessage(e: unknown): string {
       return tr('common.errModuleOff');
     case 'ACCOUNT_DISABLED':
       return tr('common.errAccountDisabled');
+    case 'EMAIL_NOT_VERIFIED':
+      return tr('common.errEmailNotVerified');
     case 'ORG_SUSPENDED':
       return tr('common.errOrgSuspended');
     case 'INVALID_STATE':
