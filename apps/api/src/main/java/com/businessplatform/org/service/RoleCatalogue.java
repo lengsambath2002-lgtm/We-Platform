@@ -19,6 +19,7 @@ public final class RoleCatalogue {
     }
 
     public static final String STRUCTURE = "org.structure.manage";
+    public static final String BILLING = "billing.manage";
     public static final String DOCUMENTS = "documents.manage";
     public static final String AUDIT = "activity.view";
     public static final String BUSINESS = "business.manage";
@@ -31,6 +32,7 @@ public final class RoleCatalogue {
 
     public static final List<Entry> ENTRIES = List.of(
             new Entry(STRUCTURE, null, false),
+            new Entry(BILLING, null, false),
             new Entry(DOCUMENTS, null, false),
             new Entry(AUDIT, null, false),
             new Entry(HR, Module.HR, true),

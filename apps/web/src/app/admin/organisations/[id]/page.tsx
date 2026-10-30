@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { ErrorState } from '@/components/common/states';
+import { SubscriptionCard } from '@/components/platform/subscription-card';
 import { ConfirmAction, StatusBadge, TargetHistory, When } from '@/components/platform/ui';
 import { moduleName } from '@/components/shell/nav';
 import { Badge } from '@/components/ui/badge';
@@ -90,6 +91,8 @@ export default function PlatformOrg() {
             <div><dt className="text-muted-foreground">{t('platform.colLastActivity')}</dt><dd><When at={org.lastActivityAt} pattern="d MMM yyyy HH:mm" /></dd></div>
           </dl>
         </section>
+
+        <SubscriptionCard key={JSON.stringify(data.subscription)} orgId={id} sub={data.subscription} />
 
         <section className="rounded-lg border bg-card p-4 sm:p-5 lg:col-span-2">
           <h2 className="text-base font-semibold">{t('platform.colModules')}</h2>

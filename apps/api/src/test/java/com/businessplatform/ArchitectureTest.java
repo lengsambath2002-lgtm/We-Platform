@@ -17,7 +17,7 @@ class ArchitectureTest {
     @Test
     void the_core_does_not_depend_on_modules() {
         noClasses().that().resideInAnyPackage("..common..", "..identity..", "..org..", "..module..", "..workflow..",
-                "..calendar..", "..activity..", "..notification..", "..file..", "..document..", "..oidc..")
+                "..calendar..", "..activity..", "..notification..", "..file..", "..document..", "..oidc..", "..billing..")
                 .should().dependOnClassesThat().resideInAnyPackage("..project..", "..overview..", "..report..", "..hr..",
                         "..retail..", "..business..", "..education..", "..ops..")
                 .check(CLASSES);

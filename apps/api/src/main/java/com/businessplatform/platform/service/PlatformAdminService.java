@@ -60,6 +60,7 @@ public class PlatformAdminService {
     private final ActivityService activity;
     private final AccountService accounts;
     private final Clock clock;
+    private final com.businessplatform.billing.service.SubscriptionService subscriptions;
 
     /** The signed-in super admin's id; NOT_FOUND for anyone else. */
     public UUID requireSuperAdmin() {
@@ -163,6 +164,33 @@ public class PlatformAdminService {
         return orgs.findById(id).orElseThrow(BusinessException::notFound);
     }
 
+    // ── Plans and subscriptions ──────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<com.businessplatform.billing.payload.BillingPayloads.PlanView> plans() {
+        requireSuperAdmin();
+        return subscriptions.allPlans();
+    }
+
+    @Transactional
+    public com.businessplatform.billing.payload.BillingPayloads.PlanView savePlan(String code,
+            com.businessplatform.billing.payload.BillingPayloads.PlanRequest in) {
+        UUID me = requireSuperAdmin();
+        var saved = subscriptions.savePlan(code, in, modules.registry().stream().map(m -> m.getKey()).toList());
+        record(me, "plan.saved", PlatformAudit.USER, me, Map.of("plan", code));
+        return saved;
+    }
+
+    /** Sets an organisation's subscription as agreed with them (a contract, complimentary, a longer trial …). */
+    @Transactional
+    public OrgDetail setSubscription(UUID id, com.businessplatform.billing.payload.BillingPayloads.AdminSubscriptionRequest in) {
+        UUID me = requireSuperAdmin();
+        Organisation o = org(id);
+        subscriptions.set(o.getId(), in, me);
+        record(me, "org.subscription.set", PlatformAudit.ORGANISATION, o.getId(), Map.of("plan", in.planCode(), "status", in.status()));
+        return detail(o);
+    }
+
     private OrgDetail detail(Organisation o) {
         orgs.flush();
         OrgRow row = platform.organisation(o.getId());
@@ -171,7 +199,8 @@ public class PlatformAdminService {
                 .map(m -> new ModuleRow(m.getKey(), m.getNameEn(), m.getNameKm(), modules.available(m), on.contains(m.getKey())))
                 .toList();
         return new OrgDetail(row, person(o.getCreatedBy()), o.getSuspendedAt(), person(o.getSuspendedBy()),
-                o.getSuspendedReason(), o.getDeletedAt(), person(o.getDeletedBy()), platform.members(o.getId()), mods);
+                o.getSuspendedReason(), o.getDeletedAt(), person(o.getDeletedBy()), platform.members(o.getId()), mods,
+                subscriptions.brief(o.getId()).orElse(null));
     }
 
     // ── Accounts ─────────────────────────────────────────────────────────────────────

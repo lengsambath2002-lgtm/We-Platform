@@ -88,6 +88,14 @@ public final class Permissions {
         if (ctx.can(RoleCatalogue.STRUCTURE)) {
             p.add("org.structure.manage");
         }
+        // Plan & billing: Admins see it; Owners and the billing role (not every Admin) change it.
+        boolean billing = ctx.role() == com.businessplatform.org.domain.OrgRole.OWNER || ctx.grants().orgWide().contains(RoleCatalogue.BILLING);
+        if (ctx.isAdmin() || billing) {
+            p.add("billing.view");
+        }
+        if (billing) {
+            p.add("billing.manage");
+        }
         return p;
     }
 }

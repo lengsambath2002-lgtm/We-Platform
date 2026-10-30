@@ -59,6 +59,7 @@ public class OrgImportService {
 
     private final OrgAccess access;
     private final OrgService orgs;
+    private final com.businessplatform.billing.service.SubscriptionService subscriptions;
     private final OrgStructureService structure;
     private final AccountService accounts;
     private final MembershipRepository memberships;
@@ -107,6 +108,9 @@ public class OrgImportService {
         if (plan.errors() > 0) {
             return plan.result(false);
         }
+        int seats = (int) plan.lines().stream().filter(l -> !"UPDATE".equals(l.action)
+                && (l.role == null || l.role != OrgRole.GUEST)).count();
+        subscriptions.requireSeats(ctx.orgId(), seats);
         execute(ctx, slug, plan);
         return plan.result(true);
     }

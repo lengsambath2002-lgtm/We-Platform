@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  CreditCard,
   DoorOpen,
   KeyRound,
   Banknote,
@@ -83,13 +84,15 @@ export function adminNav(ctx: OrgContext): NavItem[] {
   const can = (p: string) => ctx.permissions.includes(p);
   // Members with a custom role that includes the audit log see just that.
   const audit = can('activity.view') ? [{ href: 'admin/audit', label: tr('collab.auditNav'), icon: ScrollText }] : [];
-  if (!can('org.settings.manage')) return audit;
+  const billing = can('billing.view') ? [{ href: 'admin/billing', label: tr('billing.nav'), icon: CreditCard }] : [];
+  if (!can('org.settings.manage')) return [...billing, ...audit];
   return [
     { href: 'admin/modules', label: tr('shell.modules'), icon: Blocks },
     { href: 'admin/workflows', label: tr('shell.workflows'), icon: GitBranch },
     { href: 'admin/members', label: tr('shell.membersRoles'), icon: UserCog },
     ...(can('org.roles.manage') ? [{ href: 'admin/roles', label: tr('roles.nav'), icon: KeyRound }] : []),
     { href: 'admin/settings', label: tr('settings.title'), icon: Settings },
+    ...billing,
     ...audit,
   ];
 }
