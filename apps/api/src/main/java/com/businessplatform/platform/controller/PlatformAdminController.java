@@ -147,6 +147,11 @@ public class PlatformAdminController {
         return ResponseEntity.ok(ApiResponse.ok(admin.sendPasswordReset(id, AuthController.ip(req))));
     }
 
+    @PostMapping("/users/{id}/two-step/reset")
+    public ResponseEntity<ApiResponse<UserDetail>> resetTwoStep(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponse.ok(admin.resetTwoStep(id)));
+    }
+
     @PutMapping("/users/{id}/super-admin")
     public ResponseEntity<ApiResponse<UserDetail>> superAdmin(@PathVariable UUID id, @RequestBody Toggle in) {
         return ResponseEntity.ok(ApiResponse.ok(admin.setSuperAdmin(id, in.enabled())));

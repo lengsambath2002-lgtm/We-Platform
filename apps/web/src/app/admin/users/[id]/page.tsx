@@ -1,7 +1,7 @@
 'use client';
 
 import { parseISO } from 'date-fns';
-import { ArrowLeft, KeyRound, LogOut, ShieldCheck, ShieldOff, UserCheck, UserX } from 'lucide-react';
+import { ArrowLeft, KeyRound, LogOut, Smartphone, ShieldCheck, ShieldOff, UserCheck, UserX } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { toast } from 'sonner';
@@ -56,6 +56,11 @@ export default function PlatformUser() {
               title={t('platform.sendResetTitle', { name: user.name })} body={t('platform.sendResetBody')} confirm={t('platform.sendReset')}
               run={run(() => platformApi.sendPasswordReset(id), t('platform.resetSent', { email: user.email }))} />
           )}
+          {data.twoStep && !self && (
+            <ConfirmAction trigger={<Button variant="outline"><Smartphone className="size-4" />{t('platform.resetTwoStep')}</Button>}
+              title={t('platform.resetTwoStepTitle', { name: user.name })} body={t('platform.resetTwoStepBody')} confirm={t('platform.resetTwoStep')}
+              run={run(() => platformApi.resetTwoStep(id), t('platform.twoStepReset', { name: user.name }))} />
+          )}
           {!self && (user.superAdmin ? (
             <ConfirmAction destructive trigger={<Button variant="outline"><ShieldOff className="size-4" />{t('platform.removeSuperAdmin')}</Button>}
               title={t('platform.removeSuperAdminTitle', { name: user.name })} body={t('platform.removeSuperAdminBody')} confirm={t('platform.removeSuperAdmin')}
@@ -93,6 +98,7 @@ export default function PlatformUser() {
             <div><dt className="text-muted-foreground">{t('platform.colJoined')}</dt><dd><When at={user.createdAt} /></dd></div>
             <div><dt className="text-muted-foreground">{t('platform.colLastSeen')}</dt><dd><When at={user.lastSeenAt} pattern="d MMM yyyy HH:mm" /></dd></div>
             <div><dt className="text-muted-foreground">{t('platform.devices')}</dt><dd className="tabular">{data.signedInDevices}</dd></div>
+            <div><dt className="text-muted-foreground">{t('account.twoStep')}</dt><dd>{t(data.twoStep ? 'account.twoStepOn' : 'platform.twoStepOffShort')}</dd></div>
             <div><dt className="text-muted-foreground">{t('platform.language')}</dt><dd>{data.locale === 'km' ? 'ខ្មែរ' : 'English'}</dd></div>
           </dl>
         </section>

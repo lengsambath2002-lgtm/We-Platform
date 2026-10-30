@@ -10,7 +10,10 @@ import type { Session, User } from '@/lib/api/types';
 interface SessionState {
   user: User | null;
   ready: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  /** Resolves to the two-step challenge when a code is still needed, else null (signed in). */
+  signIn: (email: string, password: string) => Promise<string | null>;
+  /** The second step: the challenge and a code from the app (or a recovery code). */
+  completeTwoStep: (challenge: string, code: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   setUser: (u: User) => void;
@@ -53,7 +56,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       ready,
       setUser,
       startSession: start,
-      signIn: async (email, password) => start(await http.post<Session>('/auth/sign-in', { email, password })),
+      signIn: async (email, password) => {
+        const s = await http.post<Session>('/auth/sign-in', { email, password });
+        if (s.twoStep) return s.twoStep;
+        start(s);
+        return null;
+      },
+      completeTwoStep: async (challenge, code) => start(await http.post<Session>('/auth/two-step', { challenge, code })),
       signUp: async (name, email, password) =>
         start(await http.post<Session>('/auth/sign-up', { name, email, password })),
       signOut: async () => {

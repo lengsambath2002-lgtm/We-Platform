@@ -22,6 +22,8 @@ export interface Session {
   accessToken: string;
   expiresIn: number;
   user: User;
+  /** With two-step sign-in on, the password step answers only this challenge (no token, no user). */
+  twoStep?: string | null;
 }
 
 export interface OrgSummary {

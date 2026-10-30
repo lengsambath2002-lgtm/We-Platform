@@ -57,6 +57,14 @@ export const en = {
   joining: 'Joining…',
   joinAs: 'Join as {name}',
   haveAccountAlready: 'I already have an account',
+  twoStepTitle: 'Two-step sign-in',
+  twoStepLead: 'Enter the 6-digit code from your authenticator app.',
+  twoStepRecoveryLead: 'Enter one of your recovery codes. Each works once.',
+  twoStepCode: 'Code',
+  twoStepVerify: 'Verify',
+  twoStepUseRecovery: 'Use a recovery code instead',
+  twoStepUseApp: 'Use the authenticator app instead',
+  twoStepExpired: 'That took too long. Sign in again.',
 };
 
 export const km: Record<keyof typeof en, string> = {
@@ -112,4 +120,12 @@ export const km: Record<keyof typeof en, string> = {
   joining: 'កំពុងចូលរួម…',
   joinAs: 'ចូលរួមជា {name}',
   haveAccountAlready: 'ខ្ញុំមានគណនីរួចហើយ',
+  twoStepTitle: 'ការចូលពីរជំហាន',
+  twoStepLead: 'បញ្ចូលលេខកូដ ៦ ខ្ទង់ពីកម្មវិធីផ្ទៀងផ្ទាត់របស់អ្នក។',
+  twoStepRecoveryLead: 'បញ្ចូលលេខកូដសង្គ្រោះមួយរបស់អ្នក។ នីមួយៗប្រើបានម្ដង។',
+  twoStepCode: 'លេខកូដ',
+  twoStepVerify: 'ផ្ទៀងផ្ទាត់',
+  twoStepUseRecovery: 'ប្រើលេខកូដសង្គ្រោះជំនួសវិញ',
+  twoStepUseApp: 'ប្រើកម្មវិធីផ្ទៀងផ្ទាត់ជំនួសវិញ',
+  twoStepExpired: 'ចំណាយពេលយូរពេក។ សូមចូលម្ដងទៀត។',
 };

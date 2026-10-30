@@ -50,6 +50,24 @@ public class AppUser {
     private boolean superAdmin;
 
     /** Set by a super admin: the account cannot sign in until enabled again. */
+    /** Two-step sign-in: the authenticator secret (encrypted, {@code SecretBox}); null while off. */
+    @Column(name = "totp_secret", length = 200)
+    private String totpSecret;
+
+    /** A secret being set up, until the first code confirms it. */
+    @Column(name = "totp_pending_secret", length = 200)
+    private String totpPendingSecret;
+
+    @Column(name = "totp_enabled_at")
+    private Instant totpEnabledAt;
+
+    @Column(name = "totp_last_step")
+    private Long totpLastStep;
+
+    public boolean isTwoStepOn() {
+        return totpEnabledAt != null;
+    }
+
     /** When the account confirmed its email (an emailed link); null until then. */
     @Column(name = "email_verified_at")
     private Instant emailVerifiedAt;

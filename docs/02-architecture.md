@@ -157,6 +157,17 @@ resetting the password also proves the address. Accounts from before verificatio
 `email_verified` claim is now real. `PLATFORM_AUTH_REQUIRE_VERIFIED_EMAIL=false` lifts the limits (local
 development and the browser tests, which can't open emailed links).
 
+### Two-step sign-in (built)
+
+Optional per account (`TwoStepService`): on the account page, scan a QR code with an authenticator app (TOTP, RFC
+6238: 30 s, 6 digits, ±1 step, each code works once), confirm with a first code, and keep 10 recovery codes (shown
+once, single use, SHA-256 stored). From then on a right password answers only a challenge (`SessionResponse.twoStep`,
+5 minutes, `two_step_challenge`) and `POST /api/auth/two-step` with a code or a recovery code completes the sign-in;
+a password-reset link also ends at the code. Wrong codes count towards the 5-attempt lockout. Turning it off takes the
+password and a code; a super admin can turn it off for someone who lost their phone and codes (audited, emailed).
+The authenticator secret is encrypted (AES-GCM, `SecretBox`, key derived from `PLATFORM_JWT_SECRET`: changing that
+secret means people set it up again). Not yet: an organisation setting that requires it for every member.
+
 ### Invoices and payment (built)
 
 `billing_invoice` (`PlatformInvoice`, `PlatformInvoiceService`): choosing a paid plan, and each renewal, issues an
@@ -337,7 +348,7 @@ Every org-scoped table has `org_id` NOT NULL with an index; ids are UUID; timest
 
 | Area | Endpoints |
 |---|---|
-| Auth | `POST /api/auth/sign-up`, `/sign-in`, `/refresh`, `/sign-out`, `/forgot-password`, `/reset-password`, `/verify-email`; `GET /api/me`; `POST /api/me/verify-email/resend` |
+| Auth | `POST /api/auth/sign-up`, `/sign-in`, `/refresh`, `/sign-out`, `/forgot-password`, `/reset-password`, `/verify-email`; `GET /api/me`; `POST /api/me/verify-email/resend`; `/api/auth/two-step`; `GET/POST /api/me/two-step` (`/setup`, `/enable`, `/disable`, `/recovery-codes`) |
 | Orgs | `GET/POST /api/orgs`, `GET/PATCH /api/orgs/{org}`, `GET /api/orgs/{org}/context` (my roles, permissions, enabled modules, nav) |
 | Members | `GET /api/orgs/{org}/members`, `POST /api/orgs/{org}/invitations`, `POST /api/invitations/{token}/accept`, `PATCH /api/orgs/{org}/members/{id}` (role, status) |
 | Teams | `GET/POST /api/orgs/{org}/teams`, `PUT /api/orgs/{org}/teams/{id}/members` |

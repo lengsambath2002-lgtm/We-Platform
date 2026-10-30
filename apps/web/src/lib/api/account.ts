@@ -8,6 +8,18 @@ import { api, http } from './client';
 import { keys } from './queries';
 import type { Invitation, Member, OrgSummary, Session } from './types';
 
+export interface TwoStepStatus {
+  enabled: boolean;
+  enabledAt: string | null;
+  recoveryCodesLeft: number;
+}
+
+/** The secret to type into an authenticator app, and the otpauth:// address to show as a QR code. */
+export interface TwoStepSetup {
+  secret: string;
+  uri: string;
+}
+
 /** One signed-in device; `id` stays the same across token refreshes. */
 export interface DeviceSession {
   id: string;
@@ -29,6 +41,11 @@ export const accountApi = {
     http.post<void>('/me/password', { currentPassword, newPassword }),
   verifyEmail: (token: string) => http.post<void>('/auth/verify-email', { token }),
   resendVerification: () => http.post<void>('/me/verify-email/resend'),
+  twoStepStatus: () => http.get<TwoStepStatus>('/me/two-step'),
+  setupTwoStep: () => http.post<TwoStepSetup>('/me/two-step/setup'),
+  enableTwoStep: (code: string) => http.post<{ codes: string[] }>('/me/two-step/enable', { code }),
+  newRecoveryCodes: (password: string) => http.post<{ codes: string[] }>('/me/two-step/recovery-codes', { password }),
+  disableTwoStep: (password: string, code: string) => http.post<void>('/me/two-step/disable', { password, code }),
   forgotPassword: (email: string) => http.post<void>('/auth/forgot-password', { email }),
   checkResetToken: (token: string) => http.post<{ valid: boolean }>('/auth/reset-password/check', { token }),
   resetPassword: (token: string, password: string) => http.post<Session>('/auth/reset-password', { token, password }),

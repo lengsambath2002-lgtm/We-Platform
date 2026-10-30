@@ -13,6 +13,7 @@ import { ConnectedAppsSection } from '@/components/account/connected-apps-sectio
 import { DevicesSection } from '@/components/account/devices-section';
 import { OrgsSection } from '@/components/account/orgs-section';
 import { PasswordSection } from '@/components/account/password-section';
+import { TwoStepSection } from '@/components/account/two-step-section';
 import { PersonAvatar } from '@/components/common/person';
 import { applyServerErrors } from '@/components/forms/server-errors';
 import { LanguageSwitch } from '@/components/shell/language-switch';
@@ -65,6 +66,7 @@ function Account() {
       </section>
 
       <PasswordSection />
+      <TwoStepSection />
       <DevicesSection />
       <ConnectedAppsSection />
       <OrgsSection />

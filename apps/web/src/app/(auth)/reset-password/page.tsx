@@ -54,7 +54,14 @@ function ResetPassword() {
   const onSubmit = form.handleSubmit(async (v) => {
     setError(null);
     try {
-      startSession(await accountApi.resetPassword(token, v.password));
+      const s = await accountApi.resetPassword(token, v.password);
+      // With two-step sign-in on, the new password still needs a code: sign in as usual.
+      if (s.twoStep) {
+        toast.success(t('settings.resetDoneSignIn'));
+        router.replace('/sign-in');
+        return;
+      }
+      startSession(s);
       toast.success(t('settings.resetDone'));
       router.replace('/');
     } catch (e) {

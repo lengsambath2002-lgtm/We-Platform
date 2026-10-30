@@ -26,8 +26,23 @@ public final class AuthPayloads {
             boolean emailVerified) {
     }
 
-    /** The access token (15 minutes) for {@code Authorization: Bearer}; the refresh token is a cookie (web) or here (mobile). */
-    public record SessionResponse(String accessToken, long expiresIn, UserResponse user, String refreshToken) {
+    /**
+     * The access token (15 minutes) for {@code Authorization: Bearer}; the refresh token is a cookie (web) or here
+     * (mobile). With two-step sign-in on, a right password answers only {@code twoStep}: the challenge to send back
+     * with a code to {@code POST /api/auth/two-step}.
+     */
+    public record SessionResponse(String accessToken, long expiresIn, UserResponse user, String refreshToken, String twoStep) {
+
+        public SessionResponse(String accessToken, long expiresIn, UserResponse user, String refreshToken) {
+            this(accessToken, expiresIn, user, refreshToken, null);
+        }
+
+        public static SessionResponse challenge(String token) {
+            return new SessionResponse(null, 0, null, null, token);
+        }
+    }
+
+    public record TwoStepRequest(@NotBlank @Size(max = 100) String challenge, @NotBlank @Size(max = 20) String code) {
     }
 
     public record UpdateMeRequest(@Size(min = 2, max = 80) String name,
