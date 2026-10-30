@@ -58,7 +58,7 @@ export default function CandidatePage() {
           {d.canManage && open && <Button variant="outline" size="sm" onClick={() => setDialog('interview')}><CalendarPlus className="size-4" />{t('hr.scheduleInterview')}</Button>}
           {d.canManage && open && <Button variant="outline" size="sm" onClick={() => setDialog('reject')}><X className="size-4" />{t('hr.reject')}</Button>}
           {d.canHire && <Button size="sm" onClick={() => setDialog('hire')}><UserCheck className="size-4" />{t('hr.hire')}</Button>}
-          {can('hr.manage') && c.stage !== 'HIRED' && <Button variant="ghost" size="sm" aria-label={t('hr.removeCandidate')} onClick={() => {
+          {can('hr.recruit.manage') && c.stage !== 'HIRED' && <Button variant="ghost" size="sm" aria-label={t('hr.removeCandidate')} onClick={() => {
             if (!window.confirm(t('hr.removeCandidateConfirm', { name: c.name }))) return;
             act(() => recruitmentApi.deleteCandidate(slug, c.id), t('hr.candidateRemoved')).then(() => router.replace(`/${slug}/hr/recruitment/jobs/${d.job.id}`));
           }}><Trash2 className="size-4" /></Button>}
@@ -127,11 +127,11 @@ export default function CandidatePage() {
                     <Checkbox checked={s.done} disabled={!d.canManage} aria-label={s.title} onCheckedChange={(x) => act(() => recruitmentApi.setStepDone(slug, s.id, x === true))} />
                     <span className={s.done ? 'flex-1 text-sm text-muted-foreground line-through' : 'flex-1 text-sm'}>{s.title}</span>
                     {s.dueDate && <span className="text-xs text-muted-foreground tabular">{day(s.dueDate)}</span>}
-                    {can('hr.manage') && <Button variant="ghost" size="icon" className="size-7" aria-label={t('common.remove')} onClick={() => act(() => recruitmentApi.removeStep(slug, s.id))}><Trash2 className="size-3.5" /></Button>}
+                    {can('hr.recruit.manage') && <Button variant="ghost" size="icon" className="size-7" aria-label={t('common.remove')} onClick={() => act(() => recruitmentApi.removeStep(slug, s.id))}><Trash2 className="size-3.5" /></Button>}
                   </li>
                 ))}
               </ul>
-              {can('hr.manage') && (
+              {can('hr.recruit.manage') && (
                 <form className="mt-3 flex gap-2" onSubmit={(e) => { e.preventDefault(); if (newStep.trim()) act(() => recruitmentApi.addStep(slug, c.id, { title: newStep.trim(), dueDate: null })).then(() => setNewStep('')); }}>
                   <Input value={newStep} maxLength={200} onChange={(e) => setNewStep(e.target.value)} placeholder={t('hr.addStepHint')} aria-label={t('hr.addStep')} />
                   <Button type="submit" variant="outline" size="sm"><Plus className="size-4" />{t('hr.addStep')}</Button>

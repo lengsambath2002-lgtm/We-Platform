@@ -27,7 +27,7 @@ export default function PayslipPage() {
   const { t } = useT();
   const { id } = useParams<{ id: string }>();
   const { data: s, error, isPending, refetch } = usePayslip(slug, id);
-  const back = can('hr.manage') && s ? `/${slug}/hr/payroll/${s.runId}` : `/${slug}/hr/payslips`;
+  const back = can('hr.payroll') && s ? `/${slug}/hr/payroll/${s.runId}` : `/${slug}/hr/payslips`;
   if (error) return <ErrorState error={error} retry={() => refetch()} />;
   if (isPending) return <ListSkeleton />;
 

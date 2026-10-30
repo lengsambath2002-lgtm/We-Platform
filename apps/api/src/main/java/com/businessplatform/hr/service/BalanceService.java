@@ -49,7 +49,7 @@ public class BalanceService {
     public List<Balance> balances(String slug, UUID userId, Integer year) {
         OrgContext ctx = hr.require(slug);
         UUID who = userId == null ? ctx.userId() : userId;
-        if (!who.equals(ctx.userId()) && !HrAccess.manages(ctx)) {
+        if (!who.equals(ctx.userId()) && !HrAccess.managesPerson(ctx, who)) {
             throw BusinessException.forbidden();
         }
         profiles.profile(ctx, who);
@@ -58,7 +58,10 @@ public class BalanceService {
 
     @Transactional
     public List<AdjustmentView> adjustments(String slug, UUID userId, int year) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireTeam(slug);
+        if (!HrAccess.managesPerson(ctx, userId)) {
+            throw BusinessException.forbidden();
+        }
         profiles.profile(ctx, userId);
         Map<UUID, LeaveType> byId = new HashMap<>();
         types.all(ctx).forEach(t -> byId.put(t.getId(), t));
@@ -71,7 +74,10 @@ public class BalanceService {
     /** Adds (or with negative days removes) allowance for one person, type and year; the reason is kept. */
     @Transactional
     public List<Balance> adjust(String slug, AdjustRequest in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireTeam(slug);
+        if (!HrAccess.managesPerson(ctx, in.userId())) {
+            throw BusinessException.forbidden();
+        }
         EmployeeProfile p = profiles.profile(ctx, in.userId());
         LeaveType t = types.find(ctx, in.leaveTypeId());
         if (!t.limited()) {

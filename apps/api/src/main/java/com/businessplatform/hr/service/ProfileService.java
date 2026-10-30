@@ -81,7 +81,7 @@ public class ProfileService {
     public ProfileView update(String slug, UUID userId, ProfileRequest in) {
         OrgContext ctx = hr.require(slug);
         EmployeeProfile p = profile(ctx, userId);
-        if (!HrAccess.manages(ctx)) {
+        if (!HrAccess.managesPerson(ctx, userId)) {
             throw BusinessException.forbidden();
         }
         Membership m = memberships.findByOrgIdAndUserId(ctx.orgId(), userId).orElseThrow();
@@ -98,15 +98,27 @@ public class ProfileService {
             }
         }
         List<String> changed = new ArrayList<>();
-        UUID unitId = in.unitId();
-        if (unitId == null && clean(in.department()) != null) {
-            unitId = structure.departmentNamed(ctx, clean(in.department()));
-        }
         Optional<Placement> placedBefore = structure.primaryOf(ctx.orgId(), m.getId());
+        UUID unitId = in.unitId();
+        String department = clean(in.department());
+        if (unitId == null && department != null) {
+            // The same department text as now keeps the current unit (which may be a team inside it).
+            unitId = department.equalsIgnoreCase(Objects.toString(p.getDepartment(), ""))
+                    ? placedBefore.map(Placement::unitId).orElse(null) : structure.departmentNamed(ctx, department);
+        }
+        if (unitId == null && in.positionId() != null) {
+            unitId = structure.positionUnit(ctx.orgId(), in.positionId()).orElse(null);
+        }
+        Placement wanted = unitId == null && in.positionId() == null ? null : new Placement(unitId, in.positionId());
         String titleBefore = m.getTitle();
         String departmentBefore = p.getDepartment();
-        // Updates the job title and (through StructureSync) the department.
-        structure.placePrimary(ctx, userId, unitId, in.positionId(), in.title());
+        if (!Objects.equals(placedBefore.orElse(null), wanted)) {
+            // Moving someone needs an organisation-wide HR manager (or structure manager): it updates the job title
+            // and, through StructureSync, the department.
+            structure.placePrimary(ctx, userId, unitId, in.positionId(), in.title());
+        } else if (in.positionId() == null) {
+            m.setTitle(clean(in.title()));
+        }
         boolean moved = !placedBefore.equals(structure.primaryOf(ctx.orgId(), m.getId()));
         if (moved) {
             changed.add("placement");
@@ -180,7 +192,7 @@ public class ProfileService {
         AppUser u = people.get(p.getUserId());
         Membership m = active.get(p.getUserId());
         boolean self = p.getUserId().equals(ctx.userId());
-        boolean shown = self || HrAccess.manages(ctx);
+        boolean shown = self || HrAccess.managesPerson(ctx, p.getUserId());
         Optional<Placement> placed = m == null ? Optional.empty() : structure.primaryOf(ctx.orgId(), m.getId());
         return new ProfileView(ref(u), u.getEmail(), m == null ? null : m.getRole().name(), m == null ? null : m.getTitle(),
                 p.getDepartment(), placed.map(Placement::unitId).orElse(null), placed.map(Placement::positionId).orElse(null),
@@ -190,7 +202,7 @@ public class ProfileService {
                 shown ? p.getEmergencyRelation() : null,
                 reportIds.stream().map(people::get).filter(Objects::nonNull).map(ProfileService::ref)
                         .sorted(Comparator.comparing(PersonRef::name, String.CASE_INSENSITIVE_ORDER)).toList(),
-                HrAccess.manages(ctx), self);
+                HrAccess.managesPerson(ctx, p.getUserId()), self);
     }
 
     private void contact(List<String> changed, EmployeeProfile p, String phone, String name, String emergencyPhone,

@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  KeyRound,
   Banknote,
   BarChart3,
   Blocks,
@@ -78,13 +79,17 @@ export function globalNav(ctx: OrgContext): NavItem[] {
 }
 
 export function adminNav(ctx: OrgContext): NavItem[] {
-  if (!ctx.permissions.includes('org.settings.manage')) return [];
+  const can = (p: string) => ctx.permissions.includes(p);
+  // Members with a custom role that includes the audit log see just that.
+  const audit = can('activity.view') ? [{ href: 'admin/audit', label: tr('collab.auditNav'), icon: ScrollText }] : [];
+  if (!can('org.settings.manage')) return audit;
   return [
     { href: 'admin/modules', label: tr('shell.modules'), icon: Blocks },
     { href: 'admin/workflows', label: tr('shell.workflows'), icon: GitBranch },
     { href: 'admin/members', label: tr('shell.membersRoles'), icon: UserCog },
+    ...(can('org.roles.manage') ? [{ href: 'admin/roles', label: tr('roles.nav'), icon: KeyRound }] : []),
     { href: 'admin/settings', label: tr('settings.title'), icon: Settings },
-    ...(ctx.permissions.includes('activity.view') ? [{ href: 'admin/audit', label: tr('collab.auditNav'), icon: ScrollText }] : []),
+    ...audit,
   ];
 }
 
@@ -196,13 +201,11 @@ export function hrNav(ctx: OrgContext): NavItem[] {
     { href: 'hr/reviews', label: tr('hr.navReviews'), icon: ClipboardCheck },
     { href: 'hr/training', label: tr('hr.navTraining'), icon: GraduationCap },
     ...(can('hr.recruit') ? [{ href: 'hr/recruitment', label: tr('hr.navRecruitment'), icon: Briefcase }] : []),
-    ...(can('hr.manage') ? [
-      { href: 'hr/dashboard', label: tr('hr.navDashboard'), icon: LayoutDashboard },
-      { href: 'hr/attendance/board', label: tr('hr.navTeamAttendance'), icon: UsersRound },
-      { href: 'hr/requests', label: tr('hr.navRequests'), icon: Inbox },
-      { href: 'hr/payroll', label: tr('hr.navPayroll'), icon: Banknote },
-      { href: 'hr/settings', label: tr('hr.navSettings'), icon: SlidersHorizontal },
-    ] : []),
+    ...(can('hr.manage') ? [{ href: 'hr/dashboard', label: tr('hr.navDashboard'), icon: LayoutDashboard }] : []),
+    ...(can('hr.team') ? [{ href: 'hr/attendance/board', label: tr('hr.navTeamAttendance'), icon: UsersRound }] : []),
+    ...(can('hr.manage') ? [{ href: 'hr/requests', label: tr('hr.navRequests'), icon: Inbox }] : []),
+    ...(can('hr.payroll') ? [{ href: 'hr/payroll', label: tr('hr.navPayroll'), icon: Banknote }] : []),
+    ...(can('hr.manage') ? [{ href: 'hr/settings', label: tr('hr.navSettings'), icon: SlidersHorizontal }] : []),
   ];
 }
 

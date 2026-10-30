@@ -61,6 +61,7 @@ public class OrgService {
     private final Messages messages;
     private final List<PermissionSource> permissionSources;
     private final OrgStructureService structure;
+    private final CustomRoleService customRoles;
 
     /** Addresses the web app uses for its own pages (/{slug} would shadow them). */
     private static final Set<String> RESERVED_SLUGS = Set.of("account", "onboarding", "invite", "sign-in", "sign-up",
@@ -175,9 +176,11 @@ public class OrgService {
         Map<UUID, AppUser> people = users.findByIdIn(ms.stream().map(Membership::getUserId).toList()).stream()
                 .collect(Collectors.toMap(AppUser::getId, Function.identity()));
         Map<UUID, String> unitNames = structure.primaryUnitNames(ctx.orgId());
+        Map<UUID, List<String>> roleNames = ctx.isAdmin() ? customRoles.roleNames(ctx.orgId()) : Map.of();
         return ms.stream()
                 .filter(m -> ctx.isAdmin() || Membership.ACTIVE.equals(m.getStatus()))
-                .map(m -> toMember(m, people.get(m.getUserId()), unitNames.get(m.getId()))).toList();
+                .map(m -> toMember(m, people.get(m.getUserId()), unitNames.get(m.getId()), roleNames.getOrDefault(m.getId(), List.of())))
+                .toList();
     }
 
     @Transactional
@@ -212,7 +215,8 @@ public class OrgService {
             changed.put("status", in.status());
         }
         audit(ctx, "member", m.getUserId(), "org.member.updated", changed);
-        return toMember(m, who, structure.primaryUnitNames(ctx.orgId()).get(m.getId()));
+        return toMember(m, who, structure.primaryUnitNames(ctx.orgId()).get(m.getId()),
+                customRoles.roleNames(ctx.orgId()).getOrDefault(m.getId(), List.of()));
     }
 
     // ── Invitations ──────────────────────────────────────────────────────────────────
@@ -399,8 +403,8 @@ public class OrgService {
         return env.getProperty("platform.app-url", "http://localhost:3300") + "/invite/" + token;
     }
 
-    private static MemberResponse toMember(Membership m, AppUser u, String unit) {
+    private static MemberResponse toMember(Membership m, AppUser u, String unit, List<String> roles) {
         return new MemberResponse(m.getId(), u.getId(), u.getName(), u.getEmail(), u.getAvatarUrl(), m.getRole(),
-                m.getStatus(), m.getTitle(), unit, m.getCreatedAt());
+                m.getStatus(), m.getTitle(), unit, roles, m.getCreatedAt());
     }
 }

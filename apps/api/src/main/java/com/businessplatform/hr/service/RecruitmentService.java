@@ -90,7 +90,7 @@ public class RecruitmentService {
     // ── Who may do what ──────────────────────────────────────────────────────────────
 
     private static boolean manages(OrgContext ctx, JobOpening j) {
-        return HrAccess.manages(ctx) || ctx.userId().equals(j.getHiringManagerId());
+        return HrAccess.recruits(ctx) || ctx.userId().equals(j.getHiringManagerId());
     }
 
     /** HR, the job's hiring manager, or someone on one of the candidate's interview panels. */
@@ -124,7 +124,7 @@ public class RecruitmentService {
 
     @Transactional
     public JobView saveJob(String slug, UUID id, JobRequest in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireRecruiter(slug);
         JobOpening j = id == null ? new JobOpening() : job(ctx, id);
         if (in.hiringManagerId() != null && !activeMember(ctx, in.hiringManagerId())) {
             throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "hiringManagerId", "Choose a member of the organisation");
@@ -241,7 +241,7 @@ public class RecruitmentService {
     /** HR managers: removes a candidate and their CV (e.g. on request); hires stay as the record of the hire. */
     @Transactional
     public void deleteCandidate(String slug, UUID id) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireRecruiter(slug);
         Candidate c = candidate(ctx, id);
         if (Candidate.HIRED.equals(c.getStage())) {
             throw new BusinessException(ErrorCode.INVALID_STATE, "A hire can't be removed", List.of());
@@ -376,7 +376,7 @@ public class RecruitmentService {
      */
     @Transactional
     public CandidateDetail hire(String slug, UUID id, HireRequest in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireRecruiter(slug);
         Candidate c = candidate(ctx, id);
         JobOpening j = job(ctx, c.getJobId());
         if (c.closed()) {
@@ -428,7 +428,7 @@ public class RecruitmentService {
     /** HR managers: recent hires with their onboarding progress. */
     @Transactional(readOnly = true)
     public List<HireView> hires(String slug) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireRecruiter(slug);
         List<Candidate> found = candidates.findByOrgIdAndStageOrderByHiredAtDesc(ctx.orgId(), Candidate.HIRED);
         Map<UUID, JobOpening> jobById = jobs.findAllById(found.stream().map(Candidate::getJobId).distinct().toList()).stream()
                 .collect(Collectors.toMap(JobOpening::getId, Function.identity()));
@@ -447,7 +447,7 @@ public class RecruitmentService {
 
     @Transactional
     public CandidateDetail addItem(String slug, UUID candidateId, OnboardingItemRequest in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireRecruiter(slug);
         Candidate c = hired(ctx, candidateId);
         OnboardingItem item = new OnboardingItem();
         item.setId(Ids.next());
@@ -475,7 +475,7 @@ public class RecruitmentService {
 
     @Transactional
     public CandidateDetail removeItem(String slug, UUID itemId) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireRecruiter(slug);
         OnboardingItem item = items.findByIdAndOrgId(itemId, ctx.orgId()).orElseThrow(BusinessException::notFound);
         Candidate c = candidate(ctx, item.getCandidateId());
         items.delete(item);
@@ -485,13 +485,13 @@ public class RecruitmentService {
     // Not read-only: the first use seeds the standard steps.
     @Transactional
     public TemplateView templateView(String slug) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireRecruiter(slug);
         return new TemplateView(template(ctx).stream().map(t -> new TemplateItem(t.getTitle(), t.getDueDays())).toList());
     }
 
     @Transactional
     public TemplateView saveTemplate(String slug, TemplateRequest in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requireRecruiter(slug);
         templates.deleteAll(template(ctx));
         templates.flush();
         short order = 0;
@@ -595,7 +595,7 @@ public class RecruitmentService {
         return found.stream().map(j -> new JobView(j.getId(), j.getTitle(), j.getDepartment(), j.getEmploymentType(),
                 j.getLocation(), j.getDescription(), j.getOpenings(),
                 j.getHiringManagerId() == null ? null : people.get(j.getHiringManagerId()), j.getStatus(),
-                stages.getOrDefault(j.getId(), Map.of()), j.getCreatedAt(), HrAccess.manages(ctx))).toList();
+                stages.getOrDefault(j.getId(), Map.of()), j.getCreatedAt(), HrAccess.recruits(ctx))).toList();
     }
 
     private List<CandidateSummary> summaries(List<Candidate> found) {
@@ -643,6 +643,6 @@ public class RecruitmentService {
                 interviewViews(ctx, interviews.findByCandidateIdOrderByStartsAt(c.getId()), canManage),
                 its.stream().map(x -> new OnboardingView(x.getId(), x.getTitle(), x.getDueDate(), x.getDoneAt() != null,
                         x.getDoneAt(), x.getDoneBy() == null ? null : doneBy.get(x.getDoneBy()))).toList(),
-                canManage, HrAccess.manages(ctx) && !c.closed());
+                canManage, HrAccess.recruits(ctx) && !c.closed());
     }
 }

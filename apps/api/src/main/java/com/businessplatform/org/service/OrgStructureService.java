@@ -33,6 +33,7 @@ import com.businessplatform.org.domain.OrgRole;
 import com.businessplatform.org.domain.OrgUnit;
 import com.businessplatform.org.payload.StructurePayloads.*;
 import com.businessplatform.org.repository.MembershipRepository;
+import com.businessplatform.org.repository.RoleRepositories.OrgRoleGrantRepository;
 import com.businessplatform.org.repository.StructureRepositories.OrgAssignmentRepository;
 import com.businessplatform.org.repository.StructureRepositories.OrgPositionRepository;
 import com.businessplatform.org.repository.StructureRepositories.OrgUnitRepository;
@@ -53,6 +54,7 @@ public class OrgStructureService {
     private final OrgUnitRepository units;
     private final OrgPositionRepository positions;
     private final OrgAssignmentRepository assignments;
+    private final OrgRoleGrantRepository roleGrants;
     private final MembershipRepository memberships;
     private final UserRepository users;
     private final ActivityService activity;
@@ -96,14 +98,14 @@ public class OrgStructureService {
             Membership m = byMembership.get(a.getMembershipId());
             return new AssignmentView(a.getId(), brief(m, people), m.getTitle(), unitOf(a, posById), a.getPositionId(), a.isPrimary());
         }).sorted(Comparator.comparing((AssignmentView a) -> a.person().name(), String.CASE_INSENSITIVE_ORDER)).toList();
-        return new StructureView(unitViews, positionViews, assignmentViews, ctx.isAdmin());
+        return new StructureView(unitViews, positionViews, assignmentViews, ctx.can(RoleCatalogue.STRUCTURE));
     }
 
     // ── Units ────────────────────────────────────────────────────────────────────────
 
     @Transactional
     public UnitView saveUnit(String slug, UUID id, UnitRequest in) {
-        OrgContext ctx = access.requireAdmin(slug);
+        OrgContext ctx = manager(slug);
         OrgUnit u = id == null ? new OrgUnit() : unit(ctx, id);
         if (id != null && u.isArchived()) {
             throw new BusinessException(ErrorCode.INVALID_STATE, "Restore the unit first", List.of());
@@ -159,7 +161,7 @@ public class OrgStructureService {
      */
     @Transactional
     public UnitView archiveUnit(String slug, UUID id, boolean archived) {
-        OrgContext ctx = access.requireAdmin(slug);
+        OrgContext ctx = manager(slug);
         OrgUnit u = unit(ctx, id);
         if (archived == u.isArchived()) {
             return unitView(ctx, u);
@@ -184,7 +186,7 @@ public class OrgStructureService {
     /** Deletes a unit that was never used: no sub-units or positions (even archived ones) and nobody placed in it. */
     @Transactional
     public void deleteUnit(String slug, UUID id) {
-        OrgContext ctx = access.requireAdmin(slug);
+        OrgContext ctx = manager(slug);
         OrgUnit u = unit(ctx, id);
         inUse(ctx, u, false);
         units.delete(u);
@@ -201,13 +203,16 @@ public class OrgStructureService {
         if (assignments.existsByUnitId(u.getId())) {
             throw new BusinessException(ErrorCode.INVALID_STATE, "Move the people in it to another unit first", List.of());
         }
+        if (roleGrants.existsByUnitId(u.getId())) {
+            throw new BusinessException(ErrorCode.INVALID_STATE, "Remove the roles granted for it first", List.of());
+        }
     }
 
     // ── Positions ────────────────────────────────────────────────────────────────────
 
     @Transactional
     public PositionView savePosition(String slug, UUID id, PositionRequest in) {
-        OrgContext ctx = access.requireAdmin(slug);
+        OrgContext ctx = manager(slug);
         OrgPosition p = id == null ? new OrgPosition() : position(ctx, id);
         if (id != null && p.isArchived()) {
             throw new BusinessException(ErrorCode.INVALID_STATE, "Restore the position first", List.of());
@@ -268,7 +273,7 @@ public class OrgStructureService {
     /** Archives a position nobody holds (or restores one; its unit must be active). */
     @Transactional
     public PositionView archivePosition(String slug, UUID id, boolean archived) {
-        OrgContext ctx = access.requireAdmin(slug);
+        OrgContext ctx = manager(slug);
         OrgPosition p = position(ctx, id);
         if (archived == p.isArchived()) {
             return positionView(p);
@@ -294,7 +299,7 @@ public class OrgStructureService {
 
     @Transactional
     public void deletePosition(String slug, UUID id) {
-        OrgContext ctx = access.requireAdmin(slug);
+        OrgContext ctx = manager(slug);
         OrgPosition p = position(ctx, id);
         if (assignments.existsByPositionId(p.getId())) {
             throw new BusinessException(ErrorCode.INVALID_STATE, "Move the people holding it to another position first", List.of());
@@ -309,7 +314,7 @@ public class OrgStructureService {
     /** Replaces where a member sits in the structure (Owners and Admins). */
     @Transactional
     public List<AssignmentView> place(String slug, UUID membershipId, PlacementsRequest in) {
-        OrgContext ctx = access.requireAdmin(slug);
+        OrgContext ctx = manager(slug);
         Membership m = member(ctx, membershipId);
         List<Placement> extra = in.additional() == null ? List.of() : in.additional();
         replace(ctx, m, in.primary(), extra);
@@ -322,7 +327,7 @@ public class OrgStructureService {
      */
     @Transactional
     public void placePrimary(OrgContext ctx, UUID userId, UUID unitId, UUID positionId, String title) {
-        if (!ctx.isAdmin()) {
+        if (!ctx.can(RoleCatalogue.STRUCTURE) && !ctx.can(RoleCatalogue.HR)) {
             throw BusinessException.forbidden();
         }
         Membership m = memberships.findByOrgIdAndUserId(ctx.orgId(), userId).orElseThrow(BusinessException::notFound);
@@ -483,6 +488,12 @@ public class OrgStructureService {
         return Optional.empty();
     }
 
+    /** The unit a position belongs to, if it has one. */
+    @Transactional(readOnly = true)
+    public Optional<UUID> positionUnit(UUID orgId, UUID positionId) {
+        return positions.findByIdAndOrgId(positionId, orgId).map(OrgPosition::getUnitId);
+    }
+
     /** The member's primary place, if any (unit resolved from the position when only that is set). */
     @Transactional(readOnly = true)
     public Optional<Placement> primaryOf(UUID orgId, UUID membershipId) {
@@ -497,7 +508,7 @@ public class OrgStructureService {
      */
     @Transactional
     public UUID departmentNamed(OrgContext ctx, String name) {
-        if (!ctx.isAdmin()) {
+        if (!ctx.can(RoleCatalogue.STRUCTURE) && !ctx.can(RoleCatalogue.HR)) {
             throw BusinessException.forbidden();
         }
         String wanted = name.strip();
@@ -523,6 +534,14 @@ public class OrgStructureService {
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────────────
+
+    private OrgContext manager(String slug) {
+        OrgContext ctx = reader(slug);
+        if (!ctx.can(RoleCatalogue.STRUCTURE)) {
+            throw BusinessException.forbidden();
+        }
+        return ctx;
+    }
 
     private OrgContext reader(String slug) {
         OrgContext ctx = access.require(slug);

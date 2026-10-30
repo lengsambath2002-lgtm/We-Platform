@@ -30,6 +30,7 @@ import com.businessplatform.module.domain.Module;
 import com.businessplatform.module.service.ModuleService;
 import com.businessplatform.org.service.OrgAccess;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.org.service.RoleCatalogue;
 import com.businessplatform.retail.domain.PoLine;
 import com.businessplatform.retail.domain.PoReceipt;
 import com.businessplatform.retail.domain.PurchaseOrder;
@@ -87,7 +88,7 @@ public class PurchasingService {
 
     OrgContext manage(String slug) {
         OrgContext ctx = view(slug);
-        if (!ctx.isAdmin()) {
+        if (!ctx.can(RoleCatalogue.RETAIL)) {
             throw BusinessException.forbidden();
         }
         return ctx;
@@ -468,7 +469,7 @@ public class PurchasingService {
         List<SupplierPayment> ps = payments.findByPoIdOrderByPaidOnDescCreatedAtDesc(o.getId());
         Map<UUID, PersonRef> people = people(Stream.concat(Stream.of(o.getCreatedBy()),
                 Stream.concat(rs.stream().map(PoReceipt::getReceivedBy), ps.stream().map(SupplierPayment::getRecordedBy))).toList());
-        boolean admin = ctx.isAdmin();
+        boolean admin = ctx.can(RoleCatalogue.RETAIL);
         boolean waiting = PurchaseOrder.ORDERED.equals(o.getStatus()) || PurchaseOrder.PARTIAL.equals(o.getStatus());
         return new OrderView(summaries(ctx, List.of(o)).get(0), o.getShopBusinessId(), o.getNotes(),
                 ls.stream().map(l -> new LineView(l.getId(), l.getDescription(), l.getSku(), l.getQuantity(), l.getUnitCost(), l.getReceived(),

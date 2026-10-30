@@ -22,11 +22,13 @@ function Board() {
   const { t } = useT();
   const params = useSearchParams();
   const router = useRouter();
+  // hr.team: HR managers, including those whose role covers only some units (the server lists just their people).
+  const team = can('hr.team');
   const manage = can('hr.manage');
   const date = /^\d{4}-\d{2}-\d{2}$/.test(params.get('date') ?? '') ? params.get('date')! : orgToday();
-  const { data, error, isPending, refetch } = useAttendanceBoard(slug, date, manage);
+  const { data, error, isPending, refetch } = useAttendanceBoard(slug, date, team);
   const waiting = useAllOvertime(slug, 'PENDING', manage);
-  if (!manage) return <PermissionDenied />;
+  if (!team) return <PermissionDenied />;
   const count = (s: string[]) => (data ?? []).filter((r) => s.includes(r.day.status)).length;
 
   return (
@@ -77,12 +79,12 @@ function Board() {
             </Table>
           </div>
         )}
-      <section aria-labelledby="otw-h" className="mt-6">
+      {manage && <section aria-labelledby="otw-h" className="mt-6">
         <h2 id="otw-h" className="text-base font-semibold">{t('hr.overtimeWaiting')}</h2>
         <p className="mb-3 text-sm text-muted-foreground">{t('hr.overtimeWaitingBody')}</p>
         {waiting.error ? <ErrorState error={waiting.error} retry={() => waiting.refetch()} /> : waiting.isPending ? <ListSkeleton rows={2} />
           : waiting.data.length === 0 ? <EmptyState icon={Timer} title={t('hr.noOvertime')} /> : <OvertimeList items={waiting.data} showPerson />}
-      </section>
+      </section>}
     </>
   );
 }

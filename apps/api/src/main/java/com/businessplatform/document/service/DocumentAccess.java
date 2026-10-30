@@ -19,6 +19,7 @@ import com.businessplatform.identity.domain.AppUser;
 import com.businessplatform.identity.repository.UserRepository;
 import com.businessplatform.org.service.OrgAccess;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.org.service.RoleCatalogue;
 
 import lombok.RequiredArgsConstructor;
 
@@ -50,7 +51,7 @@ public class DocumentAccess {
     }
 
     public static boolean canManage(OrgContext ctx, UUID addedBy) {
-        return ctx.isAdmin() || ctx.userId().equals(addedBy);
+        return ctx.can(RoleCatalogue.DOCUMENTS) || ctx.userId().equals(addedBy);
     }
 
     static void requireManage(OrgContext ctx, UUID addedBy) {

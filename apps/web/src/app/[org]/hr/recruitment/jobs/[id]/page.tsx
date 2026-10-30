@@ -38,7 +38,7 @@ export default function JobPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          {can('hr.manage') && <Button variant="outline" size="sm" onClick={() => setEditing(true)}><Pencil className="size-4" />{t('common.edit')}</Button>}
+          {can('hr.recruit.manage') && <Button variant="outline" size="sm" onClick={() => setEditing(true)}><Pencil className="size-4" />{t('common.edit')}</Button>}
           {j.status !== 'CLOSED' && <Button size="sm" onClick={() => setAdding(true)}><UserPlus className="size-4" />{t('hr.addCandidate')}</Button>}
         </div>
       </div>

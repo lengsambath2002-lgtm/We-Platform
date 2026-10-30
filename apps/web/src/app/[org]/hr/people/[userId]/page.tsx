@@ -31,7 +31,7 @@ export default function ProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const { data: p, error, isPending, refetch } = useProfile(slug, userId);
   const [editing, setEditing] = useState<'all' | 'contact' | null>(null);
-  const showBalances = !!p && (p.canEditContact || can('hr.manage'));
+  const showBalances = !!p && (p.canEditContact || p.canEdit);
   const balances = useBalances(slug, p?.canEditContact ? '' : userId, new Date().getFullYear(), showBalances);
   if (error) return <ErrorState error={error} retry={() => refetch()} />;
   if (isPending) return <ListSkeleton />;

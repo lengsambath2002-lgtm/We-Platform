@@ -23,6 +23,7 @@ import com.businessplatform.document.payload.DocumentPayloads.*;
 import com.businessplatform.document.repository.DocFolderRepository;
 import com.businessplatform.document.repository.DocumentRepository;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.org.service.RoleCatalogue;
 
 import lombok.RequiredArgsConstructor;
 
@@ -57,7 +58,7 @@ public class FolderService {
                 DocumentAccess.canManage(ctx, f.getCreatedBy()))).toList();
         return new FolderContents(folder == null ? null : new FolderRef(folder.getId(), folder.getName()),
                 tree.path(folderId), folderRows, documentService.responses(ctx, docs), true,
-                folder == null ? ctx.isAdmin() : DocumentAccess.canManage(ctx, folder.getCreatedBy()));
+                folder == null ? ctx.can(RoleCatalogue.DOCUMENTS) : DocumentAccess.canManage(ctx, folder.getCreatedBy()));
     }
 
     /** Every folder out of the trash, for the "move to" picker. */
@@ -143,7 +144,7 @@ public class FolderService {
         FolderTree tree = access.tree(ctx);
         DocFolder f = access.liveFolder(tree, id);
         DocumentAccess.requireManage(ctx, f.getCreatedBy());
-        if (!ctx.isAdmin()) {
+        if (!ctx.can(RoleCatalogue.DOCUMENTS)) {
             Set<UUID> inside = tree.subtree(f.getId());
             boolean others = Stream.concat(
                     inside.stream().map(x -> tree.find(x).orElseThrow().getCreatedBy()),

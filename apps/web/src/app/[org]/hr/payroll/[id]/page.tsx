@@ -29,7 +29,7 @@ export default function PayRunPage() {
   const act = useOrgMutation(slug, (a: 'recalculate' | 'approve' | 'reopen' | 'pay') => payrollApi.act(slug, id, a));
   const remove = useOrgMutation(slug, () => payrollApi.deleteRun(slug, id));
   const [adjusting, setAdjusting] = useState<Payslip | null>(null);
-  if (!can('hr.manage')) return <PermissionDenied />;
+  if (!can('hr.payroll')) return <PermissionDenied />;
   const back = <Link href={`/${slug}/hr/payroll`} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />{t('hr.payrollTitle')}</Link>;
   if (error) return <>{back}<ErrorState error={error} retry={() => refetch()} /></>;
   if (isPending) return <>{back}<ListSkeleton rows={6} /></>;

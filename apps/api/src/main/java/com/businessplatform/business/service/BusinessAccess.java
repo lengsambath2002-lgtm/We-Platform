@@ -12,6 +12,7 @@ import com.businessplatform.module.domain.Module;
 import com.businessplatform.module.service.ModuleService;
 import com.businessplatform.org.service.OrgAccess;
 import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.org.service.RoleCatalogue;
 
 import lombok.RequiredArgsConstructor;
 
@@ -63,7 +64,7 @@ public class BusinessAccess {
     }
 
     public static boolean manages(OrgContext ctx) {
-        return ctx.isAdmin();
+        return ctx.can(RoleCatalogue.BUSINESS);
     }
 
     /** Admins, or the person who created the record. */

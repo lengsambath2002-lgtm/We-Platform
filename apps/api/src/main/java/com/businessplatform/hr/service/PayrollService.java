@@ -93,12 +93,12 @@ public class PayrollService {
 
     @Transactional
     public SettingsView settings(String slug) {
-        return view(settings(hr.requireManager(slug)));
+        return view(settings(hr.requirePayroll(slug)));
     }
 
     @Transactional
     public SettingsView updateSettings(String slug, SettingsRequest in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         List<BracketInput> b = in.taxBrackets();
         for (int i = 0; i < b.size(); i++) {
             boolean last = i == b.size() - 1;
@@ -183,7 +183,7 @@ public class PayrollService {
     /** Everyone active (not guests) with what they are paid, by name. */
     @Transactional
     public List<PayView> people(String slug) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         List<EmployeeProfile> people = activePeople(ctx);
         Map<UUID, EmployeePay> byUser = pays.findByOrgId(ctx.orgId()).stream()
                 .collect(Collectors.toMap(EmployeePay::getUserId, Function.identity()));
@@ -194,7 +194,7 @@ public class PayrollService {
 
     @Transactional
     public PayView setPay(String slug, UUID userId, PayRequest in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         EmployeeProfile p = profiles.profile(ctx, userId);
         EmployeePay pay = pays.findByOrgIdAndUserId(ctx.orgId(), userId).orElseGet(() -> {
             EmployeePay n = new EmployeePay();
@@ -228,14 +228,14 @@ public class PayrollService {
 
     @Transactional(readOnly = true)
     public List<RunSummary> runs(String slug) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         return runs.findByOrgIdOrderByMonthDesc(ctx.orgId()).stream().map(r -> summary(r, slips.findByPayRunId(r.getId()))).toList();
     }
 
     /** Prepares a month's DRAFT for everyone with a salary set up. */
     @Transactional
     public RunDetail create(String slug, RunRequest in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         if (runs.existsByOrgIdAndMonth(ctx.orgId(), in.month())) {
             throw BusinessException.field(ErrorCode.CONFLICT, "month", "There is already a pay run for this month");
         }
@@ -258,14 +258,14 @@ public class PayrollService {
     // Not read-only: listing who isn't set up may create missing employee profiles.
     @Transactional
     public RunDetail get(String slug, UUID id) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         return detail(ctx, run(ctx, id));
     }
 
     /** A DRAFT's exchange rate and note; everything is recalculated. */
     @Transactional
     public RunDetail update(String slug, UUID id, RunUpdate in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         PayRun r = draft(ctx, id);
         r.setExchangeRate(in.exchangeRate());
         r.setNote(ProfileService.clean(in.note()));
@@ -277,7 +277,7 @@ public class PayrollService {
     /** Recalculates a DRAFT from today's salaries, leave and overtime (HR's adjustments are kept). */
     @Transactional
     public RunDetail recalculate(String slug, UUID id) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         PayRun r = draft(ctx, id);
         calculate(ctx, r);
         return detail(ctx, r);
@@ -285,7 +285,7 @@ public class PayrollService {
 
     @Transactional
     public RunDetail setAdjustments(String slug, UUID payslipId, AdjustmentsRequest in) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         Payslip p = slips.findByIdAndOrgId(payslipId, ctx.orgId()).orElseThrow(BusinessException::notFound);
         PayRun r = draft(ctx, p.getPayRunId());
         p.setAdjustments(in.adjustments().stream().map(a -> {
@@ -300,7 +300,7 @@ public class PayrollService {
 
     @Transactional
     public void delete(String slug, UUID id) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         PayRun r = draft(ctx, id);
         activity.record(ctx.orgId(), HrAccess.MODULE, RUN, r.getId(), ctx.userId(), "payroll.run.deleted", Map.of("month", r.getMonth()));
         runs.delete(r);
@@ -309,7 +309,7 @@ public class PayrollService {
     /** Locks a DRAFT; nothing changes after this. */
     @Transactional
     public RunDetail approve(String slug, UUID id) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         PayRun r = draft(ctx, id);
         if (slips.findByPayRunId(r.getId()).isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_STATE, "Set up someone's salary before approving", List.of());
@@ -325,7 +325,7 @@ public class PayrollService {
     /** Back to DRAFT, while not paid yet. */
     @Transactional
     public RunDetail reopen(String slug, UUID id) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         PayRun r = run(ctx, id);
         if (!PayRun.APPROVED.equals(r.getStatus())) {
             throw new BusinessException(ErrorCode.INVALID_STATE, "Only an approved run that isn't paid can be reopened", List.of());
@@ -341,7 +341,7 @@ public class PayrollService {
     /** Records the payment: everyone in the run sees their payslip and gets a notification and an email. */
     @Transactional
     public RunDetail markPaid(String slug, UUID id) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         PayRun r = run(ctx, id);
         if (!PayRun.APPROVED.equals(r.getStatus())) {
             throw new BusinessException(ErrorCode.INVALID_STATE, "Approve the run first", List.of());
@@ -378,7 +378,7 @@ public class PayrollService {
     // Not read-only: listing who isn't set up may create missing employee profiles.
     @Transactional
     public String csv(String slug, UUID id) {
-        OrgContext ctx = hr.requireManager(slug);
+        OrgContext ctx = hr.requirePayroll(slug);
         PayRun r = run(ctx, id);
         StringBuilder out = new StringBuilder("Name,Email,Bank,Account,Net pay (USD)\n");
         detail(ctx, r).payslips().forEach(p -> {
@@ -417,7 +417,7 @@ public class PayrollService {
         Payslip p = slips.findByIdAndOrgId(id, ctx.orgId()).orElseThrow(BusinessException::notFound);
         PayRun r = runs.findById(p.getPayRunId()).orElseThrow();
         boolean own = p.getUserId().equals(ctx.userId()) && PayRun.PAID.equals(r.getStatus());
-        if (!own && !HrAccess.manages(ctx)) {
+        if (!own && !HrAccess.runsPayroll(ctx)) {
             throw BusinessException.notFound();
         }
         return slip(ctx, r, p, profiles.persons(List.of(p.getUserId())));

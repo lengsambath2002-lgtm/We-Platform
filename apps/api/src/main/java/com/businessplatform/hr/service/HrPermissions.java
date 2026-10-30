@@ -32,9 +32,13 @@ public class HrPermissions implements PermissionSource {
         if (!enabledModules.contains(HrAccess.MODULE) || ctx.isGuest()) {
             return List.of();
         }
-        boolean involved = HrAccess.manages(ctx)
+        boolean involved = HrAccess.recruits(ctx)
                 || jobs.existsByOrgIdAndHiringManagerIdAndStatusNot(ctx.orgId(), ctx.userId(), JobOpening.CLOSED)
                 || panels.onAnyPanel(ctx.orgId(), ctx.userId());
-        return involved ? List.of("hr.recruit") : List.of();
+        if (!involved) {
+            return List.of();
+        }
+        // hr.recruit.manage: every opening, the onboarding template and hiring (not just the caller's own openings).
+        return HrAccess.recruits(ctx) ? List.of("hr.recruit", "hr.recruit.manage") : List.of("hr.recruit");
     }
 }
