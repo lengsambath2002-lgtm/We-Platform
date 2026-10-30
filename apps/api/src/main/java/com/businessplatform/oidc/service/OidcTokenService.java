@@ -125,7 +125,7 @@ public class OidcTokenService {
                 .claim("auth_time", c.getAuthTime().getEpochSecond())
                 .claim("nonce", c.getNonce());
         if (scopes.contains("email")) {
-            b.claim("email", u.getEmail().toLowerCase()).claim("email_verified", false);
+            b.claim("email", u.getEmail().toLowerCase()).claim("email_verified", u.getEmailVerifiedAt() != null);
         }
         if (scopes.contains("profile")) {
             b.claim("name", u.getName()).claim("locale", "km".equals(u.getLocale()) ? "km" : "en");

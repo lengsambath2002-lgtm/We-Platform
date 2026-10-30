@@ -59,6 +59,7 @@ public class OrgImportService {
 
     private final OrgAccess access;
     private final OrgService orgs;
+    private final com.businessplatform.identity.service.EmailVerificationService verification;
     private final com.businessplatform.billing.service.SubscriptionService subscriptions;
     private final OrgStructureService structure;
     private final AccountService accounts;
@@ -104,6 +105,7 @@ public class OrgImportService {
     @Transactional
     public ImportResult apply(String slug, ImportRequest in) {
         OrgContext ctx = access.requireAdmin(slug);
+        verification.require(ctx.userId());
         Plan plan = plan(ctx, in.rows());
         if (plan.errors() > 0) {
             return plan.result(false);

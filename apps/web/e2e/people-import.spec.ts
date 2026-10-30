@@ -35,7 +35,7 @@ test('an owner imports people with units, positions and managers from a CSV', as
   await expect(page.getByText('2 new accounts')).toBeVisible();
   await expect(page.getByText('New units: Mobile Center, Mobile Center › Mobile')).toBeVisible();
   await page.getByRole('button', { name: 'Import 2 people' }).click();
-  await expect(page.getByRole('status')).toContainText('Imported: 2 new accounts');
+  await expect(page.getByRole('status').filter({ hasText: 'Imported:' })).toContainText('Imported: 2 new accounts');
 
   await page.getByRole('link', { name: 'View the structure' }).click();
   await page.getByRole('tab', { name: 'People' }).click();

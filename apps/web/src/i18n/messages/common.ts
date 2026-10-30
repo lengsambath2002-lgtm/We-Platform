@@ -37,6 +37,7 @@ export const en = {
   errNotFound: 'This no longer exists, or you no longer have access to it.',
   errModuleOff: 'This module is switched off for your organisation.',
   errAccountDisabled: 'This account is disabled. Contact the platform administrator.',
+  errEmailNotVerified: 'Confirm your email address first: open the link we emailed you.',
   errOrgSuspended: 'This organisation is suspended. Contact the platform administrator.',
   // dates
   today: 'Today',
@@ -85,6 +86,7 @@ export const km: Record<keyof typeof en, string> = {
   errNotFound: 'វាលែងមានទៀតហើយ ឬអ្នកលែងមានសិទ្ធិចូលមើលវា។',
   errModuleOff: 'ម៉ូឌុលនេះត្រូវបានបិទសម្រាប់ស្ថាប័នរបស់អ្នក។',
   errAccountDisabled: 'គណនីនេះត្រូវបានបិទ។ សូមទាក់ទងអ្នកគ្រប់គ្រងវេទិកា។',
+  errEmailNotVerified: 'សូមបញ្ជាក់អាសយដ្ឋានអ៊ីមែលរបស់អ្នកជាមុនសិន៖ បើកតំណដែលយើងបានផ្ញើតាមអ៊ីមែល។',
   errOrgSuspended: 'ស្ថាប័ននេះត្រូវបានផ្អាក។ សូមទាក់ទងអ្នកគ្រប់គ្រងវេទិកា។',
   today: 'ថ្ងៃនេះ',
   tomorrow: 'ថ្ងៃស្អែក',

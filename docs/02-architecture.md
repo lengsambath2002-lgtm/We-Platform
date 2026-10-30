@@ -55,7 +55,7 @@ and record references (`module`, `recordType`, `recordId`). Each module owns its
 ## 4. Sitemap (web)
 
 ```
-/sign-in · /sign-up · /forgot-password · /invite/[token]
+/sign-in · /sign-up · /forgot-password · /verify-email · /invite/[token]
 /[org]/overview                    Overview dashboard
 /[org]/my-tasks                    My Tasks
 /[org]/projects                    Project list ─ /[org]/projects/[key] (board · list · timeline later · members · settings)
@@ -146,6 +146,16 @@ are locked (`ModuleEntitlements`; switched-on data is kept), invitations and imp
 invitations count), uploads stop at the storage limit (`StorageQuota`). Owners and the billing role change the plan;
 Admins see it. Super admins edit plans and set any organisation's subscription (contracts, complimentary, longer
 trials). Organisations that existed before plans are complimentary Premium.
+
+### Email verification (built)
+
+Sign-up emails a "confirm your email" link (`EmailVerificationService`; `email_verification`, 3 days, single use,
+only the token's hash stored; "send the link again" at most 3 times in 15 minutes). Until it's opened the account can
+sign in and join organisations it's invited to, but can't create an organisation, invite people or import them
+(`EMAIL_NOT_VERIFIED`), so a mistyped or borrowed address can't send email to others. Accepting an invitation or
+resetting the password also proves the address. Accounts from before verification count as confirmed. The OIDC
+`email_verified` claim is now real. `PLATFORM_AUTH_REQUIRE_VERIFIED_EMAIL=false` lifts the limits (local
+development and the browser tests, which can't open emailed links).
 
 ### Invoices and payment (built)
 
@@ -327,7 +337,7 @@ Every org-scoped table has `org_id` NOT NULL with an index; ids are UUID; timest
 
 | Area | Endpoints |
 |---|---|
-| Auth | `POST /api/auth/sign-up`, `/sign-in`, `/refresh`, `/sign-out`, `/forgot-password`, `/reset-password`; `GET /api/me` |
+| Auth | `POST /api/auth/sign-up`, `/sign-in`, `/refresh`, `/sign-out`, `/forgot-password`, `/reset-password`, `/verify-email`; `GET /api/me`; `POST /api/me/verify-email/resend` |
 | Orgs | `GET/POST /api/orgs`, `GET/PATCH /api/orgs/{org}`, `GET /api/orgs/{org}/context` (my roles, permissions, enabled modules, nav) |
 | Members | `GET /api/orgs/{org}/members`, `POST /api/orgs/{org}/invitations`, `POST /api/invitations/{token}/accept`, `PATCH /api/orgs/{org}/members/{id}` (role, status) |
 | Teams | `GET/POST /api/orgs/{org}/teams`, `PUT /api/orgs/{org}/teams/{id}/members` |

@@ -27,6 +27,8 @@ const sessionsKey = ['me', 'sessions'] as const;
 export const accountApi = {
   changePassword: (currentPassword: string, newPassword: string) =>
     http.post<void>('/me/password', { currentPassword, newPassword }),
+  verifyEmail: (token: string) => http.post<void>('/auth/verify-email', { token }),
+  resendVerification: () => http.post<void>('/me/verify-email/resend'),
   forgotPassword: (email: string) => http.post<void>('/auth/forgot-password', { email }),
   checkResetToken: (token: string) => http.post<{ valid: boolean }>('/auth/reset-password/check', { token }),
   resetPassword: (token: string, password: string) => http.post<Session>('/auth/reset-password', { token, password }),

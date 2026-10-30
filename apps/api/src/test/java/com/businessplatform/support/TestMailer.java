@@ -22,8 +22,18 @@ public class TestMailer implements Mailer {
         sent.add(message);
     }
 
+    /** Emails to the address, leaving out "confirm your email" (every sign-up gets one; see {@link #verifications}). */
     public List<MailMessage> to(String email) {
-        return sent.stream().filter(m -> m.to().equalsIgnoreCase(email)).toList();
+        return sent.stream().filter(m -> m.to().equalsIgnoreCase(email) && !isVerification(m)).toList();
+    }
+
+    /** The "confirm your email" links sent to the address. */
+    public List<MailMessage> verifications(String email) {
+        return sent.stream().filter(m -> m.to().equalsIgnoreCase(email) && isVerification(m)).toList();
+    }
+
+    private static boolean isVerification(MailMessage m) {
+        return m.text().contains("/verify-email?token=");
     }
 
     /** Waits up to 5 s for the {@code n}-th (1-based) email to {@code email}. */

@@ -17,6 +17,7 @@ import com.businessplatform.common.security.CurrentUser;
 import com.businessplatform.identity.payload.AccountPayloads.ChangePasswordRequest;
 import com.businessplatform.identity.payload.AccountPayloads.SessionInfo;
 import com.businessplatform.identity.service.AccountService;
+import com.businessplatform.identity.service.EmailVerificationService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,11 +31,19 @@ import lombok.RequiredArgsConstructor;
 public class AccountController {
 
     private final AccountService account;
+    private final EmailVerificationService verification;
 
     /** Changes the password and signs out every other device. */
     @PostMapping("/password")
     public ResponseEntity<ApiResponse<Void>> changePassword(@Valid @RequestBody ChangePasswordRequest in) {
         account.changePassword(CurrentUser.id(), CurrentUser.sessionId(), in.currentPassword(), in.newPassword());
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
+    /** Emails the "confirm your email" link again. */
+    @PostMapping("/verify-email/resend")
+    public ResponseEntity<ApiResponse<Void>> resendVerification() {
+        verification.resend(CurrentUser.id());
         return ResponseEntity.ok(ApiResponse.ok(null));
     }
 

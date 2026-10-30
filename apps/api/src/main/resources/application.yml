@@ -30,6 +30,8 @@ platform:
     access-ttl: ${PLATFORM_ACCESS_TTL:PT15M}
     refresh-ttl: ${PLATFORM_REFRESH_TTL:P30D}
     cookie-secure: ${PLATFORM_COOKIE_SECURE:false}
+    # New accounts must open the emailed link before they create an organisation or invite people.
+    require-verified-email: ${PLATFORM_AUTH_REQUIRE_VERIFIED_EMAIL:true}
   files:
     dir: ${PLATFORM_FILES_DIR:./data/files}
   app-url: ${PLATFORM_APP_URL:http://localhost:3300}

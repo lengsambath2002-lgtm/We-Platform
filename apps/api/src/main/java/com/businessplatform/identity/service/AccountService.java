@@ -44,6 +44,7 @@ public class AccountService {
     private final PasswordEncoder encoder;
     private final AuthService auth;
     private final MailService mail;
+    private final EmailVerificationService verification;
     private final Messages messages;
     private final Clock clock;
     private final String appUrl;
@@ -52,7 +53,7 @@ public class AccountService {
     private final AttemptLimiter perIp;
 
     public AccountService(UserRepository users, UserSessionRepository sessions, PasswordResetRepository resets,
-            PasswordEncoder encoder, AuthService auth, MailService mail, Messages messages, Clock clock,
+            PasswordEncoder encoder, AuthService auth, MailService mail, EmailVerificationService verification, Messages messages, Clock clock,
             @Value("${platform.app-url}") String appUrl) {
         this.users = users;
         this.sessions = sessions;
@@ -60,6 +61,7 @@ public class AccountService {
         this.encoder = encoder;
         this.auth = auth;
         this.mail = mail;
+        this.verification = verification;
         this.messages = messages;
         this.clock = clock;
         this.appUrl = appUrl;
@@ -211,6 +213,8 @@ public class AccountService {
         u.setLockedUntil(null);
         resets.retireAll(u.getId(), now);
         sessions.revokeAll(u.getId(), now);
+        // The link reached this inbox: the address is theirs.
+        verification.markVerified(u);
         return auth.start(u, userAgent, ip);
     }
 

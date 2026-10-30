@@ -4,6 +4,9 @@ spring:
   flyway:
     clean-disabled: false
 platform:
+  auth:
+    # Most tests sign up and create an organisation at once; EmailVerificationTest turns it on.
+    require-verified-email: false
   # PlatformAdminTest signs this address up to check the first super admins come from the configuration.
   super-admins: First.Admin@Platform.test
   service:
