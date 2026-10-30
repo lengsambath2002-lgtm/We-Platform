@@ -172,6 +172,8 @@ export function hrNav(ctx: OrgContext): NavItem[] {
     { href: 'hr/attendance', label: tr('hr.navAttendance'), icon: Clock, exact: true },
     { href: 'hr/people', label: tr('hr.navPeople'), icon: Contact },
     { href: 'hr/payslips', label: tr('hr.navPayslips'), icon: Receipt },
+    { href: 'hr/reviews', label: tr('hr.navReviews'), icon: ClipboardCheck },
+    { href: 'hr/training', label: tr('hr.navTraining'), icon: GraduationCap },
     ...(can('hr.recruit') ? [{ href: 'hr/recruitment', label: tr('hr.navRecruitment'), icon: Briefcase }] : []),
     ...(can('hr.manage') ? [
       { href: 'hr/attendance/board', label: tr('hr.navTeamAttendance'), icon: UsersRound },

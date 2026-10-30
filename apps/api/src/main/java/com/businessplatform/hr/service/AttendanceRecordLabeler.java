@@ -10,6 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.businessplatform.activity.RecordLabeler;
 import com.businessplatform.hr.repository.AttendanceRecordRepository;
+import com.businessplatform.hr.repository.DevelopmentRepositories.ReviewCycleRepository;
+import com.businessplatform.hr.repository.DevelopmentRepositories.ReviewRepository;
+import com.businessplatform.hr.repository.DevelopmentRepositories.TrainingCourseRepository;
 import com.businessplatform.hr.repository.OvertimeRequestRepository;
 import com.businessplatform.hr.repository.PayrollRepositories.PayRunRepository;
 import com.businessplatform.hr.repository.RecruitmentRepositories.CandidateRepository;
@@ -32,13 +35,18 @@ public class AttendanceRecordLabeler implements RecordLabeler {
     private final PayRunRepository runs;
     private final JobOpeningRepository jobs;
     private final CandidateRepository candidates;
+    private final ReviewCycleRepository cycles;
+    private final ReviewRepository reviews;
+    private final TrainingCourseRepository courses;
     private final UserRepository users;
 
     @Override
     public boolean handles(String recordType) {
         return TimekeepingService.RECORD.equals(recordType) || OvertimeService.RECORD.equals(recordType)
                 || ScheduleService.RECORD.equals(recordType) || PayrollService.RUN.equals(recordType)
-                || RecruitmentService.JOB.equals(recordType) || RecruitmentService.CANDIDATE.equals(recordType);
+                || RecruitmentService.JOB.equals(recordType) || RecruitmentService.CANDIDATE.equals(recordType)
+                || ReviewService.CYCLE.equals(recordType) || ReviewService.REVIEW.equals(recordType)
+                || TrainingService.COURSE.equals(recordType);
     }
 
     @Override
@@ -73,6 +81,15 @@ public class AttendanceRecordLabeler implements RecordLabeler {
             }
             case RecruitmentService.CANDIDATE -> candidates.findAllById(ids).stream().filter(c -> c.getOrgId().equals(ctx.orgId()))
                     .forEach(c -> out.put(c.getId(), new Label(c.getName(), RecruitmentService.candidateLink(ctx, c.getId()))));
+            case ReviewService.CYCLE -> cycles.findAllById(ids).stream().filter(c -> c.getOrgId().equals(ctx.orgId()))
+                    .forEach(c -> out.put(c.getId(), new Label(c.getName(), base + "/reviews/cycles/" + c.getId())));
+            case ReviewService.REVIEW -> {
+                var found = reviews.findAllById(ids).stream().filter(r -> r.getOrgId().equals(ctx.orgId())).toList();
+                Map<UUID, AppUser> people = people(found.stream().map(r -> r.getEmployeeId()).toList());
+                found.forEach(r -> out.put(r.getId(), new Label(people.get(r.getEmployeeId()).getName(), base + "/reviews/" + r.getId())));
+            }
+            case TrainingService.COURSE -> courses.findAllById(ids).stream().filter(c -> c.getOrgId().equals(ctx.orgId()))
+                    .forEach(c -> out.put(c.getId(), new Label(c.getTitle(), base + "/training/" + c.getId())));
             default -> schedules.findAllById(ids).stream().filter(s -> s.getOrgId().equals(ctx.orgId()))
                     .forEach(s -> out.put(s.getId(), new Label(s.getName(), base + "/settings")));
         }

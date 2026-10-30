@@ -382,3 +382,27 @@ Onboarding starts when the candidate is hired = ការណែនាំកា�
 You are the hiring manager for {title} = អ្នកជាអ្នកគ្រប់គ្រងការជ្រើសរើសសម្រាប់ {title}
 Interview with {name} for {title} = សម្ភាសន៍ជាមួយ {name} សម្រាប់ {title}
 Interview feedback on {name} = មតិយោបល់ពីការសម្ភាសន៍ {name}
+
+# HR: performance reviews and training
+A launched cycle can't be changed = មិនអាចកែវដ្តវាយតម្លៃដែលបានចាប់ផ្ដើមហើយបានទេ
+Another review cycle has this name = មានវដ្តវាយតម្លៃផ្សេងទៀតប្រើឈ្មោះនេះរួចហើយ
+The period ends before it starts = រយៈពេលបញ្ចប់មុនពេលចាប់ផ្ដើម
+This cycle is launched already = វដ្តនេះបានចាប់ផ្ដើមរួចហើយ
+Only an open cycle can be closed = មានតែវដ្តដែលកំពុងបើកប៉ុណ្ណោះដែលអាចបិទបាន
+This review is finished = ការវាយតម្លៃនេះបានបញ្ចប់ហើយ
+Your self-assessment is sent already = ការវាយតម្លៃខ្លួនឯងរបស់អ្នកបានផ្ញើរួចហើយ
+Wait for the self-assessment first = សូមរង់ចាំការវាយតម្លៃខ្លួនឯងជាមុនសិន
+This review is shared already = ការវាយតម្លៃនេះបានចែករំលែករួចហើយ
+Give an overall rating = សូមផ្ដល់ការវាយតម្លៃរួម
+There is nothing to acknowledge yet = មិនទាន់មានអ្វីត្រូវទទួលស្គាល់នៅឡើយទេ
+This review cycle is closed = វដ្តវាយតម្លៃនេះបានបិទហើយ
+Answer each question = សូមឆ្លើយសំណួរនីមួយៗ
+Rate every question before sending = សូមវាយតម្លៃគ្រប់សំណួរ មុនពេលផ្ញើ
+Your review for {cycle}: please assess yourself = ការវាយតម្លៃរបស់អ្នកសម្រាប់ {cycle}៖ សូមវាយតម្លៃខ្លួនឯង
+A review is ready for you: {cycle} = មានការវាយតម្លៃរង់ចាំអ្នក៖ {cycle}
+Your review for {cycle} is ready to read = ការវាយតម្លៃរបស់អ្នកសម្រាប់ {cycle} រួចរាល់សម្រាប់អាន
+The course ends before it starts = វគ្គបញ្ចប់មុនពេលចាប់ផ្ដើម
+This course isn't open for sign-up = វគ្គនេះមិនបើកឱ្យចុះឈ្មោះទេ
+Already on this course = មានក្នុងវគ្គនេះរួចហើយ
+This course is full = វគ្គនេះពេញហើយ
+You are enrolled in {title} = អ្នកបានចុះឈ្មោះក្នុង {title}
