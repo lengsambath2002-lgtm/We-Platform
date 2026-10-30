@@ -78,6 +78,7 @@ public class OrgService {
         o.setSlug(in.slug());
         o.setName(in.name().strip());
         o.setCreatedBy(me);
+        o.setPrimaryOwnerId(me);
         orgs.save(o);
         memberships.save(membership(o.getId(), me, OrgRole.OWNER));
         modules.set(o.getId(), Module.PROJECTS, true, me);
@@ -105,6 +106,10 @@ public class OrgService {
                         on.contains(m.getKey())))
                 .toList();
         List<String> permissions = new java.util.ArrayList<>(Permissions.of(ctx, on));
+        // Deleting the organisation and handing over primary ownership: the primary owner only.
+        if (orgs.findById(ctx.orgId()).map(o -> ctx.userId().equals(o.getPrimaryOwnerId())).orElse(false)) {
+            permissions.addAll(List.of("org.delete", "org.transfer"));
+        }
         permissionSources.forEach(s -> s.permissions(ctx, on).stream().filter(p -> !permissions.contains(p)).forEach(permissions::add));
         return new OrgContextResponse(new OrgSummary(ctx.orgId(), ctx.slug(), ctx.orgName(), ctx.role()),
                 permissions, states);
@@ -128,6 +133,9 @@ public class OrgService {
             throw new BusinessException(ErrorCode.INVALID_STATE,
                     "You are the only owner. Make another member an owner first, or delete the organisation", List.of());
         }
+        if (isPrimary(ctx.orgId(), ctx.userId())) {
+            throw new BusinessException(ErrorCode.INVALID_STATE, "Hand primary ownership to someone else first", List.of());
+        }
         audit(ctx, "member", ctx.userId(), "org.member.left", Map.of());
         memberships.deleteById(ctx.membershipId());
     }
@@ -140,10 +148,10 @@ public class OrgService {
     @Transactional
     public void delete(String slug, DeleteOrgRequest in) {
         OrgContext ctx = access.require(slug);
-        if (ctx.role() != OrgRole.OWNER) {
+        Organisation o = orgs.findById(ctx.orgId()).orElseThrow();
+        if (!ctx.userId().equals(o.getPrimaryOwnerId())) {
             throw BusinessException.forbidden();
         }
-        Organisation o = orgs.findById(ctx.orgId()).orElseThrow();
         if (!o.getName().strip().equals(in.name().strip())) {
             throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "name", "Type the organisation's name exactly");
         }
@@ -177,9 +185,11 @@ public class OrgService {
                 .collect(Collectors.toMap(AppUser::getId, Function.identity()));
         Map<UUID, String> unitNames = structure.primaryUnitNames(ctx.orgId());
         Map<UUID, List<String>> roleNames = ctx.isAdmin() ? customRoles.roleNames(ctx.orgId()) : Map.of();
+        UUID primary = orgs.findById(ctx.orgId()).map(Organisation::getPrimaryOwnerId).orElse(null);
         return ms.stream()
                 .filter(m -> ctx.isAdmin() || Membership.ACTIVE.equals(m.getStatus()))
-                .map(m -> toMember(m, people.get(m.getUserId()), unitNames.get(m.getId()), roleNames.getOrDefault(m.getId(), List.of())))
+                .map(m -> toMember(m, people.get(m.getUserId()), unitNames.get(m.getId()), roleNames.getOrDefault(m.getId(), List.of()),
+                        m.getUserId().equals(primary)))
                 .toList();
     }
 
@@ -191,6 +201,10 @@ public class OrgService {
         boolean touchesOwner = m.getRole() == OrgRole.OWNER || in.role() == OrgRole.OWNER;
         if (touchesOwner && ctx.role() != OrgRole.OWNER) {
             throw BusinessException.forbidden();
+        }
+        boolean demoted = (in.role() != null && in.role() != OrgRole.OWNER) || Membership.SUSPENDED.equals(in.status());
+        if (demoted && isPrimary(ctx.orgId(), m.getUserId())) {
+            throw BusinessException.field(ErrorCode.INVALID_STATE, "role", "The primary owner stays an owner: hand primary ownership over first");
         }
         boolean losesOwner = m.getRole() == OrgRole.OWNER
                 && ((in.role() != null && in.role() != OrgRole.OWNER) || Membership.SUSPENDED.equals(in.status()));
@@ -216,7 +230,7 @@ public class OrgService {
         }
         audit(ctx, "member", m.getUserId(), "org.member.updated", changed);
         return toMember(m, who, structure.primaryUnitNames(ctx.orgId()).get(m.getId()),
-                customRoles.roleNames(ctx.orgId()).getOrDefault(m.getId(), List.of()));
+                customRoles.roleNames(ctx.orgId()).getOrDefault(m.getId(), List.of()), isPrimary(ctx.orgId(), m.getUserId()));
     }
 
     /**
@@ -234,6 +248,31 @@ public class OrgService {
             AppUser who = users.findById(userId).orElseThrow();
             audit(ctx, "member", userId, "org.member.updated", Map.of("name", who.getName(), "status", Membership.SUSPENDED));
         }
+    }
+
+    /** The primary owner hands the role to another active member, who becomes an Owner if they weren't. */
+    @Transactional
+    public MemberResponse transferOwnership(String slug, TransferRequest in) {
+        OrgContext ctx = access.require(slug);
+        Organisation o = orgs.findById(ctx.orgId()).orElseThrow();
+        if (!ctx.userId().equals(o.getPrimaryOwnerId())) {
+            throw BusinessException.forbidden();
+        }
+        Membership m = memberships.findById(in.membershipId()).filter(x -> x.getOrgId().equals(ctx.orgId()))
+                .filter(x -> Membership.ACTIVE.equals(x.getStatus()) && x.getRole() != OrgRole.GUEST)
+                .orElseThrow(() -> BusinessException.field(ErrorCode.VALIDATION_FAILED, "membershipId", "Choose an active member"));
+        if (m.getUserId().equals(ctx.userId())) {
+            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "membershipId", "Choose someone else");
+        }
+        m.setRole(OrgRole.OWNER);
+        o.setPrimaryOwnerId(m.getUserId());
+        AppUser who = users.findById(m.getUserId()).orElseThrow();
+        audit(ctx, "member", m.getUserId(), "org.ownership.transferred", Map.of("name", who.getName()));
+        return toMember(m, who, structure.primaryUnitNames(ctx.orgId()).get(m.getId()), List.of(), true);
+    }
+
+    private boolean isPrimary(UUID orgId, UUID userId) {
+        return orgs.findById(orgId).map(o -> userId.equals(o.getPrimaryOwnerId())).orElse(false);
     }
 
     // ── Invitations ──────────────────────────────────────────────────────────────────
@@ -420,8 +459,8 @@ public class OrgService {
         return env.getProperty("platform.app-url", "http://localhost:3300") + "/invite/" + token;
     }
 
-    private static MemberResponse toMember(Membership m, AppUser u, String unit, List<String> roles) {
+    private static MemberResponse toMember(Membership m, AppUser u, String unit, List<String> roles, boolean primary) {
         return new MemberResponse(m.getId(), u.getId(), u.getName(), u.getEmail(), u.getAvatarUrl(), m.getRole(),
-                m.getStatus(), m.getTitle(), unit, roles, m.getCreatedAt());
+                m.getStatus(), m.getTitle(), unit, roles, primary, m.getCreatedAt());
     }
 }

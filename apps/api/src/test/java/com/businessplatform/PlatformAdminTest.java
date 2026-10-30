@@ -73,6 +73,14 @@ class PlatformAdminTest extends IntegrationTest {
 
         // Being a super admin is not membership: the organisation itself stays closed to them.
         assertThat(code(call(root, HttpMethod.GET, "/api/orgs/" + slug + "/projects", null))).isEqualTo("NOT_FOUND");
+
+        // Looking at a customer's organisation or account is itself logged.
+        ok(call(root, HttpMethod.GET, "/api/platform/orgs/" + orgId(owner, slug), null));
+        ok(call(root, HttpMethod.GET, "/api/platform/users/" + owner.id(), null));
+        assertThat(ok(call(root, HttpMethod.GET, "/api/platform/audit?target=" + orgId(owner, slug), null)).path("data").path("items")
+                .findValuesAsText("action")).contains("org.viewed");
+        assertThat(ok(call(root, HttpMethod.GET, "/api/platform/audit?target=" + owner.id(), null)).path("data").path("items")
+                .findValuesAsText("action")).contains("user.viewed");
     }
 
     @Test

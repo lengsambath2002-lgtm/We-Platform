@@ -33,6 +33,10 @@ public class Organisation {
     @Column(name = "created_by", nullable = false)
     private UUID createdBy;
 
+    /** The one Owner who may delete the organisation or hand this role over. */
+    @Column(name = "primary_owner_id")
+    private UUID primaryOwnerId;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

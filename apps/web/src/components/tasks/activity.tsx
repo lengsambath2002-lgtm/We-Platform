@@ -77,6 +77,7 @@ export function describe(a: ActivityItem, moduleName: (key: string) => string = 
     case 'org.member.joined': return tr('collab.actMemberJoined', { role: role(d.role) });
     case 'org.invitation.resent': return tr('collab.actInvitationResent', { email: s(d.email) });
     case 'org.member.left': return tr('collab.actMemberLeft');
+    case 'org.ownership.transferred': return tr('collab.actOwnershipTransferred', { name: s(d.name) });
     case 'retail.shop.linked': return tr('retail.actLinked', { name: s(d.name) });
     case 'retail.shop.unlinked': return d.reason === 'moved' ? tr('retail.actMoved', { name: s(d.name) }) : tr('retail.actUnlinked', { name: s(d.name) });
     case 'org.deleted': return tr('collab.actOrgDeleted', { name: s(d.name) });

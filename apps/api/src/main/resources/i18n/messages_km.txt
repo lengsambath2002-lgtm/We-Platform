@@ -501,3 +501,7 @@ Finish the checklist first = សូមបញ្ចប់បញ្ជីត្រ
 Someone else in HR handles your own departure = អ្នកផ្សេងក្នុង HR ដោះស្រាយការចាកចេញរបស់អ្នក
 A departure is already under way for this person = ការចាកចេញកំពុងដំណើរការរួចហើយសម្រាប់បុគ្គលនេះ
 This departure is closed = ការចាកចេញនេះត្រូវបានបិទ
+Hand primary ownership to someone else first = សូមប្រគល់ភាពជាម្ចាស់ចម្បងទៅអ្នកផ្សេងជាមុនសិន
+The primary owner stays an owner: hand primary ownership over first = ម្ចាស់ចម្បងនៅតែជាម្ចាស់៖ សូមប្រគល់ភាពជាម្ចាស់ចម្បងជាមុនសិន
+Choose an active member = សូមជ្រើសសមាជិកសកម្ម
+Choose someone else = សូមជ្រើសអ្នកផ្សេង

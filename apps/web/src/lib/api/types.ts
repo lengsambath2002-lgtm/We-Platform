@@ -57,6 +57,8 @@ export interface Member {
   unit: string | null;
   /** Custom roles held (listed for Owners and Admins only). */
   customRoles: string[];
+  /** The one owner who may delete the organisation or hand this role over. */
+  primaryOwner: boolean;
   joinedAt: string;
 }
 

@@ -142,6 +142,8 @@ export const en = {
   act_user_password_reset_sent: 'sent {target} a password reset',
   act_user_super_admin_granted: 'made {target} a super admin',
   act_user_super_admin_revoked: 'removed super admin from {target}',
+  act_org_viewed: 'viewed {target}',
+  act_user_viewed: 'viewed the account of {target}',
 };
 
 export const km: Record<keyof typeof en, string> = {
@@ -287,4 +289,6 @@ export const km: Record<keyof typeof en, string> = {
   act_user_password_reset_sent: 'បានផ្ញើការកំណត់ពាក្យសម្ងាត់ឡើងវិញទៅ {target}',
   act_user_super_admin_granted: 'បានធ្វើឱ្យ {target} ជាអ្នកគ្រប់គ្រងកំពូល',
   act_user_super_admin_revoked: 'បានដកសិទ្ធិអ្នកគ្រប់គ្រងកំពូលពី {target}',
+  act_org_viewed: 'បានមើល {target}',
+  act_user_viewed: 'បានមើលគណនីរបស់ {target}',
 };

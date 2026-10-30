@@ -42,11 +42,16 @@ public final class OrgPayloads {
      * {@code customRoles}: the custom roles they hold (shown to Owners and Admins only).
      */
     public record MemberResponse(UUID membershipId, UUID userId, String name, String email, String avatarUrl,
-            OrgRole role, String status, String title, String unit, List<String> customRoles, Instant joinedAt) {
+            OrgRole role, String status, String title, String unit, List<String> customRoles, boolean primaryOwner,
+            Instant joinedAt) {
     }
 
     public record UpdateMemberRequest(OrgRole role, @Pattern(regexp = "ACTIVE|SUSPENDED") String status,
             @Size(max = 80) String title) {
+    }
+
+    /** Hands primary ownership to another active member (they become an Owner too). */
+    public record TransferRequest(@NotNull UUID membershipId) {
     }
 
     public record InviteRequest(@NotBlank @Email @Size(max = 254) String email, @NotNull OrgRole role) {
