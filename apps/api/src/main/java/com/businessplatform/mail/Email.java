@@ -37,7 +37,7 @@ public final class Email {
     }
 
     public Email heading(String s) {
-        html.add("<tr><td style=\"padding:0 0 12px;font:700 21px/1.35 Arial,'Noto Sans Khmer',sans-serif;color:" + INK + "\">"
+        html.add("<tr><td style=\"padding:0 0 12px;font:700 21px/1.35 'Kantumruy Pro',Arial,'Noto Sans Khmer',sans-serif;color:" + INK + "\">"
                 + esc(s) + "</td></tr>");
         text.add(s);
         text.add("");
@@ -48,7 +48,7 @@ public final class Email {
         if (s == null || s.isBlank()) {
             return this;
         }
-        html.add("<tr><td style=\"padding:0 0 12px;font:15px/1.6 Arial,'Noto Sans Khmer',sans-serif;color:" + INK + "\">"
+        html.add("<tr><td style=\"padding:0 0 12px;font:15px/1.6 'Kantumruy Pro',Arial,'Noto Sans Khmer',sans-serif;color:" + INK + "\">"
                 + esc(s) + "</td></tr>");
         text.add(s);
         return this;
@@ -69,7 +69,7 @@ public final class Email {
             return this;
         }
         html.add("<tr><td style=\"padding:8px 0 20px\"><table role=\"presentation\"><tr><td style=\"border-radius:999px;background:"
-                + INK + "\"><a href=\"" + esc(url) + "\" style=\"display:inline-block;padding:12px 26px;font:600 15px Arial,"
+                + INK + "\"><a href=\"" + esc(url) + "\" style=\"display:inline-block;padding:12px 26px;font:600 15px 'Kantumruy Pro',Arial,"
                 + "'Noto Sans Khmer',sans-serif;color:#ffffff;text-decoration:none;border-radius:999px\">" + esc(label)
                 + "</a></td></tr></table></td></tr>");
         text.add("");
@@ -82,7 +82,7 @@ public final class Email {
         if (s == null || s.isBlank()) {
             return this;
         }
-        html.add("<tr><td style=\"padding:0 0 8px;font:12.5px/1.5 Arial,'Noto Sans Khmer',sans-serif;color:" + MUTED + "\">"
+        html.add("<tr><td style=\"padding:0 0 8px;font:12.5px/1.5 'Kantumruy Pro',Arial,'Noto Sans Khmer',sans-serif;color:" + MUTED + "\">"
                 + esc(s) + "</td></tr>");
         text.add(s);
         return this;

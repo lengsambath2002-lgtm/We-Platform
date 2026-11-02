@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 
 import { VerifyEmailNotice } from '@/components/account/verify-email-notice';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -20,7 +20,12 @@ export function AppShell({ ctx, children }: { ctx: OrgContext; children: ReactNo
         <Sidebar ctx={ctx} collapsed={collapsed} setCollapsed={setCollapsed} />
         <div className="flex min-w-0 flex-1 flex-col">
           <Header ctx={ctx} />
-          <main id="main" className="mx-auto w-full max-w-[1440px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:pb-10 print:max-w-none print:p-0"><VerifyEmailNotice /><BillingBanner />{children}</main>
+          <main id="main" className="mx-auto w-full max-w-[1440px] flex-1 px-4 pb-24 pt-6 sm:px-6 lg:pb-10 print:max-w-none print:p-0">
+            {/* Keys: the banners appear and disappear above the page, which must keep its state. */}
+            <VerifyEmailNotice key="verify-email" />
+            <BillingBanner key="billing" />
+            <Fragment key="page">{children}</Fragment>
+          </main>
         </div>
       </div>
       <BottomNav ctx={ctx} />
