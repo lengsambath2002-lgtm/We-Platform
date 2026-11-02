@@ -3,12 +3,19 @@ package com.businessplatform.org.controller;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import com.businessplatform.common.api.ApiResponse;
+import com.businessplatform.common.security.CurrentUser;
 import com.businessplatform.module.service.ModuleService;
 import com.businessplatform.org.payload.OrgPayloads.*;
+import com.businessplatform.org.service.AccountDeletionService;
+import com.businessplatform.org.service.OrgContext;
+import com.businessplatform.org.service.OrgExportService;
 import com.businessplatform.org.service.OrgService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,6 +30,8 @@ public class OrgController {
 
     private final OrgService orgs;
     private final ModuleService modules;
+    private final OrgExportService export;
+    private final AccountDeletionService deletion;
 
     @GetMapping("/api/orgs")
     public ResponseEntity<ApiResponse<List<OrgSummary>>> mine() {
@@ -46,6 +55,30 @@ public class OrgController {
     }
 
     /** Owners only; body {@code {"name": "<the organisation's name>"}} confirms. */
+    /** Owners: every row and file of the organisation as a ZIP of CSV files (see {@link OrgExportService}). */
+    @GetMapping("/api/orgs/{org}/export")
+    public ResponseEntity<StreamingResponseBody> export(@PathVariable String org) {
+        OrgContext ctx = export.start(org);
+        String name = ctx.slug() + "-export-" + java.time.LocalDate.now() + ".zip";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .body(out -> export.write(ctx, out));
+    }
+
+    /** Organisations to hand over before the account can be deleted. */
+    @GetMapping("/api/me/delete/blockers")
+    public ResponseEntity<ApiResponse<List<String>>> deletionBlockers() {
+        return ResponseEntity.ok(ApiResponse.ok(deletion.blockers(CurrentUser.id())));
+    }
+
+    /** Deletes the signed-in account (password, and a code with two-step sign-in on). */
+    @PostMapping("/api/me/delete")
+    public ResponseEntity<ApiResponse<Void>> deleteAccount(@Valid @RequestBody DeleteAccountRequest in) {
+        deletion.delete(CurrentUser.id(), in.password(), in.code());
+        return ResponseEntity.ok(ApiResponse.ok(null));
+    }
+
     @DeleteMapping("/api/orgs/{org}")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable String org, @Valid @RequestBody DeleteOrgRequest in) {
         orgs.delete(org, in);

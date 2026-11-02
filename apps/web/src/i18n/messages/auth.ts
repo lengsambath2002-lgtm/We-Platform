@@ -65,6 +65,7 @@ export const en = {
   twoStepUseRecovery: 'Use a recovery code instead',
   twoStepUseApp: 'Use the authenticator app instead',
   twoStepExpired: 'That took too long. Sign in again.',
+  accountDeleted: 'Your account was deleted. Thank you for using Business Platform.',
 };
 
 export const km: Record<keyof typeof en, string> = {
@@ -128,4 +129,5 @@ export const km: Record<keyof typeof en, string> = {
   twoStepUseRecovery: 'ប្រើលេខកូដសង្គ្រោះជំនួសវិញ',
   twoStepUseApp: 'ប្រើកម្មវិធីផ្ទៀងផ្ទាត់ជំនួសវិញ',
   twoStepExpired: 'ចំណាយពេលយូរពេក។ សូមចូលម្ដងទៀត។',
+  accountDeleted: 'គណនីរបស់អ្នកត្រូវបានលុប។ សូមអរគុណដែលបានប្រើ Business Platform។',
 };

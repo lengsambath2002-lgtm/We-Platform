@@ -137,6 +137,21 @@ public class TwoStepService {
         notify(u, false, false);
     }
 
+    /** VALIDATION_FAILED unless {@code code} (or a recovery code) is right; nothing to check while it is off. */
+    @Transactional
+    public void requireCode(UUID userId, String code) {
+        AppUser u = user(userId);
+        if (u.isTwoStepOn() && !accepts(u, code)) {
+            throw BusinessException.field(ErrorCode.VALIDATION_FAILED, "code", "That code isn't right");
+        }
+    }
+
+    /** Erases it without an email (the account is being deleted). */
+    @Transactional
+    public void forget(UUID userId) {
+        turnOff(user(userId));
+    }
+
     /** A super admin turns it off for someone who lost their phone and their recovery codes. */
     @Transactional
     public boolean reset(UUID userId) {

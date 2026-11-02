@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useT } from '@/i18n/provider';
-import { accountApi, useLeaveOrDeleteOrg } from '@/lib/api/account';
+import { accountApi, downloadOrgExport, useLeaveOrDeleteOrg } from '@/lib/api/account';
 import { errorMessage } from '@/lib/api/client';
 import { keys, useMembers } from '@/lib/api/queries';
 import { useOrg } from '@/lib/org-context';
@@ -81,6 +81,7 @@ export default function OrgSettings() {
   const [leaving, setLeaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const isOwner = org.role === 'OWNER';
+  const [exporting, setExporting] = useState(false);
   // To tell the last owner up front that they can't leave (the API refuses it anyway).
   const members = useMembers(slug);
   const [host, setHost] = useState('');
@@ -130,6 +131,19 @@ export default function OrgSettings() {
           </div>
           <Button variant="outline" disabled={lastOwner || primary} onClick={() => setLeaving(true)}>{t('settings.leave')}</Button>
         </section>
+
+        {isOwner && (
+          <section className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-card p-4 sm:p-6" aria-labelledby="export-title">
+            <div className="min-w-0 flex-1">
+              <h2 id="export-title" className="text-base font-semibold">{t('settings.exportTitle')}</h2>
+              <p className="text-sm text-muted-foreground">{t('settings.exportBody')}</p>
+            </div>
+            <Button variant="outline" disabled={exporting} onClick={async () => {
+              setExporting(true);
+              try { await downloadOrgExport(org.slug); } catch (e) { toast.error(e instanceof Error && e.message === '429' ? t('settings.exportLimit') : t('common.errGeneric')); } finally { setExporting(false); }
+            }}>{t(exporting ? 'settings.exporting' : 'settings.exportButton')}</Button>
+          </section>
+        )}
 
         {primary && (
           <section className="space-y-3 rounded-lg border bg-card p-4 sm:p-6" aria-labelledby="transfer-title">

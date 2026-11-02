@@ -72,6 +72,10 @@ public class AppUser {
     @Column(name = "email_verified_at")
     private Instant emailVerifiedAt;
 
+    /** The person deleted their account: email and sign-in erased (see {@code AccountDeletionService}). */
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     @Column(name = "disabled_at")
     private Instant disabledAt;
 
