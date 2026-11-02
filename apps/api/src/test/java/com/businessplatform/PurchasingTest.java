@@ -128,4 +128,17 @@ class PurchasingTest extends IntegrationTest {
         assertThat(ok(call(s.owner(), HttpMethod.GET, s.retail() + "/purchasing", null)).path("data").path("owed").decimalValue())
                 .isEqualByComparingTo("0.00");
     }
+
+    @Test
+    void general_business_alone_can_buy_and_nothing_without_it_or_retail() throws Exception {
+        User owner = signUp("Biz Buyer");
+        String org = newOrg(owner);
+        String base = "/api/orgs/" + org + "/retail";
+        assertThat(code(call(owner, HttpMethod.GET, base + "/suppliers", null))).isEqualTo("MODULE_DISABLED");
+        ok(call(owner, HttpMethod.PUT, "/api/orgs/" + org + "/modules/business", Map.of("enabled", true)));
+        String sup = ok(call(owner, HttpMethod.POST, base + "/suppliers", Map.of("name", "Phnom Penh Office Supply", "paymentTermsDays", 30)))
+                .path("data").path("id").asText();
+        assertThat(sup).isNotBlank();
+        assertThat(ok(call(owner, HttpMethod.GET, base + "/suppliers", null)).path("data").toString()).contains("Phnom Penh Office Supply");
+    }
 }

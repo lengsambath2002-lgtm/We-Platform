@@ -16,7 +16,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "biz_customer")
+@Table(name = "customer")
 public class Customer {
 
     public static final String COMPANY = "COMPANY";

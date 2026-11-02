@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -77,9 +78,13 @@ public class PurchasingService {
 
     // ── Access ───────────────────────────────────────────────────────────────────────
 
+    /** Purchasing belongs to General Business; organisations on Retail &amp; Commerce (VirtualBiz) use it too. */
     OrgContext view(String slug) {
         OrgContext ctx = access.require(slug);
-        modules.require(ctx.orgId(), Module.RETAIL);
+        Set<String> on = modules.enabled(ctx.orgId());
+        if (!on.contains(Module.BUSINESS) && !on.contains(Module.RETAIL)) {
+            throw new BusinessException(ErrorCode.MODULE_DISABLED);
+        }
         if (ctx.isGuest()) {
             throw BusinessException.forbidden();
         }
@@ -88,10 +93,15 @@ public class PurchasingService {
 
     OrgContext manage(String slug) {
         OrgContext ctx = view(slug);
-        if (!ctx.can(RoleCatalogue.RETAIL)) {
+        if (!canBuy(ctx)) {
             throw BusinessException.forbidden();
         }
         return ctx;
+    }
+
+    /** Who orders, receives and pays: General Business or Retail &amp; Commerce managers. */
+    static boolean canBuy(OrgContext ctx) {
+        return ctx.can(RoleCatalogue.BUSINESS) || ctx.can(RoleCatalogue.RETAIL);
     }
 
     private LocalDate today() {
@@ -469,7 +479,7 @@ public class PurchasingService {
         List<SupplierPayment> ps = payments.findByPoIdOrderByPaidOnDescCreatedAtDesc(o.getId());
         Map<UUID, PersonRef> people = people(Stream.concat(Stream.of(o.getCreatedBy()),
                 Stream.concat(rs.stream().map(PoReceipt::getReceivedBy), ps.stream().map(SupplierPayment::getRecordedBy))).toList());
-        boolean admin = ctx.can(RoleCatalogue.RETAIL);
+        boolean admin = canBuy(ctx);
         boolean waiting = PurchaseOrder.ORDERED.equals(o.getStatus()) || PurchaseOrder.PARTIAL.equals(o.getStatus());
         return new OrderView(summaries(ctx, List.of(o)).get(0), o.getShopBusinessId(), o.getNotes(),
                 ls.stream().map(l -> new LineView(l.getId(), l.getDescription(), l.getSku(), l.getQuantity(), l.getUnitCost(), l.getReceived(),

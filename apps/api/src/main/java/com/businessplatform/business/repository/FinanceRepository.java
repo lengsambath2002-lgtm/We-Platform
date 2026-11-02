@@ -54,7 +54,7 @@ public class FinanceRepository {
 
     public List<NamedTotal> salesByCustomer(UUID orgId, LocalDate from, LocalDate to) {
         return jdbc.query("SELECT c.id, c.name, SUM(i.total) AS total, SUM(i.paid) AS paid, COUNT(*) AS n FROM biz_invoice i"
-                + " JOIN biz_customer c ON c.id = i.customer_id WHERE i.org_id = :org AND i.status IN ('ISSUED', 'PARTIALLY_PAID', 'PAID')"
+                + " JOIN customer c ON c.id = i.customer_id WHERE i.org_id = :org AND i.status IN ('ISSUED', 'PARTIALLY_PAID', 'PAID')"
                 + " AND i.issue_date BETWEEN :from AND :to GROUP BY c.id, c.name ORDER BY total DESC, c.name", range(orgId, from, to),
                 (rs, n) -> new NamedTotal(rs.getObject("id", UUID.class), rs.getString("name"), null, rs.getBigDecimal("total"),
                         rs.getBigDecimal("paid"), rs.getLong("n")));
@@ -70,7 +70,7 @@ public class FinanceRepository {
 
     public List<Open> openInvoices(UUID orgId, LocalDate asOf) {
         return jdbc.query("SELECT c.id, c.name, i.total - i.paid AS balance, (:asOf - i.due_date) AS late FROM biz_invoice i"
-                + " JOIN biz_customer c ON c.id = i.customer_id WHERE i.org_id = :org AND i.status IN ('ISSUED', 'PARTIALLY_PAID')"
+                + " JOIN customer c ON c.id = i.customer_id WHERE i.org_id = :org AND i.status IN ('ISSUED', 'PARTIALLY_PAID')"
                 + " AND i.total > i.paid", new MapSqlParameterSource("org", orgId).addValue("asOf", Date.valueOf(asOf)),
                 (rs, n) -> new Open(rs.getObject("id", UUID.class), rs.getString("name"), rs.getBigDecimal("balance"), rs.getLong("late")));
     }

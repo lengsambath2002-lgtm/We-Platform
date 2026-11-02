@@ -69,7 +69,7 @@ public class OrgService {
     /** Addresses the web app uses for its own pages (/{slug} would shadow them). */
     private static final Set<String> RESERVED_SLUGS = Set.of("account", "onboarding", "invite", "sign-in", "sign-up",
             "api", "admin", "settings", "help", "login", "logout", "static", "_next", "oauth", "terms", "privacy", "legal",
-            "verify-email");
+            "verify-email", "pricing", "features", "modules", "faq", "about", "contact", "blog", "docs", "security");
 
     @Transactional
     public OrgSummary create(CreateOrgRequest in) {

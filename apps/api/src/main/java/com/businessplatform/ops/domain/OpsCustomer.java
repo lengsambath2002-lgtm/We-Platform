@@ -11,12 +11,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Someone the organisation does service work for (a company or a household). */
+/** Someone the organisation does service work for: the same customer record General Business sells to (the shared `customer` table; Service leaves the kind at its default and doesn't map the tax number). */
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "svc_customer")
+@Table(name = "customer")
 public class OpsCustomer {
 
     @Id
