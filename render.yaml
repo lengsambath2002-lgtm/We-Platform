@@ -1,0 +1,76 @@
+# Business Platform API + PostgreSQL on Render (docs/ops/deploy.md). Render → New → Blueprint → this repository.
+# The web app runs on Vercel and sends /api/* here (its API_URL).
+services:
+  - type: web
+    name: business-platform-api
+    runtime: docker
+    plan: free
+    region: singapore
+    rootDir: apps/api
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: PLATFORM_ENV
+        value: production
+      # A small instance (512 MB): keep the heap inside it.
+      - key: JAVA_TOOL_OPTIONS
+        value: "-XX:MaxRAMPercentage=70 -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError"
+      - key: DB_HOST
+        fromDatabase:
+          name: business-platform-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: business-platform-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: business-platform-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: business-platform-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: business-platform-db
+          property: password
+      # 256 random bits Render generates once. It also encrypts two-step sign-in keys: never change it lightly.
+      - key: PLATFORM_JWT_SECRET
+        generateValue: true
+      - key: PLATFORM_COOKIE_SECURE
+        value: "true"
+      - key: PLATFORM_FIREBASE_PROJECT_ID
+        value: virtaulbiz
+      # Asked for when the Blueprint is created (sync: false):
+      # the Vercel address of the web app (https://…, links in emails point there).
+      - key: PLATFORM_APP_URL
+        sync: false
+      # Emails that become super admins.
+      - key: PLATFORM_SUPER_ADMINS
+        sync: false
+      # Gmail: smtp.gmail.com, 587, the address, its app password, "Business Platform <address>".
+      - key: PLATFORM_MAIL_HOST
+        sync: false
+      - key: PLATFORM_MAIL_PORT
+        sync: false
+      - key: PLATFORM_MAIL_USERNAME
+        sync: false
+      - key: PLATFORM_MAIL_PASSWORD
+        sync: false
+      - key: PLATFORM_MAIL_FROM
+        sync: false
+      # Empty sends to everyone; an address limits real email to it while testing.
+      - key: PLATFORM_MAIL_ONLY_TO
+        sync: false
+
+databases:
+  - name: business-platform-db
+    plan: free
+    region: singapore
+    databaseName: business_platform
+    user: bizplat
+    postgresMajorVersion: "16"
+    # Only the API (inside Render) connects.
+    ipAllowList: []
