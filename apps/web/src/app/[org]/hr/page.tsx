@@ -5,6 +5,7 @@ import { CalendarCheck2, CalendarPlus, Palmtree } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 
+import { HrHomeTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { PersonAvatar } from '@/components/common/person';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
@@ -58,6 +59,7 @@ export default function HrHome() {
 
   return (
     <>
+      <HrHomeTabs />
       <PageHeader title={t('hr.homeTitle')} subtitle={t('hr.homeSubtitle')}
         actions={<Button size="sm" onClick={() => setAsking(true)}><CalendarPlus className="size-4" />{t('hr.requestLeave')}</Button>} />
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">

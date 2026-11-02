@@ -4,8 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { ErrorState } from '@/components/common/states';
+import { Landing } from '@/components/landing/landing';
 import { useOrgs } from '@/lib/api/queries';
-import { RequireUser } from '@/lib/require-user';
+import { useSession } from '@/lib/auth/session';
+import { useHydrated } from '@/lib/require-user';
 
 function Home() {
   const router = useRouter();
@@ -23,6 +25,10 @@ function Home() {
   return null;
 }
 
+/** Signed in: on to the last organisation (or onboarding). Everyone else: the landing page. */
 export default function Page() {
-  return <RequireUser><Home /></RequireUser>;
+  const { user, ready } = useSession();
+  const hydrated = useHydrated();
+  if (!ready) return hydrated ? <div className="min-h-dvh bg-background" /> : null;
+  return user ? <Home /> : <Landing />;
 }

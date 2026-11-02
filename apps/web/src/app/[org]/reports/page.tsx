@@ -4,6 +4,7 @@ import { FolderKanban } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useMemo } from 'react';
 
+import { ReportsTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, PermissionDenied } from '@/components/common/states';
 import { ApprovalsReport } from '@/components/reports/approvals';
@@ -35,6 +36,7 @@ function Reports() {
   }
   return (
     <>
+      <ReportsTabs />
       <PageHeader title={t('reports.title')} subtitle={t('reports.subtitle')} />
       <ReportFilters value={value} onChange={set} projects={projectsOn ? (projects.data ?? []) : undefined} />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">

@@ -1,5 +1,6 @@
 /** General Business: customers, products, quotes, invoices, payments, expenses and settings. */
 export const en = {
+  serviceRecords: 'Service records',
   // navigation
   navLabel: 'Business pages',
   navOverview: 'Overview',
@@ -456,6 +457,7 @@ export const en = {
 };
 
 export const km: Record<keyof typeof en, string> = {
+  serviceRecords: 'កំណត់ត្រាសេវាកម្ម',
   navLabel: 'ទំព័រអាជីវកម្ម',
   navOverview: 'ទិដ្ឋភាពទូទៅ',
   navCustomers: 'អតិថិជន',

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 import { toast } from 'sonner';
 
+import { AttendanceTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
 import { OvertimeDialog, OvertimeList, TimesheetTable, TimesheetTotals, TodayCard, orgToday } from '@/components/hr/attendance-ui';
@@ -30,6 +31,7 @@ function MyAttendance() {
 
   return (
     <>
+      <AttendanceTabs />
       <PageHeader title={t('hr.attTitle')} subtitle={t('hr.attSubtitle')}
         actions={<Button size="sm" variant="outline" onClick={() => setAsking(true)}><Timer className="size-4" />{t('hr.requestOvertime')}</Button>} />
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">

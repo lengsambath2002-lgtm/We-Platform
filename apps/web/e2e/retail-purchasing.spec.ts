@@ -25,11 +25,11 @@ test('an owner adds a supplier, orders, records a delivery and a payment', async
   await page.waitForURL(/\/overview$/);
 
   // A supplier.
-  await page.goto(`/${slug}/retail/suppliers`);
+  await page.goto(`/${slug}/business/suppliers`);
   await page.getByRole('button', { name: 'New supplier' }).click();
   await page.getByRole('dialog').getByLabel('Name').fill('Phnom Penh Wholesale');
   await page.getByRole('dialog').getByRole('button', { name: 'Save' }).click();
-  await page.waitForURL(/\/retail\/suppliers\/[0-9a-f-]+$/);
+  await page.waitForURL(/\/business\/suppliers\/[0-9a-f-]+$/);
 
   // An order from them: 10 × 3.50.
   await page.getByRole('button', { name: 'New purchase order' }).click();
@@ -39,7 +39,7 @@ test('an owner adds a supplier, orders, records a delivery and a payment', async
   await dlg.getByLabel('Unit cost (USD)').fill('3.50');
   await expect(dlg.getByText('$35.00')).toBeVisible();
   await dlg.getByRole('button', { name: 'Save' }).click();
-  await page.waitForURL(/\/retail\/purchase-orders\/[0-9a-f-]+$/);
+  await page.waitForURL(/\/business\/purchase-orders\/[0-9a-f-]+$/);
   await page.getByRole('button', { name: 'Place order' }).click();
   await expect(page.getByRole('heading', { name: 'PO-0001' })).toBeVisible();
 
@@ -55,7 +55,7 @@ test('an owner adds a supplier, orders, records a delivery and a payment', async
   await page.getByRole('button', { name: 'Record payment' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Record payment' }).click();
   await expect(page.getByText('Payment recorded')).toBeVisible();
-  await page.goto(`/${slug}/retail/purchasing`);
+  await page.goto(`/${slug}/business/purchasing`);
   await expect(page.getByText('Owed to suppliers')).toBeVisible();
   await expect(page.getByRole('row').filter({ hasText: 'Phnom Penh Wholesale' })).toContainText('$35.00');
 });

@@ -2,11 +2,9 @@
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { ApprovalBadge } from '@/components/common/badges';
-import { educationNav } from '@/components/shell/nav';
 import { Button } from '@/components/ui/button';
 import { currentLocale, labels, tr } from '@/i18n/core';
 import { useT } from '@/i18n/provider';
@@ -15,7 +13,6 @@ import {
   type StudentStatus, type Subject, type Withdrawal,
 } from '@/lib/api/education';
 import { khr, usd } from '@/lib/money';
-import { useOrg } from '@/lib/org-context';
 import { cn } from '@/lib/utils';
 
 export const STUDENT_STATUS_LABEL = labels(STUDENT_STATUSES, (s) => `education.status_${s}`);
@@ -101,32 +98,6 @@ export function WithdrawalBadge({ w }: { w: Pick<Withdrawal, 'status' | 'approva
   if (w.status === 'PENDING') return <ApprovalBadge status={w.approvalStatus ?? 'PENDING'} />;
   if (w.status === 'APPROVED' || w.status === 'REJECTED') return <ApprovalBadge status={w.status} />;
   return <span className={cn(pill, 'bg-muted text-muted-foreground')}>{tr('education.withdrawalCancelled')}</span>;
-}
-
-/** The tabs on top of every Education page (on phones, the quickest way between its pages). */
-export function EduNav() {
-  const ctx = useOrg();
-  const { t } = useT();
-  const path = usePathname();
-  return (
-    <nav aria-label={t('education.navLabel')} className="-mx-1 mb-5 overflow-x-auto border-b print:hidden">
-      <ul className="flex min-w-max gap-1 px-1">
-        {educationNav(ctx).map((p) => {
-          const href = `/${ctx.slug}/${p.href}`;
-          const active = p.exact ? path === href : path === href || path.startsWith(`${href}/`);
-          return (
-            <li key={p.href}>
-              <Link href={href} aria-current={active ? 'page' : undefined}
-                className={cn('-mb-px inline-flex h-10 items-center border-b-2 border-transparent px-3 text-sm font-medium text-muted-foreground hover:text-foreground',
-                  active && 'border-primary text-foreground')}>
-                {p.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
 }
 
 /** "21–40 of 75" with previous / next. Hidden when everything fits on one page. */

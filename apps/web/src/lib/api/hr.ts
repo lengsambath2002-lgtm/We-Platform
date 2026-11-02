@@ -145,8 +145,8 @@ export const hrKeys = {
   holidays: (org: string, year: number) => ['org', org, 'hr', 'holidays', year] as const,
 };
 
-export const usePeople = (org: string) =>
-  useQuery({ queryKey: hrKeys.people(org), queryFn: () => http.get<PersonSummary[]>(`${h(org)}/people`) });
+export const usePeople = (org: string, enabled = true) =>
+  useQuery({ queryKey: hrKeys.people(org), queryFn: () => http.get<PersonSummary[]>(`${h(org)}/people`), enabled });
 export const useProfile = (org: string, userId: string) =>
   useQuery({ queryKey: hrKeys.profile(org, userId), queryFn: () => http.get<Profile>(`${h(org)}/people/${userId}`), enabled: !!userId });
 export const useLeaveTypes = (org: string) =>
@@ -162,8 +162,8 @@ export const useAllLeave = (org: string, f: LeaveFilter, enabled = true) =>
   useQuery({ queryKey: hrKeys.leaves(org, f), queryFn: () => http.get<Leave[]>(`${h(org)}/leave${qs(f)}`), enabled });
 export const useLeave = (org: string, id: string) =>
   useQuery({ queryKey: hrKeys.leave(org, id), queryFn: () => http.get<Leave>(`${h(org)}/leave/${id}`) });
-export const useAbsences = (org: string, from: string, to: string) =>
-  useQuery({ queryKey: hrKeys.absences(org, from, to), queryFn: () => http.get<Absence[]>(`${h(org)}/absences?from=${from}&to=${to}`) });
+export const useAbsences = (org: string, from: string, to: string, enabled = true) =>
+  useQuery({ queryKey: hrKeys.absences(org, from, to), queryFn: () => http.get<Absence[]>(`${h(org)}/absences?from=${from}&to=${to}`), enabled });
 
 export const useHolidays = (org: string, year: number) =>
   useQuery({ queryKey: hrKeys.holidays(org, year), queryFn: () => http.get<Holiday[]>(`${h(org)}/holidays?year=${year}`) });
@@ -313,8 +313,8 @@ export interface ChartNode { person: PersonRef; title: string | null; department
 
 export const useHrDashboard = (org: string, enabled = true) =>
   useQuery({ queryKey: ['org', org, 'hr', 'dashboard'], queryFn: () => http.get<HrDashboard>(`${h(org)}/dashboard`), enabled });
-export const useOrgChart = (org: string) =>
-  useQuery({ queryKey: ['org', org, 'hr', 'org-chart'], queryFn: () => http.get<ChartNode[]>(`${h(org)}/org-chart`) });
+export const useOrgChart = (org: string, enabled = true) =>
+  useQuery({ queryKey: ['org', org, 'hr', 'org-chart'], queryFn: () => http.get<ChartNode[]>(`${h(org)}/org-chart`), enabled });
 
 /** Downloads one of the HR reports (CSV). */
 export async function downloadHrReport(org: string, path: string, filename: string) {

@@ -1,9 +1,10 @@
 /** HR & Workforce: people directory, profiles, leave types, balances and leave requests. */
 export const en = {
+  navGrowth: 'Growth',
   // navigation
   navLabel: 'HR pages',
   navHome: 'My leave',
-  navPeople: 'People',
+  navPeople: 'Employees',
   navRequests: 'Requests',
   navSettings: 'Settings',
   breadcrumb: 'Breadcrumb',
@@ -693,6 +694,7 @@ export const en = {
 };
 
 export const km: Record<keyof typeof en, string> = {
+  navGrowth: 'ការអភិវឌ្ឍ',
   navLabel: 'ទំព័រធនធានមនុស្ស',
   navHome: 'ច្បាប់របស់ខ្ញុំ',
   navPeople: 'បុគ្គលិក',

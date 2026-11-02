@@ -31,17 +31,18 @@ export function SubscriptionCard({ orgId, sub }: { orgId: string; sub: Subscript
   });
   const [busy, setBusy] = useState(false);
   return (
-    <section className="rounded-lg border bg-card p-4 sm:p-5 lg:col-span-2" aria-labelledby="sub-h">
+    <section className="rounded-xl border bg-card p-5 shadow-xs" aria-labelledby="sub-h">
       <div className="mb-3 flex items-center gap-2">
         <h2 id="sub-h" className="flex-1 text-base font-semibold">{t('platform.subscription')}</h2>
         {!editing && <Button variant="outline" size="sm" onClick={() => setEditing(true)}>{t('common.edit')}</Button>}
       </div>
       {!editing ? (
         sub ? (
-          <dl className="grid gap-2 text-sm sm:grid-cols-2">
-            <div><dt className="text-muted-foreground">{t('platform.subPlan')}</dt><dd>{sub.planCode} · {tr(`billing.status_${sub.status}` as MessageKey)} · {tr(`billing.cycle_${sub.billingCycle}` as MessageKey)}</dd></div>
-            <div><dt className="text-muted-foreground">{t('platform.subDates')}</dt><dd>{sub.trialEndsAt ? t('platform.subTrialTo', { date: day(sub.trialEndsAt) }) : sub.currentPeriodEnd ? t('platform.subPeriodTo', { date: day(sub.currentPeriodEnd) }) : '—'}</dd></div>
-            {sub.note && <div className="sm:col-span-2"><dt className="text-muted-foreground">{t('platform.subNote')}</dt><dd>{sub.note}</dd></div>}
+          <dl className="grid gap-3 text-sm sm:grid-cols-3">
+            <div className="rounded-lg border bg-muted/30 p-3"><dt className="text-xs text-muted-foreground">{t('platform.subPlan')}</dt><dd className="mt-1 text-base font-semibold">{sub.planCode}</dd></div>
+            <div className="rounded-lg border bg-muted/30 p-3"><dt className="text-xs text-muted-foreground">{t('platform.subStatus')}</dt><dd className="mt-1 font-medium">{tr(`billing.status_${sub.status}` as MessageKey)} · {tr(`billing.cycle_${sub.billingCycle}` as MessageKey)}</dd></div>
+            <div className="rounded-lg border bg-muted/30 p-3"><dt className="text-xs text-muted-foreground">{t('platform.subDates')}</dt><dd className="mt-1 font-medium">{sub.trialEndsAt ? t('platform.subTrialTo', { date: day(sub.trialEndsAt) }) : sub.currentPeriodEnd ? t('platform.subPeriodTo', { date: day(sub.currentPeriodEnd) }) : '—'}</dd></div>
+            {sub.note && <div className="sm:col-span-3"><dt className="text-xs text-muted-foreground">{t('platform.subNote')}</dt><dd className="mt-1">{sub.note}</dd></div>}
           </dl>
         ) : <p className="text-sm text-muted-foreground">—</p>
       ) : (

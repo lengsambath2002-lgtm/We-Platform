@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { HrHomeTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { ErrorState, ListSkeleton, PermissionDenied } from '@/components/common/states';
 import { ExpiringCard } from '@/components/hr/records-ui';
@@ -39,11 +40,12 @@ export default function HrDashboardPage() {
 
   return (
     <>
+      <HrHomeTabs />
       <PageHeader title={t('hr.dashboardTitle')} subtitle={t('hr.dashboardSubtitle')} />
       {error ? <ErrorState error={error} retry={() => refetch()} /> : isPending ? <ListSkeleton rows={6} /> : (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Tile label={t('hr.headcount')} value={d.headcount} hint={t('hr.joinedRecently', { count: d.joinedLast90Days })} href={`/${slug}/hr/people`} />
+            <Tile label={t('hr.headcount')} value={d.headcount} hint={t('hr.joinedRecently', { count: d.joinedLast90Days })} href={`/${slug}/teams`} />
             <Tile label={t('hr.inToday')} value={d.today.present} hint={t('hr.todayHint', { late: d.today.late, absent: d.today.absent, notIn: d.today.notIn })} href={`/${slug}/hr/attendance/board`} />
             <Tile label={t('hr.onLeaveToday')} value={d.today.onLeave} hint={t('hr.pendingLeaveHint', { count: d.pendingLeave })} href={`/${slug}/hr/requests`} />
             <Tile label={t('hr.overtimeWaiting')} value={d.pendingOvertime} href={`/${slug}/hr/attendance/board`} />

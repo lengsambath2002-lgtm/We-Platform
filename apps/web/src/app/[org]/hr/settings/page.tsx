@@ -181,7 +181,7 @@ function HrSettings() {
     <>
       <PageHeader title={t('hr.settingsTitle')} subtitle={t('hr.settingsSubtitle')} />
       <Tabs value={tab} onValueChange={(v) => router.replace(`/${slug}/hr/settings${v === 'types' ? '' : `?tab=${v}`}`, { scroll: false })}>
-        <TabsList className="mb-4"><TabsTrigger value="types">{t('hr.leaveTypes')}</TabsTrigger><TabsTrigger value="balances">{t('hr.balances')}</TabsTrigger><TabsTrigger value="holidays">{t('hr.holidays')}</TabsTrigger><TabsTrigger value="schedules">{t('hr.schedules')}</TabsTrigger></TabsList>
+        <TabsList variant="line" className="mb-4"><TabsTrigger value="types">{t('hr.leaveTypes')}</TabsTrigger><TabsTrigger value="balances">{t('hr.balances')}</TabsTrigger><TabsTrigger value="holidays">{t('hr.holidays')}</TabsTrigger><TabsTrigger value="schedules">{t('hr.schedules')}</TabsTrigger></TabsList>
         <TabsContent value="types"><LeaveTypes org={slug} /></TabsContent>
         <TabsContent value="balances"><Balances org={slug} /></TabsContent>
         <TabsContent value="holidays"><Holidays org={slug} /></TabsContent>

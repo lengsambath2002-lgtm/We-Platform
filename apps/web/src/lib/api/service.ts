@@ -247,7 +247,9 @@ export const useAsset = (org: string, id: string) => useQuery({ queryKey: k(org,
 export const usePlans = (org: string) => useQuery({ queryKey: k(org, 'plans'), queryFn: () => http.get<Plan[]>(`${s(org)}/maintenance`) });
 export const useTickets = (org: string, f: TicketFilter) =>
   useQuery({ queryKey: k(org, 'tickets', f), queryFn: () => http.get<Page<TicketSummary>>(`${s(org)}/tickets${qs(f)}`), placeholderData: keepPreviousData });
-export const useTicket = (org: string, id: string) => useQuery({ queryKey: k(org, 'ticket', id), queryFn: () => http.get<Ticket>(`${s(org)}/tickets/${id}`) });
+/** `id` '' = no ticket (nothing is fetched: the bare path is the ticket list). */
+export const useTicket = (org: string, id: string) =>
+  useQuery({ queryKey: k(org, 'ticket', id), queryFn: () => http.get<Ticket>(`${s(org)}/tickets/${id}`), enabled: !!id });
 export const useTicketComments = (org: string, id: string) =>
   useQuery({ queryKey: k(org, 'ticket', id, 'comments'), queryFn: () => http.get<SvcComment[]>(`${s(org)}/tickets/${id}/comments`) });
 export const useTicketHistory = (org: string, id: string) =>

@@ -8,7 +8,8 @@ import { toast } from 'sonner';
 
 import { PersonAvatar } from '@/components/common/person';
 import { ErrorState } from '@/components/common/states';
-import { ConfirmAction, StatusBadge, SuperAdminBadge, TargetHistory, When } from '@/components/platform/ui';
+import { ConfirmAction, ListPanel, ListRow, OrgMark, Panel, Prop, StatusBadge, SuperAdminBadge, TargetHistory, When } from '@/components/platform/ui';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useT } from '@/i18n/provider';
@@ -16,6 +17,7 @@ import { errorMessage } from '@/lib/api/client';
 import { platformApi, usePlatformMutation, usePlatformUser } from '@/lib/api/platform';
 import { useSession } from '@/lib/auth/session';
 import { fmt } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 export default function PlatformUser() {
   const { t } = useT();
@@ -26,7 +28,7 @@ export default function PlatformUser() {
 
   const back = <Link href="/admin/users" className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />{t('platform.navUsers')}</Link>;
   if (error) return <>{back}<ErrorState error={error} retry={() => refetch()} /></>;
-  if (!data) return <>{back}<Skeleton className="h-8 w-64" /><Skeleton className="mt-6 h-64 w-full" /></>;
+  if (!data) return <>{back}<Skeleton className="h-40 w-full rounded-xl" /><div className="mt-6 grid gap-6 lg:grid-cols-3"><Skeleton className="h-72 rounded-xl lg:col-span-2" /><Skeleton className="h-72 rounded-xl" /></div></>;
   const { user } = data;
   const self = me?.id === user.id;
   const disabled = user.status === 'DISABLED';
@@ -35,12 +37,13 @@ export default function PlatformUser() {
   return (
     <>
       {back}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <section className="mb-6 rounded-xl border bg-card p-5 shadow-xs sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
           <PersonAvatar person={user} className="size-14 text-base" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="truncate text-xl font-semibold tracking-tight">{user.name}</h1>
+              <h1 className="truncate text-2xl font-semibold tracking-tight">{user.name}</h1>
               <StatusBadge status={user.status} />
               {user.superAdmin && <SuperAdminBadge />}
             </div>
@@ -83,46 +86,61 @@ export default function PlatformUser() {
           ))}
         </div>
       </div>
+      <dl className="mt-5 grid grid-cols-2 gap-4 border-t pt-5 sm:grid-cols-4">
+        <div><dt className="text-xs text-muted-foreground">{t('platform.colOrgs')}</dt><dd className="mt-1 text-lg font-semibold tabular">{data.organisations.length}</dd></div>
+        <div><dt className="text-xs text-muted-foreground">{t('platform.devices')}</dt><dd className="mt-1 text-lg font-semibold tabular">{data.signedInDevices}</dd></div>
+        <div><dt className="text-xs text-muted-foreground">{t('platform.colJoined')}</dt><dd className="mt-1 text-sm font-medium"><When at={user.createdAt} /></dd></div>
+        <div><dt className="text-xs text-muted-foreground">{t('platform.colLastSeen')}</dt><dd className="mt-1 text-sm font-medium"><When at={user.lastSeenAt} /></dd></div>
+      </dl>
+      </section>
 
       {data.disabledAt && (
-        <div role="status" className="mb-4 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
-          <p className="font-medium text-destructive">{t('platform.disabledOn', { date: fmt(parseISO(data.disabledAt), 'd MMM yyyy') })}</p>
-          {data.disabledReason && <p className="mt-1">{t('platform.suspendedWhy')}: {data.disabledReason}</p>}
+        <div role="status" className="mb-6 flex gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+          <UserX className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
+          <div>
+            <p className="font-medium text-destructive">{t('platform.disabledOn', { date: fmt(parseISO(data.disabledAt), 'd MMM yyyy') })}</p>
+            {data.disabledReason && <p className="mt-1">{t('platform.suspendedWhy')}: {data.disabledReason}</p>}
+          </div>
         </div>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <section className="rounded-lg border bg-card p-4 sm:p-5">
-          <h2 className="mb-3 text-base font-semibold">{t('platform.accountDetails')}</h2>
-          <dl className="space-y-3 text-sm">
-            <div><dt className="text-muted-foreground">{t('platform.colJoined')}</dt><dd><When at={user.createdAt} /></dd></div>
-            <div><dt className="text-muted-foreground">{t('platform.colLastSeen')}</dt><dd><When at={user.lastSeenAt} pattern="d MMM yyyy HH:mm" /></dd></div>
-            <div><dt className="text-muted-foreground">{t('platform.devices')}</dt><dd className="tabular">{data.signedInDevices}</dd></div>
-            <div><dt className="text-muted-foreground">{t('account.twoStep')}</dt><dd>{t(data.twoStep ? 'account.twoStepOn' : 'platform.twoStepOffShort')}</dd></div>
-            <div><dt className="text-muted-foreground">{t('platform.language')}</dt><dd>{data.locale === 'km' ? 'ខ្មែរ' : 'English'}</dd></div>
+      <div className="grid items-start gap-6 lg:grid-cols-3">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
+          <div>
+            <h2 className="text-base font-semibold">{t('platform.colOrgs')} <span className="font-normal text-muted-foreground tabular">· {data.organisations.length}</span></h2>
+            <p className="mb-3 text-sm text-muted-foreground">{t('platform.userOrgsLead')}</p>
+            {data.organisations.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">{t('platform.noUserOrgs')}</div>
+            ) : (
+              <ListPanel>
+                {data.organisations.map((o) => (
+                  <ListRow key={o.id} href={`/admin/organisations/${o.id}`} lead={<OrgMark name={o.name} />} title={o.name} sub={`/${o.slug}`}
+                    aside={<>
+                      <Badge variant="outline" className="font-medium">{t(`org.role_${o.role as 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST'}`)}</Badge>
+                      <StatusBadge status={o.orgStatus} />
+                    </>} />
+                ))}
+              </ListPanel>
+            )}
+          </div>
+          <TargetHistory target={id} />
+        </div>
+
+        <Panel title={t('platform.accountDetails')} className="lg:sticky lg:top-8">
+          <dl className="-my-2.5 divide-y">
+            <Prop label={t('platform.colJoined')}><When at={user.createdAt} /></Prop>
+            <Prop label={t('platform.colLastSeen')}><When at={user.lastSeenAt} pattern="d MMM yyyy HH:mm" /></Prop>
+            <Prop label={t('platform.devices')}><span className="tabular">{data.signedInDevices}</span></Prop>
+            <Prop label={t('account.twoStep')}>
+              <span className="inline-flex items-center gap-1.5">
+                <span className={cn('size-1.5 rounded-full', data.twoStep ? 'bg-emerald-500' : 'bg-muted-foreground/50')} aria-hidden />
+                {t(data.twoStep ? 'account.twoStepOn' : 'platform.twoStepOffShort')}
+              </span>
+            </Prop>
+            <Prop label={t('platform.language')}>{data.locale === 'km' ? 'ខ្មែរ' : 'English'}</Prop>
           </dl>
-        </section>
-
-        <section className="rounded-lg border bg-card p-4 sm:p-5 lg:col-span-2">
-          <h2 className="text-base font-semibold">{t('platform.colOrgs')}</h2>
-          <p className="mb-3 text-sm text-muted-foreground">{t('platform.userOrgsLead')}</p>
-          {data.organisations.length === 0 ? <p className="text-sm text-muted-foreground">{t('platform.noUserOrgs')}</p> : (
-            <ul className="divide-y">
-              {data.organisations.map((o) => (
-                <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                  <div className="min-w-0">
-                    <Link href={`/admin/organisations/${o.id}`} className="font-medium text-primary hover:underline">{o.name}</Link>
-                    <p className="text-xs text-muted-foreground">/{o.slug} · {t(`org.role_${o.role as 'OWNER' | 'ADMIN' | 'MEMBER' | 'GUEST'}`)}</p>
-                  </div>
-                  <StatusBadge status={o.orgStatus} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        </Panel>
       </div>
-
-      <TargetHistory target={id} />
     </>
   );
 }

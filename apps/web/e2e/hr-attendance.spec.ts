@@ -62,7 +62,7 @@ test('a member clocks in and out and asks for overtime; their manager approves i
 
   // …and asks for 2 h 30 min of overtime on the last weekday.
   const day = lastWeekday();
-  await page.getByRole('navigation', { name: 'HR pages' }).getByRole('link', { name: 'Attendance', exact: true }).click();
+  await page.goto(`/${slug}/hr/attendance`);
   await page.waitForURL(new RegExp(`/${slug}/hr/attendance$`));
   await expect(page.getByRole('heading', { name: 'My month' })).toBeVisible();
   await page.getByRole('button', { name: 'Request overtime' }).click();

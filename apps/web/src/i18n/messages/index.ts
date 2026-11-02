@@ -10,6 +10,7 @@ import * as documents from './documents';
 import * as education from './education';
 import * as hr from './hr';
 import * as imports from './imports';
+import * as landing from './landing';
 import * as modules from './modules';
 import * as offboarding from './offboarding';
 import * as org from './org';
@@ -33,7 +34,7 @@ import * as collab from './collab';
  * One file per area (namespace), each exporting `en` and `km` with the same keys
  * (`km` is typed from `en`, so a missing Khmer key fails the typecheck). Keys are used as `t('<namespace>.<key>')`.
  */
-export const namespaces = { account, admin, approvals, auth, billing, business, calendar, collab, common, documents, education, hr, imports, modules, offboarding, org, overview, platform, projects, records, reports, retail, roles, service, settings, shell, sso, status, structure, tasks };
+export const namespaces = { account, admin, approvals, auth, billing, business, calendar, collab, common, documents, education, hr, imports, landing, modules, offboarding, org, overview, platform, projects, records, reports, retail, roles, service, settings, shell, sso, status, structure, tasks };
 
 type NS = typeof namespaces;
 export type MessageKey = { [N in keyof NS]: `${N & string}.${keyof NS[N]['en'] & string}` }[keyof NS];

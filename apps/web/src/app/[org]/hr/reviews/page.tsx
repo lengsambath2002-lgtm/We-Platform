@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
+import { GrowthTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { PersonAvatar } from '@/components/common/person';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
@@ -84,9 +85,10 @@ function Reviews() {
   const tab = tabs.includes(params.get('tab') ?? '') ? params.get('tab')! : 'mine';
   return (
     <>
+      <GrowthTabs />
       <PageHeader title={t('hr.reviewsTitle')} subtitle={t('hr.reviewsSubtitle')} />
       <Tabs value={tab} onValueChange={(v) => router.replace(`/${slug}/hr/reviews${v === 'mine' ? '' : `?tab=${v}`}`, { scroll: false })}>
-        <TabsList className="mb-4">
+        <TabsList variant="line" className="mb-4">
           <TabsTrigger value="mine">{t('hr.myReviews')}</TabsTrigger>
           <TabsTrigger value="to-review">{t('hr.toReview')}{toDo.data?.some((r) => r.status === 'MANAGER') ? ` (${toDo.data.filter((r) => r.status === 'MANAGER').length})` : ''}</TabsTrigger>
           {manage && <TabsTrigger value="cycles">{t('hr.cycles')}</TabsTrigger>}

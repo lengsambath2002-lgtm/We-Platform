@@ -48,12 +48,12 @@ test('choosing Standard issues an invoice; the owner says they paid and a super 
   root.on('dialog', (d) => d.accept());
   await signIn(root, ROOT);
   await root.goto('/admin/invoices');
-  const line = root.getByRole('row').filter({ hasText: number });
+  const line = root.getByRole('listitem').filter({ hasText: number });
   await expect(line).toContainText(`Says paid: ABA-${id}`);
   await line.getByRole('button', { name: 'Record payment' }).click();
   await root.getByRole('dialog').getByRole('button', { name: 'Record payment' }).click();
   await expect(root.getByText('Payment recorded')).toBeVisible();
-  await expect(root.getByRole('row').filter({ hasText: number })).toHaveCount(0);
+  await expect(root.getByRole('listitem').filter({ hasText: number })).toHaveCount(0);
 
   await page.reload();
   await expect(page.getByText(/^Paid /)).toBeVisible();

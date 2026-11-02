@@ -4,6 +4,7 @@ import { BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 
 import { PRIORITY_LABEL } from '@/components/common/badges';
+import { ReportsTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, PermissionDenied } from '@/components/common/states';
 import { ReportCard, ReportSkeleton, ReportTable, downloadCsv } from '@/components/reports/report-kit';
@@ -30,6 +31,7 @@ export default function ServiceReports() {
   const base = `/${slug}/service`;
   return (
     <>
+      <ReportsTabs />
       <PageHeader title={t('service.reportsTitle')} subtitle={t('service.reportsSubtitle')} />
       <div className="mb-6 flex flex-wrap items-end gap-3">
         <div className="space-y-1"><Label htmlFor="r-from" className="text-xs text-muted-foreground">{t('service.from')}</Label><Input id="r-from" type="date" value={from} max={to} onChange={(e) => e.target.value && setFrom(e.target.value)} /></div>

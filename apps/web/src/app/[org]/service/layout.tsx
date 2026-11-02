@@ -5,8 +5,8 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { EmptyState, PermissionDenied } from '@/components/common/states';
-import { ServiceNav } from '@/components/service/ui';
 import { Button } from '@/components/ui/button';
+import { InSettingsWhenThere } from '@/components/shell/settings-frame';
 import { useT } from '@/i18n/provider';
 import { useOrg } from '@/lib/org-context';
 
@@ -22,10 +22,5 @@ export default function ServiceLayout({ children }: { children: ReactNode }) {
     );
   }
   if (!can('service.view')) return <PermissionDenied />;
-  return (
-    <>
-      <ServiceNav />
-      {children}
-    </>
-  );
+  return <InSettingsWhenThere>{children}</InSettingsWhenThere>;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { FileUp, MailX, MapPinned, Send, UserPlus } from 'lucide-react';
+import { FileUp, MailX, MapPinned, MoreHorizontal, Send, UserCheck, UserPlus, Users, UserX } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -12,7 +12,7 @@ import { InviteDialog, ROLE_TEXT } from '@/components/org/invite-dialog';
 import { PlacementDialog } from '@/components/org/structure-ui';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useT } from '@/i18n/provider';
 import { accountApi, type SentInvitation } from '@/lib/api/account';
 import { errorMessage } from '@/lib/api/client';
@@ -22,6 +22,7 @@ import type { Member, OrgRole } from '@/lib/api/types';
 import { useSession } from '@/lib/auth/session';
 import { day } from '@/lib/format';
 import { useOrg } from '@/lib/org-context';
+import { cn } from '@/lib/utils';
 
 const ROLES: OrgRole[] = ['OWNER', 'ADMIN', 'MEMBER', 'GUEST'];
 
@@ -52,55 +53,61 @@ export default function MembersAdmin() {
           <Button size="sm" onClick={() => setInviting(true)}><UserPlus className="size-4" />{t('org.invite')}</Button>
         </>} />
       {members.error ? <ErrorState error={members.error} retry={() => members.refetch()} /> : members.isPending ? <ListSkeleton /> : (
-        <div className="overflow-x-auto rounded-lg border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow><TableHead>{t('admin.colPerson')}</TableHead><TableHead className="table-cell">{t('structure.colPlace')}</TableHead><TableHead className="w-40">{t('admin.colRole')}</TableHead><TableHead className="hidden md:table-cell">{t('admin.colJoined')}</TableHead><TableHead className="w-28 text-right">{t('admin.colAccess')}</TableHead></TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.data.map((m) => {
-                const me = m.userId === user?.id;
-                const locked = me || m.primaryOwner || (m.role === 'OWNER' && !isOwner);
-                return (
-                  <TableRow key={m.membershipId} className={m.status === 'SUSPENDED' ? 'opacity-60' : undefined}>
-                    <TableCell>
-                      <span className="flex items-center gap-3">
-                        <PersonAvatar person={m} className="size-8" />
-                        <span className="min-w-0"><span className="block truncate text-sm font-medium">{m.name}{me && ` ${t('common.you')}`}</span><span className="block truncate text-xs text-muted-foreground">{m.email}</span></span>
-                      </span>
-                    </TableCell>
-                    <TableCell className="table-cell">
-                      {m.role !== 'GUEST' && m.status === 'ACTIVE' ? (
-                        <button type="button" disabled={!structure.data} onClick={() => setPlacing(m)} aria-label={t('structure.placeOf', { name: m.name })}
-                          className="flex max-w-40 items-center sm:max-w-56 gap-1.5 rounded-md px-1 py-0.5 text-left text-sm hover:bg-muted">
-                          <MapPinned className="size-3.5 shrink-0 text-muted-foreground" />
-                          <span className="min-w-0 truncate">{[m.title, m.unit].filter(Boolean).join(' · ') || <span className="text-muted-foreground">{t('structure.notPlaced')}</span>}</span>
-                        </button>
-                      ) : <span className="text-sm text-muted-foreground">—</span>}
-                    </TableCell>
-                    <TableCell>
-                      {locked ? <span className="text-sm">{ROLE_TEXT[m.role]?.label}{m.primaryOwner && <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{t('settings.transferSection')}</span>}</span> : (
-                        <Select value={m.role} onValueChange={(r) => change(m.membershipId, { role: r }, t('admin.roleChanged', { name: m.name, role: ROLE_TEXT[r]?.label.toLowerCase() ?? r }))}>
-                          <SelectTrigger size="sm" className="w-full" aria-label={t('admin.roleOf', { name: m.name })}><SelectValue /></SelectTrigger>
-                          <SelectContent>{ROLES.filter((r) => isOwner || r !== 'OWNER').map((r) => <SelectItem key={r} value={r}>{ROLE_TEXT[r]!.label}</SelectItem>)}</SelectContent>
-                        </Select>
-                      )}
-                      {m.role === 'MEMBER' && m.customRoles.length > 0 && (
-                        <Link href={`/${slug}/admin/roles`} className="mt-1 block truncate text-xs text-primary hover:underline">{m.customRoles.join(', ')}</Link>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden text-sm text-muted-foreground md:table-cell">{day(m.joinedAt)}</TableCell>
-                    <TableCell className="text-right">
+        <ul aria-label={t('admin.membersTitle')} className="divide-y overflow-hidden rounded-xl border bg-card shadow-xs">
+          {members.data.map((m) => {
+            const me = m.userId === user?.id;
+            const locked = me || m.primaryOwner || (m.role === 'OWNER' && !isOwner);
+            const placeable = m.role !== 'GUEST' && m.status === 'ACTIVE';
+            return (
+              <li key={m.membershipId} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 sm:px-5 md:flex-nowrap">
+                <PersonAvatar person={m} className={cn('size-9', m.status === 'SUSPENDED' && 'opacity-50')} />
+                <div className="min-w-0 flex-1">
+                  <p className="flex min-w-0 items-center gap-2 text-sm font-medium">
+                    <span className="truncate">{m.name}{me && ` ${t('common.you')}`}</span>
+                    {m.primaryOwner && <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">{t('settings.transferSection')}</span>}
+                    {m.status === 'SUSPENDED' && <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive">{t('admin.suspendedBadge')}</span>}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">{m.email} · {t('admin.joinedOn', { date: day(m.joinedAt) })}</p>
+                </div>
+                <div className="order-last w-full min-w-0 pl-11 text-sm md:order-none md:w-[30%] md:pl-0">
+                  {placeable ? (
+                    <button type="button" disabled={!structure.data} onClick={() => setPlacing(m)} aria-label={t('structure.placeOf', { name: m.name })}
+                      className="flex max-w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left hover:bg-muted">
+                      <MapPinned className="size-3.5 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0 truncate">{[m.title, m.unit].filter(Boolean).join(' · ') || <span className="text-muted-foreground">{t('structure.notPlaced')}</span>}</span>
+                    </button>
+                  ) : <span className="px-1.5 text-muted-foreground">—</span>}
+                </div>
+                <div className="ml-auto flex shrink-0 items-center gap-1">
+                  <div className="w-32">
+                    {locked ? <p className="px-3 text-sm text-muted-foreground">{ROLE_TEXT[m.role]?.label}</p> : (
+                      <Select value={m.role} onValueChange={(r) => change(m.membershipId, { role: r }, t('admin.roleChanged', { name: m.name, role: ROLE_TEXT[r]?.label.toLowerCase() ?? r }))}>
+                        <SelectTrigger size="sm" className="w-full" aria-label={t('admin.roleOf', { name: m.name })}><SelectValue /></SelectTrigger>
+                        <SelectContent>{ROLES.filter((r) => isOwner || r !== 'OWNER').map((r) => <SelectItem key={r} value={r}>{ROLE_TEXT[r]!.label}</SelectItem>)}</SelectContent>
+                      </Select>
+                    )}
+                    {m.role === 'MEMBER' && m.customRoles.length > 0 && (
+                      <Link href={`/${slug}/admin/roles`} className="mt-1 block truncate px-1 text-xs text-primary hover:underline">{m.customRoles.join(', ')}</Link>
+                    )}
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="size-8" aria-label={t('admin.actionsFor', { name: m.name })}><MoreHorizontal className="size-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      {placeable && <DropdownMenuItem disabled={!structure.data} onSelect={() => setPlacing(m)}><MapPinned className="size-4" />{t('structure.changePlace')}</DropdownMenuItem>}
+                      <DropdownMenuItem asChild><Link href={`/${slug}/teams`}><Users className="size-4" />{t('admin.seeInPeople')}</Link></DropdownMenuItem>
+                      {!locked && <DropdownMenuSeparator />}
                       {!locked && (m.status === 'ACTIVE'
-                        ? <Button variant="ghost" size="sm" className="text-destructive" onClick={() => change(m.membershipId, { status: 'SUSPENDED' }, t('admin.suspended', { name: m.name }))}>{t('admin.suspend')}</Button>
-                        : <Button variant="ghost" size="sm" onClick={() => change(m.membershipId, { status: 'ACTIVE' }, t('admin.restored', { name: m.name }))}>{t('admin.restore')}</Button>)}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+                        ? <DropdownMenuItem variant="destructive" onSelect={() => change(m.membershipId, { status: 'SUSPENDED' }, t('admin.suspended', { name: m.name }))}><UserX className="size-4" />{t('admin.suspend')}</DropdownMenuItem>
+                        : <DropdownMenuItem onSelect={() => change(m.membershipId, { status: 'ACTIVE' }, t('admin.restored', { name: m.name }))}><UserCheck className="size-4" />{t('admin.restore')}</DropdownMenuItem>)}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
       <dl className="mt-4 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
         {ROLES.map((r) => <div key={r}><dt className="inline font-medium text-foreground">{ROLE_TEXT[r]!.label}</dt> — <dd className="inline">{ROLE_TEXT[r]!.hint}</dd></div>)}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, ArchiveRestore, MapPin, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Archive, ArchiveRestore, MapPin, Pencil, Plus, Receipt, Trash2 } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -19,7 +19,7 @@ import Link from 'next/link';
 
 /** One service customer: contact, sites, assets, tickets and work orders. */
 export default function CustomerPage() {
-  const { slug, can } = useOrg();
+  const { slug, can, modules } = useOrg();
   const { t } = useT();
   const { id } = useParams<{ id: string }>();
   const { data, error, isPending, refetch } = useSvcCustomer(slug, id);
@@ -41,6 +41,10 @@ export default function CustomerPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" onClick={() => setDialog('edit')}><Pencil className="size-4" />{t('common.edit')}</Button>
+          {/* The same customer in General Business: deals, quotes and invoices. */}
+          {modules.some((m) => m.key === 'business' && m.enabled) && can('business.view') && (
+            <Button size="sm" variant="outline" asChild><Link href={`/${slug}/business/customers/${c.id}`}><Receipt className="size-4" />{t('service.salesRecords')}</Link></Button>
+          )}
           <Button size="sm" variant="ghost" onClick={() => run(() => archive.mutateAsync(!c.archived), c.archived ? t('service.restored') : t('service.archivedDone'))}>
             {c.archived ? <><ArchiveRestore className="size-4" />{t('service.restore')}</> : <><Archive className="size-4" />{t('service.archive')}</>}</Button>
         </div>

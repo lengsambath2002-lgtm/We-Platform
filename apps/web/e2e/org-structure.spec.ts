@@ -61,8 +61,26 @@ test('an owner builds branch → department, adds a position and places a member
   // The structure shows the filled position and who sits where.
   await page.goto(`/${slug}/structure`);
   await page.getByRole('tab', { name: 'Positions' }).click();
-  await expect(page.getByRole('row').filter({ hasText: 'Sales Officer' })).toContainText('1/2');
-  await expect(page.getByRole('row').filter({ hasText: 'Sales Officer' })).toContainText('1 open');
-  await page.getByRole('tab', { name: 'People' }).click();
-  await expect(page.getByRole('row').filter({ hasText: 'Visal Str' })).toContainText('Phnom Penh › Sales');
+  const officer = page.getByRole('list', { name: 'Positions' }).getByRole('listitem').filter({ hasText: 'Sales Officer' });
+  await expect(officer).toContainText('1/2');
+  await expect(officer).toContainText('1 open');
+  await page.goto(`/${slug}/teams`);
+  await expect(page.getByRole('list', { name: 'People' }).getByRole('listitem').filter({ hasText: 'Visal Str' })).toContainText('Phnom Penh › Sales');
+  await page.goto(`/${slug}/structure`);
+
+  // The owner adds themselves to the branch from the unit itself, as also working there.
+  await page.getByRole('tab', { name: 'Units' }).click();
+  await page.getByRole('list', { name: 'Units' }).getByRole('button', { name: /Phnom Penh/ }).click();
+  await page.getByRole('button', { name: 'Add people' }).first().click();
+  const add = page.getByRole('dialog');
+  await expect(add.getByRole('checkbox', { name: /Visal Str/ })).toBeEnabled();
+  await add.getByRole('checkbox', { name: /Owner Str/ }).click();
+  await add.getByRole('button', { name: 'Add 1 person' }).click();
+  await expect(page.getByText('1 person added to Phnom Penh')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Phnom Penh' }).getByText('Owner Str')).toBeVisible();
+
+  // The chart shows the branch with the department under it.
+  await page.getByRole('tab', { name: 'Chart' }).click();
+  await expect(page.getByRole('button', { name: 'Open Phnom Penh' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open Sales' })).toBeVisible();
 });

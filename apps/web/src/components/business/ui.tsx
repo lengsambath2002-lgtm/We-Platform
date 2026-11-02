@@ -2,11 +2,9 @@
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
 import { ApprovalBadge } from '@/components/common/badges';
-import { businessNav } from '@/components/shell/nav';
 import { Button } from '@/components/ui/button';
 import { currentLocale, labels, tr } from '@/i18n/core';
 import { useT } from '@/i18n/provider';
@@ -14,7 +12,6 @@ import {
   type Category, EXPENSE_STATUSES, type Expense, INVOICE_STATUSES, type InvoiceStatus, PAYMENT_METHODS, type Product, QUOTE_STATUSES, type QuoteStatus,
 } from '@/lib/api/business';
 import { khr, usd } from '@/lib/money';
-import { useOrg } from '@/lib/org-context';
 import { cn } from '@/lib/utils';
 
 export const QUOTE_LABEL = labels([...QUOTE_STATUSES, 'EXPIRED'] as const, (s) => `business.quote_${s}`);
@@ -71,32 +68,6 @@ export function ExpenseBadge({ expense }: { expense: Pick<Expense, 'status' | 'a
   if (expense.status === 'PENDING') return <ApprovalBadge status={expense.approvalStatus ?? 'PENDING'} />;
   if (expense.status === 'APPROVED' || expense.status === 'REJECTED') return <ApprovalBadge status={expense.status} />;
   return <span className={cn(pill, expense.status === 'PAID' ? 'bg-success/10 text-success' : 'bg-muted text-muted-foreground')}>{EXPENSE_LABEL[expense.status]}</span>;
-}
-
-/** The tabs on top of every business page (on phones, the quickest way between its pages). */
-export function BizNav() {
-  const ctx = useOrg();
-  const { t } = useT();
-  const path = usePathname();
-  return (
-    <nav aria-label={t('business.navLabel')} className="-mx-1 mb-5 overflow-x-auto border-b print:hidden">
-      <ul className="flex min-w-max gap-1 px-1">
-        {businessNav(ctx).map((p) => {
-          const href = `/${ctx.slug}/${p.href}`;
-          const active = p.exact ? path === href : path === href || path.startsWith(`${href}/`);
-          return (
-            <li key={p.href}>
-              <Link href={href} aria-current={active ? 'page' : undefined}
-                className={cn('-mb-px inline-flex h-10 items-center border-b-2 border-transparent px-3 text-sm font-medium text-muted-foreground hover:text-foreground',
-                  active && 'border-primary text-foreground')}>
-                {p.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
 }
 
 /** "21–40 of 75" with previous / next. Hidden when everything fits on one page. */

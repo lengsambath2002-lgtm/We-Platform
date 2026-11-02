@@ -156,7 +156,7 @@ function Recruitment() {
     <>
       <PageHeader title={t('hr.recruitmentTitle')} subtitle={t('hr.recruitmentSubtitle')} />
       <Tabs value={tab} onValueChange={(v) => router.replace(`/${slug}/hr/recruitment${v === 'openings' ? '' : `?tab=${v}`}`, { scroll: false })}>
-        <TabsList className="mb-4">
+        <TabsList variant="line" className="mb-4">
           <TabsTrigger value="openings">{t('hr.openingsTitle')}</TabsTrigger>
           <TabsTrigger value="interviews">{t('hr.myInterviews')}</TabsTrigger>
           {manage && <TabsTrigger value="hires">{t('hr.hiresTitle')}</TabsTrigger>}

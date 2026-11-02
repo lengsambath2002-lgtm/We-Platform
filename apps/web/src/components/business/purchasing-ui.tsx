@@ -80,7 +80,7 @@ export function SupplierDialog({ org, supplier, onClose }: { org: string; suppli
               });
               toast.success(t('retail.supplierSaved'));
               onClose();
-              if (!s) router.push(`/${org}/retail/suppliers/${saved.id}`);
+              if (!s) router.push(`/${org}/business/suppliers/${saved.id}`);
             } catch (e) { setErr(errorMessage(e)); }
           }}>{t('common.save')}</Button>
         </DialogFooter>
@@ -165,7 +165,7 @@ export function OrderDialog({ org, order, supplierId, onClose }: { org: string; 
               });
               toast.success(t('retail.orderSaved'));
               onClose();
-              if (!order) router.push(`/${org}/retail/purchase-orders/${saved.summary.id}`);
+              if (!order) router.push(`/${org}/business/purchase-orders/${saved.summary.id}`);
             } catch (e) { setErr(errorMessage(e)); }
           }}>{t('common.save')}</Button>
         </DialogFooter>

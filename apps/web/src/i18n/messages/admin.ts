@@ -1,5 +1,9 @@
 /** Organisation settings: members & roles, modules, workflows. */
 export const en = {
+  suspendedBadge: 'Suspended',
+  joinedOn: 'Joined {date}',
+  actionsFor: 'Actions for {name}',
+  seeInPeople: 'See in People',
   // members & roles
   membersTitle: 'Members & roles',
   membersSubtitle: 'Roles decide what people can do. Only owners can make or remove owners.',
@@ -58,6 +62,10 @@ export const en = {
 };
 
 export const km: Record<keyof typeof en, string> = {
+  suspendedBadge: 'បានផ្អាក',
+  joinedOn: 'ចូលរួម {date}',
+  actionsFor: 'សកម្មភាពសម្រាប់ {name}',
+  seeInPeople: 'មើលក្នុងទំព័រមនុស្ស',
   membersTitle: 'សមាជិក និងតួនាទី',
   membersSubtitle: 'តួនាទីកំណត់អ្វីដែលមនុស្សអាចធ្វើបាន។ មានតែម្ចាស់ទេ ដែលអាចតែងតាំង ឬដកម្ចាស់បាន។',
   colPerson: 'បុគ្គល',

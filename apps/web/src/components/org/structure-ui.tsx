@@ -1,9 +1,15 @@
 'use client';
 
-import { Plus, Trash2 } from 'lucide-react';
+import { Boxes, Building2, Check, Layers, LayoutGrid, type LucideIcon, MapPin, Plus, Search, Trash2, UsersRound } from 'lucide-react';
+import Link from 'next/link';
+import { useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { PersonAvatar } from '@/components/common/person';
+import {
+  AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -21,17 +27,23 @@ const NONE = '__none__';
 export const KIND_LABEL = labels(UNIT_KINDS, (k) => `structure.kind_${k}`);
 const alert = (msg: string | null) => msg && <p role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{msg}</p>;
 
-const TONE: Record<UnitKind, string> = {
-  BRANCH: 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300',
-  DIVISION: 'bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300',
-  DEPARTMENT: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  CENTER: 'bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
-  SECTION: 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300',
-  TEAM: 'bg-muted text-foreground',
+/** Each unit type's icon: types are told apart by icon and word, not colour (colour is for status). */
+export const KIND_ICON: Record<UnitKind, LucideIcon> = {
+  BRANCH: MapPin, DIVISION: Layers, DEPARTMENT: Building2, CENTER: Boxes, SECTION: LayoutGrid, TEAM: UsersRound,
 };
 
+export function KindIcon({ kind, className }: { kind: UnitKind; className?: string }) {
+  const Icon = KIND_ICON[kind];
+  return <Icon className={cn('size-4 shrink-0 text-muted-foreground', className)} aria-hidden />;
+}
+
+/** The unit type as a quiet label with its icon. */
 export function KindBadge({ kind }: { kind: UnitKind }) {
-  return <span className={cn('inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium', TONE[kind])}>{KIND_LABEL[kind]}</span>;
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border bg-background px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+      <KindIcon kind={kind} className="size-3" />{KIND_LABEL[kind]}
+    </span>
+  );
 }
 
 /** Active units as select options, indented by depth ("— — Team A"). */
@@ -100,10 +112,10 @@ export function UnitDialog({ org, structure, unit, parentId, onClose, onSaved }:
             </Select>
             <p className="text-xs text-muted-foreground">{t('structure.headHint')}</p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
+          {(v.kind === 'BRANCH' || v.address || v.phone) && <div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
             <div className="space-y-1.5"><Label htmlFor="unit-address">{t('structure.address')}</Label><Input id="unit-address" maxLength={300} value={v.address} onChange={(e) => setV({ ...v, address: e.target.value })} /></div>
             <div className="space-y-1.5"><Label htmlFor="unit-phone">{t('structure.phone')}</Label><Input id="unit-phone" type="tel" maxLength={30} value={v.phone} onChange={(e) => setV({ ...v, phone: e.target.value })} /></div>
-          </div>
+          </div>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
@@ -278,4 +290,160 @@ export function PlacementDialog({ org, structure, member, onClose }: {
 export function placeText(structure: Structure, a: { unitId: string | null; positionId: string | null }): string {
   const pos = structure.positions.find((p) => p.id === a.positionId);
   return [pos?.title, a.unitId ? unitPath(structure.units, a.unitId) : null].filter(Boolean).join(' · ') || tr('structure.notPlaced');
+}
+
+/** A confirmation for a destructive action, in place of the browser's confirm(). */
+export function ConfirmDialog({ title, body, confirm, onConfirm, onClose }: {
+  title: string; body: string; confirm: string; onConfirm: () => Promise<unknown>; onClose: () => void;
+}) {
+  const { t } = useT();
+  const [busy, setBusy] = useState(false);
+  return (
+    <AlertDialog open onOpenChange={(o) => !o && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader><AlertDialogTitle>{title}</AlertDialogTitle><AlertDialogDescription>{body}</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+          <Button variant="destructive" disabled={busy} onClick={async () => {
+            setBusy(true);
+            try { await onConfirm(); onClose(); } finally { setBusy(false); }
+          }}>{confirm}</Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+/** A member's places as the API takes them (primary and additional), from the structure. */
+export function placesOf(structure: Structure, membershipId: string) {
+  const mine = structure.assignments.filter((a) => a.person.membershipId === membershipId);
+  const p = mine.find((a) => a.primary);
+  return {
+    primary: p ? { unitId: p.unitId, positionId: p.positionId } as Placement : null,
+    additional: mine.filter((a) => !a.primary).map((a) => ({ unitId: a.unitId, positionId: a.positionId }) as Placement),
+  };
+}
+
+const samePlace = (a: Placement, b: Placement) => a.unitId === b.unitId && a.positionId === b.positionId;
+
+/**
+ * Owners and Admins: places several members in one unit (and optionally one position) at once. "Main place" moves
+ * each person here; "Also works here" keeps their main place and adds this one (someone with no place yet gets it
+ * as their main place either way).
+ */
+export function AddPeopleDialog({ org, structure, unitId, positionId, title, onClose }: {
+  org: string; structure: Structure; unitId: string | null; positionId?: string | null; title: string; onClose: () => void;
+}) {
+  const { t } = useT();
+  const qc = useQueryClient();
+  const members = useMembers(org);
+  const [q, setQ] = useState('');
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [position, setPosition] = useState(positionId ?? NONE);
+  const [mode, setMode] = useState<'main' | 'also'>('main');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const target = { unitId, positionId: position === NONE ? null : position };
+  const here = (m: string) => structure.assignments.some((a) => a.person.membershipId === m && a.unitId === unitId && (!target.positionId || a.positionId === target.positionId));
+  const people = (members.data ?? []).filter((m) => m.status === 'ACTIVE' && m.role !== 'GUEST');
+  const needle = q.trim().toLowerCase();
+  const shown = people.filter((m) => !needle || m.name.toLowerCase().includes(needle) || m.email.toLowerCase().includes(needle))
+    .sort((a, b) => Number(here(a.membershipId)) - Number(here(b.membershipId)) || a.name.localeCompare(b.name));
+  const positions = structure.positions.filter((p) => !p.archived && (unitId ? p.unitId === unitId || !p.unitId : !p.unitId))
+    .sort((a, b) => a.title.localeCompare(b.title));
+  const toggle = (id: string) => { const n = new Set(picked); if (n.has(id)) n.delete(id); else n.add(id); setPicked(n); };
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="flex max-h-[90dvh] flex-col gap-4 sm:max-w-xl">
+        <DialogHeader><DialogTitle>{title}</DialogTitle><DialogDescription>{t('structure.addPeopleBody')}</DialogDescription></DialogHeader>
+        {alert(err)}
+        <div className="relative">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input aria-label={t('structure.searchMembers')} placeholder={t('structure.searchMembers')} className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} autoFocus />
+        </div>
+        <ul className="min-h-40 flex-1 divide-y overflow-y-auto rounded-lg border" aria-label={t('structure.people')}>
+          {members.isPending ? <li className="p-4 text-sm text-muted-foreground">…</li> : shown.length === 0 ? (
+            <li className="p-4 text-sm text-muted-foreground">{t('structure.noMembersMatch')}</li>
+          ) : shown.map((m) => {
+            const already = here(m.membershipId);
+            const on = picked.has(m.membershipId);
+            const now = structure.assignments.find((a) => a.person.membershipId === m.membershipId && a.primary);
+            return (
+              <li key={m.membershipId}>
+                <button type="button" role="checkbox" aria-checked={on} disabled={already} onClick={() => toggle(m.membershipId)}
+                  className={cn('flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-muted/50 disabled:cursor-default disabled:opacity-60 disabled:hover:bg-transparent', on && 'bg-accent/50')}>
+                  <span className={cn('grid size-4 shrink-0 place-items-center rounded border', on ? 'border-primary bg-primary text-primary-foreground' : 'border-input')}>{on && <Check className="size-3" />}</span>
+                  <PersonAvatar person={m} className="size-8" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{m.name}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{now ? t('structure.nowIn', { place: placeText(structure, now) }) : m.email}</span>
+                  </span>
+                  {already && <span className="shrink-0 text-xs text-muted-foreground">{t('structure.alreadyHere')}</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <p className="-mt-2 text-xs text-muted-foreground">{t('structure.notListed')} <Link href={`/${org}/admin/members`} className="font-medium text-primary hover:underline">{t('structure.inviteMembers')}</Link></p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="add-position">{t('structure.asPosition')}</Label>
+            <Select value={position} onValueChange={setPosition}>
+              <SelectTrigger id="add-position" className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>{t('structure.noPosition')}</SelectItem>
+                {positions.map((p) => <SelectItem key={p.id} value={p.id}>{p.title}{p.headcount - p.filled > 0 ? ` (${t('structure.openCount', { count: p.headcount - p.filled })})` : ''}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <fieldset className="space-y-1.5">
+            <legend className="mb-1.5 text-sm font-medium">{t('structure.placeAs')}</legend>
+            <div role="radiogroup" className="grid grid-cols-2 gap-1 rounded-lg border bg-muted/50 p-0.5">
+              {(['main', 'also'] as const).map((k) => (
+                <button key={k} type="button" role="radio" aria-checked={mode === k} onClick={() => setMode(k)}
+                  className={cn('rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground', mode === k && 'bg-card text-foreground shadow-xs')}>
+                  {t(k === 'main' ? 'structure.placeMain' : 'structure.placeAlso')}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">{t(mode === 'main' ? 'structure.placeMainHint' : 'structure.placeAlsoHint')}</p>
+          </fieldset>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
+          <Button disabled={busy || picked.size === 0} onClick={async () => {
+            setBusy(true);
+            setErr(null);
+            try {
+              for (const id of picked) {
+                const cur = placesOf(structure, id);
+                const body = mode === 'main' || !cur.primary
+                  ? { primary: target, additional: cur.additional.filter((p) => !samePlace(p, target)) }
+                  : { primary: cur.primary, additional: [...cur.additional.filter((p) => !samePlace(p, target)), target].slice(0, 10) };
+                await structureApi.place(org, id, body);
+              }
+              await qc.invalidateQueries({ queryKey: ['org', org] });
+              const unitName = unitId ? structure.units.find((u) => u.id === unitId)?.name ?? '' : t('structure.orgWide');
+              toast.success(t('structure.addedN', { count: picked.size, unit: unitName }));
+              onClose();
+            } catch (e) {
+              await qc.invalidateQueries({ queryKey: ['org', org] });
+              setErr(errorMessage(e));
+            } finally { setBusy(false); }
+          }}>{picked.size > 0 ? t('structure.addN', { count: picked.size }) : t('structure.addPeople')}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Takes a member out of one unit (their place there, main or additional), keeping their other places. */
+export async function removeFromUnit(org: string, structure: Structure, membershipId: string, unitId: string) {
+  const cur = placesOf(structure, membershipId);
+  return structureApi.place(org, membershipId, {
+    primary: cur.primary && cur.primary.unitId === unitId ? null : cur.primary,
+    additional: cur.additional.filter((p) => p.unitId !== unitId),
+  });
 }

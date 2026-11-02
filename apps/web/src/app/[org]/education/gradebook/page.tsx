@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 
 import { AssessmentDialog } from '@/components/education/class-dialogs';
 import { LetterBadge, num, pct, studentName, subjectName } from '@/components/education/ui';
+import { AssessmentsTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
 import { downloadCsv } from '@/components/reports/report-kit';
@@ -208,6 +209,7 @@ function GradebookPage() {
 
   return (
     <>
+      <AssessmentsTabs />
       <PageHeader title={t('education.gradebookTitle')} subtitle={t('education.gradebookSubtitle')} />
       {years.error || courses.error ? <ErrorState error={years.error ?? courses.error} retry={() => { years.refetch(); courses.refetch(); }} />
         : years.isPending || courses.isPending || classes.isPending ? <ListSkeleton />
@@ -215,7 +217,7 @@ function GradebookPage() {
             : (
               <div className="space-y-6">
                 <Tabs value={view} onValueChange={(v) => router.replace(`/${slug}/education/gradebook?${v === 'results' ? `class=${classId}` : `course=${courseId}`}&term=${termId}`)}>
-                  <TabsList>
+                  <TabsList variant="line">
                     <TabsTrigger value="course">{t('education.byCourse')}</TabsTrigger>
                     <TabsTrigger value="results">{t('education.classResults')}</TabsTrigger>
                   </TabsList>

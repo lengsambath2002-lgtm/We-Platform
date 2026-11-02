@@ -30,7 +30,7 @@ Status colours are used **only** for status (badges, dots, chart series), never 
 
 ## Typography
 
-Inter (Latin) + Noto Sans Khmer (Khmer), system fallbacks. Scale: 12 (caption) · 13 (table, meta) ·
+Kantumruy Pro for both Khmer and Latin (one typeface, so mixed text looks even), system fallbacks. Scale: 12 (caption) · 13 (table, meta) ·
 14 (body, controls) · 16 (section title) · 20 (page title) · 24 (dashboard numbers). Weights 400 /
 500 / 600. Tabular numbers in tables and money.
 

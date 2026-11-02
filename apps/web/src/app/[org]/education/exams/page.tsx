@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import { AssessmentDialog } from '@/components/education/class-dialogs';
 import { KIND_LABEL, num, subjectName } from '@/components/education/ui';
+import { AssessmentsTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
 import {
@@ -44,6 +45,7 @@ export default function Exams() {
 
   return (
     <>
+      <AssessmentsTabs />
       <PageHeader title={t('education.examsTitle')} subtitle={t('education.examsSubtitle')}
         actions={editable && <Button size="sm" onClick={() => setEditing('new')}><Plus className="size-4" />{t('education.newAssessment')}</Button>} />
       {terms.length > 0 && (

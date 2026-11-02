@@ -5,8 +5,8 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { EmptyState, PermissionDenied } from '@/components/common/states';
-import { EduNav } from '@/components/education/ui';
 import { Button } from '@/components/ui/button';
+import { InSettingsWhenThere } from '@/components/shell/settings-frame';
 import { useT } from '@/i18n/provider';
 import { useOrg } from '@/lib/org-context';
 
@@ -25,10 +25,5 @@ export default function EducationLayout({ children }: { children: ReactNode }) {
     );
   }
   if (!can('education.view')) return <PermissionDenied />;
-  return (
-    <>
-      <EduNav />
-      {children}
-    </>
-  );
+  return <InSettingsWhenThere>{children}</InSettingsWhenThere>;
 }

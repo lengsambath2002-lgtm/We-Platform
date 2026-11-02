@@ -5,8 +5,8 @@ import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { EmptyState, PermissionDenied } from '@/components/common/states';
-import { HrNav } from '@/components/hr/hr-nav';
 import { Button } from '@/components/ui/button';
+import { InSettingsWhenThere } from '@/components/shell/settings-frame';
 import { useT } from '@/i18n/provider';
 import { useOrg } from '@/lib/org-context';
 
@@ -22,10 +22,5 @@ export default function HrLayout({ children }: { children: ReactNode }) {
     );
   }
   if (!can('hr.view')) return <PermissionDenied />;
-  return (
-    <>
-      <HrNav />
-      {children}
-    </>
-  );
+  return <InSettingsWhenThere>{children}</InSettingsWhenThere>;
 }

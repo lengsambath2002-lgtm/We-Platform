@@ -3,6 +3,7 @@
 import { CalendarSearch, Inbox } from 'lucide-react';
 import { useState } from 'react';
 
+import { HrHomeTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton, PermissionDenied } from '@/components/common/states';
 import { LeaveList, typeName } from '@/components/hr/leave-ui';
@@ -39,6 +40,7 @@ export default function LeaveRequests() {
 
   return (
     <>
+      <HrHomeTabs />
       <PageHeader title={t('hr.requestsTitle')} subtitle={t('hr.requestsSubtitle')} />
       <div className="mb-4 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-end">
         <div className="space-y-1">

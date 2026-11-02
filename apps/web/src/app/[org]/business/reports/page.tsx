@@ -5,6 +5,7 @@ import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { ReportsTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { ErrorState, ListSkeleton, PermissionDenied } from '@/components/common/states';
 import { categoryName } from '@/components/business/ui';
@@ -38,6 +39,7 @@ export default function FinanceReports() {
 
   return (
     <>
+      <ReportsTabs />
       <PageHeader title={t('business.reportsTitle')} subtitle={t('business.reportsSubtitle')}
         actions={<Select value={String(year)} onValueChange={(v) => setYear(Number(v))}><SelectTrigger className="w-28" aria-label={t('business.year')}><SelectValue /></SelectTrigger>
           <SelectContent>{[thisYear, thisYear - 1, thisYear - 2].map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent></Select>} />

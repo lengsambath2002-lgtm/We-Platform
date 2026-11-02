@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
 import { Money, Pager, StudentBadge, STUDENT_STATUS_LABEL, studentName } from '@/components/education/ui';
+import { StudentsTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
@@ -39,6 +40,7 @@ function Students() {
 
   return (
     <>
+      <StudentsTabs />
       <PageHeader title={t('education.studentsTitle')} subtitle={data ? t('education.count', { count: data.total }) : undefined}
         actions={manage && <Button asChild size="sm"><Link href={`/${slug}/education/students/new`}><UserPlus className="size-4" />{t('education.registerStudent')}</Link></Button>} />
       <div className="mb-4 grid grid-cols-2 gap-3 sm:flex sm:items-end">

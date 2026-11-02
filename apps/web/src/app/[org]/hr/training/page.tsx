@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
+import { GrowthTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
 import { CourseDialog } from '@/components/hr/development-ui';
@@ -44,10 +45,11 @@ function Training() {
   const tab = params.get('tab') === 'mine' ? 'mine' : 'courses';
   return (
     <>
+      <GrowthTabs />
       <PageHeader title={t('hr.trainingTitle')} subtitle={t('hr.trainingSubtitle')}
         actions={can('hr.manage') && <Button size="sm" onClick={() => setCreating(true)}><Plus className="size-4" />{t('hr.newCourse')}</Button>} />
       <Tabs value={tab} onValueChange={(v) => router.replace(`/${slug}/hr/training${v === 'courses' ? '' : '?tab=mine'}`, { scroll: false })}>
-        <TabsList className="mb-4"><TabsTrigger value="courses">{t('hr.courses')}</TabsTrigger><TabsTrigger value="mine">{t('hr.myTraining')}</TabsTrigger></TabsList>
+        <TabsList variant="line" className="mb-4"><TabsTrigger value="courses">{t('hr.courses')}</TabsTrigger><TabsTrigger value="mine">{t('hr.myTraining')}</TabsTrigger></TabsList>
         <TabsContent value="courses">
           {courses.error ? <ErrorState error={courses.error} retry={() => courses.refetch()} /> : courses.isPending ? <ListSkeleton rows={3} />
             : courses.data.length === 0 ? <EmptyState icon={GraduationCap} title={t('hr.noCourses')} /> : (

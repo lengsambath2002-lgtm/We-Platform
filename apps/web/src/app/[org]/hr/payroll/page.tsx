@@ -1,6 +1,6 @@
 'use client';
 
-import { Banknote, Pencil, Plus, Users } from 'lucide-react';
+import { Banknote, Pencil, Plus, Settings as SettingsIcon, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
@@ -125,9 +125,11 @@ function Payroll() {
   const tab = params.get('tab') === 'people' ? 'people' : params.get('tab') === 'settings' ? 'settings' : 'runs';
   return (
     <>
-      <PageHeader title={t('hr.payrollTitle')} subtitle={t('hr.payrollSubtitle')} />
+      <PageHeader title={t('hr.payrollTitle')} subtitle={t('hr.payrollSubtitle')}
+        actions={<Button variant={tab === 'settings' ? 'secondary' : 'outline'} size="sm" aria-pressed={tab === 'settings'}
+          onClick={() => router.replace(`/${slug}/hr/payroll${tab === 'settings' ? '' : '?tab=settings'}`, { scroll: false })}><SettingsIcon className="size-4" />{t('hr.payrollSettings')}</Button>} />
       <Tabs value={tab} onValueChange={(v) => router.replace(`/${slug}/hr/payroll${v === 'runs' ? '' : `?tab=${v}`}`, { scroll: false })}>
-        <TabsList className="mb-4"><TabsTrigger value="runs">{t('hr.payRuns')}</TabsTrigger><TabsTrigger value="people">{t('hr.payPeople')}</TabsTrigger><TabsTrigger value="settings">{t('hr.payrollSettings')}</TabsTrigger></TabsList>
+        <TabsList variant="line" className="mb-4"><TabsTrigger value="runs">{t('hr.payRuns')}</TabsTrigger><TabsTrigger value="people">{t('hr.payPeople')}</TabsTrigger></TabsList>
         <TabsContent value="runs"><Runs org={slug} /></TabsContent>
         <TabsContent value="people"><People org={slug} /></TabsContent>
         <TabsContent value="settings"><Settings org={slug} /></TabsContent>

@@ -3,10 +3,8 @@
 import { parseISO } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
-import { serviceNav } from '@/components/shell/nav';
 import { Button } from '@/components/ui/button';
 import { labels, tr } from '@/i18n/core';
 import { useT } from '@/i18n/provider';
@@ -15,7 +13,6 @@ import {
 } from '@/lib/api/service';
 import { fmt } from '@/lib/format';
 import { khr, usd } from '@/lib/money';
-import { useOrg } from '@/lib/org-context';
 import { cn } from '@/lib/utils';
 
 export const TICKET_LABEL = labels(TICKET_STATUSES, (s) => `service.ticket_${s}`);
@@ -93,32 +90,6 @@ export function minutesText(m: number) {
   if (m % 1440 === 0) return tr('service.daysN', { n: m / 1440 });
   if (m % 60 === 0) return tr('service.hoursN', { n: m / 60 });
   return tr('service.minutesN', { n: m });
-}
-
-/** The tabs on top of every service page (on phones, the quickest way between its pages). */
-export function ServiceNav() {
-  const ctx = useOrg();
-  const { t } = useT();
-  const path = usePathname();
-  return (
-    <nav aria-label={t('service.navLabel')} className="-mx-1 mb-5 overflow-x-auto border-b">
-      <ul className="flex min-w-max gap-1 px-1">
-        {serviceNav(ctx).map((p) => {
-          const href = `/${ctx.slug}/${p.href}`;
-          const active = p.exact ? path === href : path === href || path.startsWith(`${href}/`);
-          return (
-            <li key={p.href}>
-              <Link href={href} aria-current={active ? 'page' : undefined}
-                className={cn('-mb-px inline-flex h-10 items-center border-b-2 border-transparent px-3 text-sm font-medium text-muted-foreground hover:text-foreground',
-                  active && 'border-primary text-foreground')}>
-                {p.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
-  );
 }
 
 /** "21–40 of 75" with previous / next. Hidden when everything fits on one page. */

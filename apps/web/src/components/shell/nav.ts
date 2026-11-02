@@ -16,92 +16,124 @@ import {
   Cpu,
   Handshake,
   HardHat,
-  LifeBuoy,
+  ShoppingCart,
+  Sprout,
   Ticket,
   Truck,
-  Contact,
   FileSignature,
   FileText,
   FolderKanban,
   GitBranch,
   GraduationCap,
   Hammer,
-  Inbox,
   Package,
   Receipt,
   LayoutDashboard,
   Network,
   Settings,
-  type LucideIcon,
   ScrollText,
-  SlidersHorizontal,
   Store,
   UserCog,
   UserRound,
   Users,
-  UsersRound,
   Wrench,
   ClipboardCheck,
-  HeartHandshake,
-  LineChart,
   Presentation,
   School,
-  Sheet,
   Wallet,
 } from 'lucide-react';
 
+import type { ComponentType, SVGProps } from 'react';
+
+import { VirtualBizMark } from '@/components/common/virtualbiz-mark';
 import { currentLocale, tr } from '@/i18n/core';
 import type { OrgContext } from '@/lib/api/types';
 
 export interface NavItem {
   href: string;
   label: string;
-  icon: LucideIcon;
+  icon: ModuleIcon;
   /** Active only on this exact page (a module home with sub-pages under it). */
   exact?: boolean;
   /** Shown indented under the item before it. */
   sub?: boolean;
+  /** The small heading of the section this item starts or belongs to (module pages, the settings menu). */
+  group?: string;
+  /** Other pages (paths under the organisation) that count as this item, e.g. the module reports for Reports. */
+  match?: string[];
 }
 
-/** Global navigation, filtered by the permissions the server sent (it re-checks every request). */
+/** Whether {@code item} is the page at {@code path} (a full path, /{org}/…). */
+export function isActiveItem(org: string, path: string, item: NavItem) {
+  const at = (href: string, exact?: boolean) => {
+    const full = `/${org}/${href}`;
+    return exact ? path === full : path === full || path.startsWith(`${full}/`);
+  };
+  return at(item.href, item.exact) || (item.match ?? []).some((m) => at(m));
+}
+
+/** The workspace: everyday pages, filtered by the permissions the server sent (it re-checks every request). */
 export function globalNav(ctx: OrgContext): NavItem[] {
   const can = (p: string) => ctx.permissions.includes(p);
   const items: (NavItem & { need?: string })[] = [
     { href: 'overview', label: tr('shell.overview'), icon: LayoutDashboard },
     { href: 'my-tasks', label: tr('shell.myTasks'), icon: CheckSquare, need: 'projects.view' },
-    { href: 'projects', label: tr('shell.projects'), icon: FolderKanban, need: 'projects.view' },
-    { href: 'calendar', label: tr('shell.calendar'), icon: CalendarDays, need: 'calendar.view' },
-    { href: 'structure', label: tr('structure.nav'), icon: Network, need: 'org.structure.view' },
-    { href: 'teams', label: tr('shell.teams'), icon: Users, need: 'teams.view' },
     { href: 'approvals', label: tr('shell.approvals'), icon: BadgeCheck, need: 'approvals.view' },
+    { href: 'calendar', label: tr('shell.calendar'), icon: CalendarDays, need: 'calendar.view' },
+    { href: 'projects', label: tr('shell.projects'), icon: FolderKanban, need: 'projects.view' },
     { href: 'documents', label: tr('documents.title'), icon: FileText, need: 'documents.view' },
-    { href: 'reports', label: tr('shell.reports'), icon: BarChart3, need: 'reports.view' },
+    { href: 'teams', label: tr('shell.navPeople'), icon: Users, need: 'teams.view', match: ['hr/people'] },
+    { href: 'structure', label: tr('structure.nav'), icon: Network, need: 'org.structure.view' },
+    { href: 'reports', label: tr('shell.reports'), icon: BarChart3, need: 'reports.view', match: ['business/reports', 'education/reports', 'service/reports'] },
   ];
   return items.filter((i) => !i.need || can(i.need));
 }
 
-export function adminNav(ctx: OrgContext): NavItem[] {
+const enabled = (ctx: OrgContext, key: string) => ctx.modules.some((m) => m.key === key && m.enabled);
+
+/**
+ * The settings area's menu: the organisation, people and access, billing, security, and each switched-on app's
+ * settings. Someone who may only see billing or the audit log gets just those.
+ */
+export function settingsNav(ctx: OrgContext): NavItem[] {
   const can = (p: string) => ctx.permissions.includes(p);
-  // Members with a custom role that includes the audit log see just that.
-  const audit = can('activity.view') ? [{ href: 'admin/audit', label: tr('collab.auditNav'), icon: ScrollText }] : [];
-  const billing = can('billing.view') ? [{ href: 'admin/billing', label: tr('billing.nav'), icon: CreditCard }] : [];
-  if (!can('org.settings.manage')) return [...billing, ...audit];
-  return [
-    { href: 'admin/modules', label: tr('shell.modules'), icon: Blocks },
-    { href: 'admin/workflows', label: tr('shell.workflows'), icon: GitBranch },
-    { href: 'admin/members', label: tr('shell.membersRoles'), icon: UserCog },
-    ...(can('org.roles.manage') ? [{ href: 'admin/roles', label: tr('roles.nav'), icon: KeyRound }] : []),
-    { href: 'admin/settings', label: tr('settings.title'), icon: Settings },
-    ...billing,
-    ...audit,
+  const org = can('org.settings.manage');
+  const name = (key: string) => {
+    const m = ctx.modules.find((x) => x.key === key);
+    return m ? moduleName(m) : key;
+  };
+  const apps: NavItem[] = [
+    ...(enabled(ctx, 'business') && can('business.manage') ? [{ href: 'business/settings', label: name('business'), icon: MODULE_ICON.business }] : []),
+    ...(enabled(ctx, 'education') && can('education.manage') ? [{ href: 'education/settings', label: name('education'), icon: MODULE_ICON.education }] : []),
+    ...(enabled(ctx, 'hr') && can('hr.manage') ? [{ href: 'hr/settings', label: name('hr'), icon: MODULE_ICON.hr }] : []),
+    ...(enabled(ctx, 'service') && can('service.admin') ? [{ href: 'service/settings', label: name('service'), icon: MODULE_ICON.service }] : []),
   ];
+  const groups: { title: string; items: NavItem[] }[] = [
+    { title: tr('shell.setOrganisation'), items: org ? [
+      { href: 'admin/settings', label: tr('shell.setGeneral'), icon: Settings },
+      { href: 'admin/modules', label: tr('shell.modules'), icon: Blocks },
+      { href: 'admin/workflows', label: tr('shell.workflows'), icon: GitBranch },
+    ] : [] },
+    { title: tr('shell.setAccess'), items: [
+      ...(org ? [{ href: 'admin/members', label: tr('shell.setMembers'), icon: UserCog }] : []),
+      ...(org && can('org.roles.manage') ? [{ href: 'admin/roles', label: tr('roles.nav'), icon: KeyRound }] : []),
+    ] },
+    { title: tr('shell.setBilling'), items: can('billing.view') ? [{ href: 'admin/billing', label: tr('billing.nav'), icon: CreditCard }] : [] },
+    { title: tr('shell.setSecurity'), items: can('activity.view') ? [{ href: 'admin/audit', label: tr('collab.auditNav'), icon: ScrollText }] : [] },
+    { title: tr('shell.setApps'), items: apps },
+  ];
+  return groups.flatMap((g) => g.items.map((i, n) => (n === 0 ? { ...i, group: g.title } : i)));
 }
 
-export const MODULE_ICON: Record<string, LucideIcon> = {
+/** An icon component: a lucide icon, or a brand mark such as VirtualBiz's. */
+export type ModuleIcon = ComponentType<SVGProps<SVGSVGElement>>;
+
+export const MODULE_ICON: Record<string, ModuleIcon> = {
   projects: FolderKanban,
   business: Briefcase,
   education: GraduationCap,
-  retail: Store,
+  // Retail & Commerce is VirtualBiz: its own mark.
+  retail: VirtualBizMark,
   hr: Users,
   service: Wrench,
 };
@@ -114,51 +146,68 @@ export const subNav = (key: string, ctx: OrgContext): NavItem[] => (key === 'hr'
   : key === 'education' ? educationNav(ctx) : key === 'service' ? serviceNav(ctx) : key === 'retail' ? retailNav(ctx) : []);
 
 /**
- * Service & Operations' pages for the sidebar and its tabs, filtered by permission (the server re-checks):
- * dispatchers and Admins get everything; technicians their dashboard, tickets, bookings and their work orders.
+ * Service & Operations' pages for the sidebar, filtered by permission (the server re-checks): dispatchers and Admins
+ * get everything; technicians their dashboard, tickets, bookings and their work orders. (Settings are in the settings
+ * area, reports in Reports.)
  */
 export function serviceNav(ctx: OrgContext): NavItem[] {
   const can = (p: string) => ctx.permissions.includes(p);
   if (!can('service.view')) return [];
   const manage = can('service.manage');
+  const work: NavItem[] = [
+    { href: 'service/tickets', label: tr('service.navTickets'), icon: Ticket, match: ['service/requests'] },
+    // Bookings live in VirtualBiz, linked through Retail & Commerce; without it the page has nothing to show.
+    ...(enabled(ctx, 'retail') ? [{ href: 'service/bookings', label: tr('service.navBookings'), icon: CalendarClock }] : []),
+    { href: 'service/work-orders', label: manage ? tr('service.navWorkOrders') : tr('service.navMyWorkOrders'), icon: ClipboardList },
+  ];
+  const resources: NavItem[] = manage ? [
+    { href: 'service/technicians', label: tr('service.navTechnicians'), icon: HardHat },
+    { href: 'service/assets', label: tr('service.navAssets'), icon: Cpu, match: ['service/customers'] },
+    { href: 'service/maintenance', label: tr('service.navMaintenance'), icon: Hammer },
+  ] : [];
   return [
     { href: 'service', label: tr('service.navDashboard'), icon: LayoutDashboard, exact: true },
-    ...(manage ? [{ href: 'service/requests', label: tr('service.navRequests'), icon: LifeBuoy }] : []),
-    { href: 'service/tickets', label: tr('service.navTickets'), icon: Ticket },
-    { href: 'service/bookings', label: tr('service.navBookings'), icon: CalendarClock },
-    { href: 'service/work-orders', label: manage ? tr('service.navWorkOrders') : tr('service.navMyWorkOrders'), icon: ClipboardList },
-    ...(manage ? [
-      { href: 'service/technicians', label: tr('service.navTechnicians'), icon: HardHat },
-      { href: 'service/assets', label: tr('service.navAssets'), icon: Cpu },
-      { href: 'service/maintenance', label: tr('service.navMaintenance'), icon: Hammer },
-      { href: 'service/reports', label: tr('service.navReports'), icon: BarChart3 },
-    ] : []),
-    ...(can('service.admin') ? [{ href: 'service/settings', label: tr('service.navSettings'), icon: SlidersHorizontal }] : []),
+    ...grouped(tr('shell.grpWork'), work),
+    ...grouped(tr('shell.grpResources'), resources),
   ];
 }
 
-/** General Business's pages for the sidebar and its tabs, filtered by permission (the server re-checks). */
+/** Items with the section heading on the first one. */
+function grouped(title: string, items: NavItem[]): NavItem[] {
+  return items.map((i, n) => (n === 0 ? { ...i, group: title } : i));
+}
+
+/** Purchasing: its overview (with the orders) and the suppliers. */
+function buyingNav(): NavItem[] {
+  return [
+    { href: 'business/purchasing', label: tr('retail.navPurchasing'), icon: ShoppingCart, match: ['business/purchase-orders'] },
+    { href: 'business/suppliers', label: tr('retail.navSuppliers'), icon: Truck },
+  ];
+}
+
+/** General Business's pages for the sidebar, filtered by permission (the server re-checks). */
 export function businessNav(ctx: OrgContext): NavItem[] {
   const can = (p: string) => ctx.permissions.includes(p);
   if (!can('business.view')) return [];
   return [
     { href: 'business', label: tr('business.navOverview'), icon: LayoutDashboard, exact: true },
-    { href: 'business/deals', label: tr('business.navDeals'), icon: Handshake },
-    { href: 'business/customers', label: tr('business.navCustomers'), icon: UserRound },
-    { href: 'business/products', label: tr('business.navProducts'), icon: Package },
-    { href: 'business/quotes', label: tr('business.navQuotes'), icon: FileSignature },
-    { href: 'business/invoices', label: tr('business.navInvoices'), icon: Receipt },
-    { href: 'business/expenses', label: tr('business.navExpenses'), icon: Banknote },
-    ...(can('business.manage') ? [
-      { href: 'business/reports', label: tr('business.navReports'), icon: LineChart },
-      { href: 'business/settings', label: tr('business.navSettings'), icon: SlidersHorizontal },
-    ] : []),
+    ...grouped(tr('shell.grpSales'), [
+      { href: 'business/deals', label: tr('business.navDeals'), icon: Handshake },
+      { href: 'business/customers', label: tr('business.navCustomers'), icon: UserRound },
+      { href: 'business/quotes', label: tr('business.navQuotes'), icon: FileSignature },
+      { href: 'business/invoices', label: tr('business.navInvoices'), icon: Receipt },
+    ]),
+    ...grouped(tr('shell.grpPurchasing'), buyingNav()),
+    ...grouped(tr('shell.grpOperations'), [
+      { href: 'business/products', label: tr('business.navProducts'), icon: Package },
+      { href: 'business/expenses', label: tr('business.navExpenses'), icon: Banknote },
+    ]),
   ];
 }
 
 /**
- * Education's pages for the sidebar and its tabs, filtered by permission (the server re-checks): admins see
- * everything; teachers their classes' pages, without fees and the academic structure.
+ * Education's pages for the sidebar, filtered by permission (the server re-checks): admins see everything; teachers
+ * their classes' pages, without fees.
  */
 export function educationNav(ctx: OrgContext): NavItem[] {
   const can = (p: string) => ctx.permissions.includes(p);
@@ -166,17 +215,17 @@ export function educationNav(ctx: OrgContext): NavItem[] {
   const manage = can('education.manage');
   return [
     { href: 'education', label: tr('education.navHome'), icon: LayoutDashboard, exact: true },
-    { href: 'education/students', label: tr('education.navStudents'), icon: GraduationCap },
-    { href: 'education/parents', label: tr('education.navParents'), icon: HeartHandshake },
-    { href: 'education/teachers', label: tr('education.navTeachers'), icon: Presentation },
-    { href: 'education/classes', label: tr('education.navClasses'), icon: School },
-    { href: 'education/attendance', label: tr('education.navAttendance'), icon: ClipboardCheck },
-    { href: 'education/exams', label: tr('education.navExams'), icon: ClipboardList },
-    { href: 'education/gradebook', label: tr('education.navGradebook'), icon: Sheet },
-    ...(manage ? [{ href: 'education/fees', label: tr('education.navFees'), icon: Wallet }] : []),
-    { href: 'education/timetable', label: tr('education.navTimetable'), icon: CalendarClock },
-    { href: 'education/reports', label: tr('education.navReports'), icon: LineChart },
-    ...(manage ? [{ href: 'education/settings', label: tr('education.navSettings'), icon: SlidersHorizontal }] : []),
+    ...grouped(tr('shell.grpPeople'), [
+      { href: 'education/students', label: tr('education.navStudents'), icon: GraduationCap, match: ['education/parents'] },
+      { href: 'education/teachers', label: tr('education.navTeachers'), icon: Presentation },
+    ]),
+    ...grouped(tr('shell.grpTeaching'), [
+      { href: 'education/classes', label: tr('education.navClasses'), icon: School },
+      { href: 'education/timetable', label: tr('education.navTimetable'), icon: CalendarClock },
+      { href: 'education/attendance', label: tr('education.navAttendance'), icon: ClipboardCheck },
+      { href: 'education/exams', label: tr('education.navAssessments'), icon: ClipboardList, match: ['education/gradebook'] },
+    ]),
+    ...grouped(tr('shell.grpFinance'), manage ? [{ href: 'education/fees', label: tr('education.navFees'), icon: Wallet }] : []),
   ];
 }
 
@@ -186,31 +235,27 @@ export function retailNav(ctx: OrgContext): NavItem[] {
   if (!can('retail.view')) return [];
   return [
     { href: 'retail', label: tr('retail.navShops'), icon: Store, exact: true },
-    { href: 'retail/purchasing', label: tr('retail.navPurchasing'), icon: LayoutDashboard },
-    { href: 'retail/purchase-orders', label: tr('retail.navOrders'), icon: ClipboardList },
-    { href: 'retail/suppliers', label: tr('retail.navSuppliers'), icon: Truck },
+    // Purchasing lives under General Business; without it, Retail shows it here.
+    ...(enabled(ctx, 'business') && can('business.view') ? [] : grouped(tr('shell.grpPurchasing'), buyingNav())),
   ];
 }
 
-/** HR's pages for the sidebar and HR's tabs, filtered by permission (the server re-checks). */
+/** HR's pages for the sidebar, filtered by permission (the server re-checks): what is mine, then what I manage. */
 export function hrNav(ctx: OrgContext): NavItem[] {
   const can = (p: string) => ctx.permissions.includes(p);
   if (!can('hr.view')) return [];
   return [
-    { href: 'hr', label: tr('hr.navHome'), icon: CalendarCheck2, exact: true },
-    { href: 'hr/attendance', label: tr('hr.navAttendance'), icon: Clock, exact: true },
-    { href: 'hr/people', label: tr('hr.navPeople'), icon: Contact },
-    { href: 'hr/org-chart', label: tr('hr.navOrgChart'), icon: Network },
-    { href: 'hr/payslips', label: tr('hr.navPayslips'), icon: Receipt },
-    { href: 'hr/reviews', label: tr('hr.navReviews'), icon: ClipboardCheck },
-    { href: 'hr/training', label: tr('hr.navTraining'), icon: GraduationCap },
-    ...(can('hr.recruit') ? [{ href: 'hr/recruitment', label: tr('hr.navRecruitment'), icon: Briefcase }] : []),
-    ...(can('hr.team') ? [{ href: 'hr/offboarding', label: tr('offboarding.nav'), icon: DoorOpen }] : []),
-    ...(can('hr.manage') ? [{ href: 'hr/dashboard', label: tr('hr.navDashboard'), icon: LayoutDashboard }] : []),
-    ...(can('hr.team') ? [{ href: 'hr/attendance/board', label: tr('hr.navTeamAttendance'), icon: UsersRound }] : []),
-    ...(can('hr.manage') ? [{ href: 'hr/requests', label: tr('hr.navRequests'), icon: Inbox }] : []),
-    ...(can('hr.payroll') ? [{ href: 'hr/payroll', label: tr('hr.navPayroll'), icon: Banknote }] : []),
-    ...(can('hr.manage') ? [{ href: 'hr/settings', label: tr('hr.navSettings'), icon: SlidersHorizontal }] : []),
+    ...grouped(tr('shell.grpMe'), [
+      { href: 'hr', label: tr('hr.navHome'), icon: CalendarCheck2, exact: true, match: ['hr/dashboard', 'hr/leave', 'hr/requests'] },
+      { href: 'hr/attendance', label: tr('hr.navAttendance'), icon: Clock },
+      { href: 'hr/payslips', label: tr('hr.navPayslips'), icon: Receipt },
+      { href: 'hr/reviews', label: tr('hr.navGrowth'), icon: Sprout, match: ['hr/training'] },
+    ]),
+    ...grouped(tr('shell.grpManage'), [
+      ...(can('hr.recruit') ? [{ href: 'hr/recruitment', label: tr('hr.navRecruitment'), icon: Briefcase }] : []),
+      ...(can('hr.team') ? [{ href: 'hr/offboarding', label: tr('offboarding.nav'), icon: DoorOpen }] : []),
+      ...(can('hr.payroll') ? [{ href: 'hr/payroll', label: tr('hr.navPayroll'), icon: Banknote }] : []),
+    ]),
   ];
 }
 

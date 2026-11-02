@@ -1,5 +1,6 @@
 /** Service & Operations: requests and tickets, work orders, technicians, assets, maintenance, bookings and reports. */
 export const en = {
+  salesRecords: 'Sales & invoices',
   // navigation
   navLabel: 'Service pages',
   navDashboard: 'Dashboard',
@@ -59,6 +60,8 @@ export const en = {
   anyone: 'Anyone',
   assignedToMe: 'Assigned to me',
   openOnly: 'Open',
+  viewNew: 'New',
+  ticketViews: 'Ticket views',
   noMatchTitle: 'Nothing matches',
   noMatchBody: 'Try other words or clear the filters.',
   noCustomer: 'No customer',
@@ -472,6 +475,7 @@ export const en = {
 };
 
 export const km: Record<keyof typeof en, string> = {
+  salesRecords: 'ការលក់ និងវិក្កយបត្រ',
   navLabel: 'ទំព័រសេវាកម្ម',
   navDashboard: 'ផ្ទាំងគ្រប់គ្រង',
   navRequests: 'សំណើសេវាកម្ម',
@@ -529,6 +533,8 @@ export const km: Record<keyof typeof en, string> = {
   anyone: 'គ្រប់គ្នា',
   assignedToMe: 'ចាត់តាំងឱ្យខ្ញុំ',
   openOnly: 'កំពុងបើក',
+  viewNew: 'ថ្មី',
+  ticketViews: 'ទិដ្ឋភាពសំបុត្រ',
   noMatchTitle: 'គ្មានអ្វីត្រូវគ្នាទេ',
   noMatchBody: 'សូមសាកល្បងពាក្យផ្សេង ឬសម្អាតតម្រង។',
   noCustomer: 'គ្មានអតិថិជន',

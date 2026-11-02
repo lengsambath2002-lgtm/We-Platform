@@ -1,8 +1,9 @@
 'use client';
 
-import { CalendarClock, ExternalLink, PowerOff, Store, Unplug } from 'lucide-react';
+import { ExternalLink, PowerOff, Store, Unplug } from 'lucide-react';
 import Link from 'next/link';
 
+import { VirtualBizMark } from '@/components/common/virtualbiz-mark';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,7 @@ export default function BookingsPage() {
 
   const intro = (
     <section className="mb-6 flex gap-3 rounded-lg border bg-card p-4">
-      <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary"><CalendarClock className="size-5" aria-hidden /></span>
+      <VirtualBizMark className="size-10 shrink-0" aria-hidden />
       <div className="min-w-0 space-y-1 text-sm">
         <p className="font-medium">{t('service.bookingsLiveTitle')}</p>
         <p className="text-muted-foreground">{t('service.bookingsLiveBody')}</p>
@@ -53,7 +54,7 @@ export default function BookingsPage() {
         <ul className="divide-y rounded-lg border bg-card">
           {shops.data.shops.map((s) => (
             <li key={s.businessId} className="flex flex-wrap items-center gap-3 px-4 py-3">
-              <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary"><Store className="size-5" aria-hidden /></span>
+              <VirtualBizMark className="size-10 shrink-0" aria-hidden />
               <p className="min-w-0 flex-1 truncate font-medium">{s.businessName}</p>
               <Button asChild size="sm">
                 <a href={virtualbiz.open(base, s.businessId)} aria-label={t('service.openBookingsOf', { name: s.businessName })}>

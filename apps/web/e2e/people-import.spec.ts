@@ -37,7 +37,6 @@ test('an owner imports people with units, positions and managers from a CSV', as
   await page.getByRole('button', { name: 'Import 2 people' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Imported:' })).toContainText('Imported: 2 new accounts');
 
-  await page.getByRole('link', { name: 'View the structure' }).click();
-  await page.getByRole('tab', { name: 'People' }).click();
-  await expect(page.getByRole('row').filter({ hasText: 'Ly, Dev' })).toContainText('Mobile Center › Mobile');
+  await page.goto(`/${slug}/teams`);
+  await expect(page.getByRole('list', { name: 'People' }).getByRole('listitem').filter({ hasText: 'Ly, Dev' })).toContainText('Mobile Center › Mobile');
 });

@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ErrorState, ListSkeleton } from '@/components/common/states';
-import { OrderDialog, PoBadge, SupplierDialog } from '@/components/retail/purchasing-ui';
+import { OrderDialog, PoBadge, SupplierDialog } from '@/components/business/purchasing-ui';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/provider';
 import { errorMessage } from '@/lib/api/client';
@@ -28,10 +28,10 @@ export default function SupplierPage() {
   const archive = useOrgMutation(slug, (v: boolean) => purchasingApi.archiveSupplier(slug, id, v));
   if (error) return <ErrorState error={error} retry={() => refetch()} />;
   if (isPending) return <ListSkeleton rows={5} />;
-  const manage = can('retail.manage');
+  const manage = (can('business.manage') || can('retail.manage'));
   return (
     <>
-      <Link href={`/${slug}/retail/suppliers`} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />{t('retail.suppliersTitle')}</Link>
+      <Link href={`/${slug}/business/suppliers`} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />{t('retail.suppliersTitle')}</Link>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">{s.name}{s.archived && <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs font-normal">{t('retail.archived')}</span>}</h1>
@@ -62,7 +62,7 @@ export default function SupplierPage() {
         {orders.isPending ? <ListSkeleton rows={2} /> : (orders.data ?? []).length === 0 ? <p className="text-sm text-muted-foreground">{t('retail.noOrders')}</p> : (
           <ul className="divide-y">{orders.data!.map((o) => (
             <li key={o.id}>
-              <Link href={`/${slug}/retail/purchase-orders/${o.id}`} className="flex flex-wrap items-center justify-between gap-2 py-2 hover:bg-muted/50">
+              <Link href={`/${slug}/business/purchase-orders/${o.id}`} className="flex flex-wrap items-center justify-between gap-2 py-2 hover:bg-muted/50">
                 <span className="text-sm font-medium">{o.number ?? t('retail.draftOrder')}{o.orderDate && <span className="ml-2 font-normal text-muted-foreground">{day(o.orderDate)}</span>}</span>
                 <span className="flex items-center gap-3"><span className="text-sm tabular">{usd(o.total)}</span><PoBadge status={o.status} /></span>
               </Link>

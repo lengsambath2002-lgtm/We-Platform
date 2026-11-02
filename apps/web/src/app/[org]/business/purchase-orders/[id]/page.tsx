@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { ErrorState, ListSkeleton } from '@/components/common/states';
-import { CancelOrderDialog, OrderDialog, PayDialog, PoBadge, ReceiveDialog } from '@/components/retail/purchasing-ui';
+import { CancelOrderDialog, OrderDialog, PayDialog, PoBadge, ReceiveDialog } from '@/components/business/purchasing-ui';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -41,18 +41,18 @@ export default function OrderPage() {
   if (error) return <ErrorState error={error} retry={() => refetch()} />;
   if (isPending) return <ListSkeleton rows={6} />;
   const s = o.summary;
-  const manage = can('retail.manage');
+  const manage = (can('business.manage') || can('retail.manage'));
   const base = shops.data?.virtualbizUrl;
   const shopId = o.shopBusinessId ?? (shops.data?.shops.length === 1 ? shops.data.shops[0].businessId : null);
 
   return (
     <>
-      <Link href={`/${slug}/retail/purchase-orders`} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />{t('retail.ordersTitle')}</Link>
+      <Link href={`/${slug}/business/purchase-orders`} className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />{t('retail.ordersTitle')}</Link>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2"><h1 className="text-xl font-semibold tracking-tight">{s.number ?? t('retail.draftOrder')}</h1><PoBadge status={s.status} /></div>
           <p className="mt-1 text-sm text-muted-foreground">
-            <Link className="text-primary hover:underline" href={`/${slug}/retail/suppliers/${s.supplierId}`}>{s.supplierName}</Link>
+            <Link className="text-primary hover:underline" href={`/${slug}/business/suppliers/${s.supplierId}`}>{s.supplierName}</Link>
             {s.shopName && <> · {s.shopName}</>}{s.orderDate && <> · {t('retail.orderedOn', { date: day(s.orderDate) })}</>}
             {s.expectedDate && <> · {t('retail.expectedOn', { date: day(s.expectedDate) })}</>}
           </p>
@@ -62,7 +62,7 @@ export default function OrderPage() {
             {o.canEdit && <Button variant="outline" size="sm" onClick={() => setDialog('edit')}><Pencil className="size-4" />{t('common.edit')}</Button>}
             {o.canEdit && <Button size="sm" onClick={() => act(() => purchasingApi.place(slug, s.id), t('retail.orderPlaced'))}><Send className="size-4" />{t('retail.placeOrder')}</Button>}
             {o.canEdit && <Button variant="ghost" size="sm" aria-label={t('common.delete')} onClick={async () => {
-              if (window.confirm(t('retail.deleteDraftConfirm')) && await act(() => purchasingApi.deleteOrder(slug, s.id), t('retail.orderDeleted'))) router.replace(`/${slug}/retail/purchase-orders`);
+              if (window.confirm(t('retail.deleteDraftConfirm')) && await act(() => purchasingApi.deleteOrder(slug, s.id), t('retail.orderDeleted'))) router.replace(`/${slug}/business/purchase-orders`);
             }}><Trash2 className="size-4" /></Button>}
             {o.canReceive && <Button size="sm" onClick={() => setDialog('receive')}><PackageCheck className="size-4" />{t('retail.recordDelivery')}</Button>}
             {o.canPay && <Button variant="outline" size="sm" onClick={() => setDialog('pay')}><Wallet className="size-4" />{t('retail.recordPayment')}</Button>}

@@ -134,7 +134,7 @@ export default function TaskPage() {
           <Attachments org={slug} taskId={task.id} files={attachments} canEdit={canEdit} />
 
           <Tabs defaultValue="comments">
-            <TabsList><TabsTrigger value="comments">{t('tasks.commentsTab', { count: task.comments })}</TabsTrigger><TabsTrigger value="activity">{t('tasks.activity')}</TabsTrigger></TabsList>
+            <TabsList variant="line"><TabsTrigger value="comments">{t('tasks.commentsTab', { count: task.comments })}</TabsTrigger><TabsTrigger value="activity">{t('tasks.activity')}</TabsTrigger></TabsList>
             <TabsContent value="comments" className="pt-3"><Comments org={slug} taskId={task.id} canComment={data.canComment !== false} hideHeading /></TabsContent>
             <TabsContent value="activity" className="pt-3">
               {activity.error ? <ErrorState error={activity.error} retry={() => activity.refetch()} /> : activity.isPending ? <ListSkeleton rows={3} /> : <ActivityTimeline items={activity.data} />}

@@ -71,16 +71,19 @@ function ProjectPage() {
             {p.lead && <span>· {t('projects.leadName', { name: p.lead.name })}</span>}
           </div>
         </div>
-        {p.canEdit && <Button size="sm" onClick={() => setNewIn('TODO')}><Plus className="size-4" />{t('tasks.newTask')}</Button>}
+        <div className="flex items-center gap-2">
+          <Button variant={view === 'settings' ? 'secondary' : 'outline'} size="icon" className="size-8" aria-label={t('projects.settings')} title={t('projects.settings')}
+            aria-pressed={view === 'settings'} onClick={() => setView(view === 'settings' ? 'board' : 'settings')}><Settings className="size-4" /></Button>
+          {p.canEdit && <Button size="sm" onClick={() => setNewIn('TODO')}><Plus className="size-4" />{t('tasks.newTask')}</Button>}
+        </div>
       </div>
 
       <ArchivedBanner org={slug} project={p} />
       <Tabs value={view} onValueChange={setView}>
-        <TabsList className="mb-4">
+        <TabsList variant="line" className="mb-4">
           <TabsTrigger value="board"><Columns3 className="size-4" />{t('projects.board')}</TabsTrigger>
           <TabsTrigger value="list"><List className="size-4" />{t('projects.list')}</TabsTrigger>
           <TabsTrigger value="members"><Users className="size-4" />{t('projects.members')}</TabsTrigger>
-          <TabsTrigger value="settings"><Settings className="size-4" />{t('projects.settings')}</TabsTrigger>
         </TabsList>
 
         {(view === 'board' || view === 'list') && (

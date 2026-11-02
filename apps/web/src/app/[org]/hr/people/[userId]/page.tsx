@@ -44,7 +44,7 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-4xl">
       <nav aria-label={t('hr.breadcrumb')} className="mb-3 flex items-center gap-1 text-sm text-muted-foreground">
-        <Link href={`/${slug}/hr/people`} className="hover:text-foreground">{t('hr.navPeople')}</Link><ChevronRight className="size-3.5" /><span className="truncate">{p.person.name}</span>
+        <Link href={`/${slug}/teams`} className="hover:text-foreground">{t('shell.navPeople')}</Link><ChevronRight className="size-3.5" /><span className="truncate">{p.person.name}</span>
       </nav>
       <div className="mb-6 flex flex-wrap items-center gap-4">
         <PersonAvatar person={p.person} className="size-14 text-base" />

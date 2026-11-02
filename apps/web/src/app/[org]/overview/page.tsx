@@ -1,12 +1,15 @@
 'use client';
 
 import { parseISO } from 'date-fns';
-import { AlertTriangle, BadgeCheck, CalendarDays, CheckSquare, Clock, FolderKanban, Plus, UserPlus } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BadgeCheck, CalendarDays, CheckSquare, Clock, FolderKanban, Plus, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { ApprovalBadge } from '@/components/common/badges';
 import { PageHeader } from '@/components/common/page-header';
+import { PersonAvatar } from '@/components/common/person';
+import { VirtualBizMark } from '@/components/common/virtualbiz-mark';
+import { MODULE_ICON, moduleHref, moduleName } from '@/components/shell/nav';
 import { EmptyState, ErrorState } from '@/components/common/states';
 import { ActivityTimeline } from '@/components/tasks/activity';
 import { DueDate, TaskRow } from '@/components/tasks/task-row';
@@ -15,9 +18,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useT } from '@/i18n/provider';
-import { useOverview } from '@/lib/api/queries';
+import { useAbsences } from '@/lib/api/hr';
+import { useMembers, useOverview } from '@/lib/api/queries';
 import { useSession } from '@/lib/auth/session';
-import { ago, fmt } from '@/lib/format';
+import { ago, day, fmt } from '@/lib/format';
 import { useOrg } from '@/lib/org-context';
 import { cn } from '@/lib/utils';
 
@@ -42,9 +46,101 @@ function Panel({ title, action, children, className }: { title: string; action?:
   );
 }
 
+/** A quiet one-line "nothing here" inside a panel, instead of a big empty box. */
+function Quiet({ icon: Icon, children, action }: { icon: typeof Clock; children: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center gap-3 px-4 py-5 text-sm text-muted-foreground">
+      <span className="grid size-8 shrink-0 place-items-center rounded-full bg-muted"><Icon className="size-4" aria-hidden /></span>
+      <span className="min-w-0 flex-1">{children}</span>
+      {action}
+    </div>
+  );
+}
+
+const linkClass = 'text-xs font-medium text-primary hover:underline';
+const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+/** The apps this organisation uses, each a door to its home. */
+function Apps({ slug }: { slug: string }) {
+  const { modules } = useOrg();
+  const { t } = useT();
+  const apps = modules.filter((m) => m.kind === 'INDUSTRY' && m.enabled);
+  if (apps.length === 0) return null;
+  return (
+    <Panel title={t('overview.yourApps')}>
+      <ul className="grid gap-px bg-border sm:grid-cols-2">
+        {apps.map((m, n) => {
+          const Icon = MODULE_ICON[m.key] ?? MODULE_ICON.business;
+          return (
+            <li key={m.key} className={cn('bg-card', n === apps.length - 1 && apps.length % 2 === 1 && 'sm:col-span-2')}>
+              <Link href={`/${slug}/${moduleHref(m.key)}`} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-muted/50">
+                {Icon === VirtualBizMark ? <VirtualBizMark className="size-9 shrink-0" aria-hidden />
+                  : <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="size-[18px]" aria-hidden /></span>}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium">{moduleName(m)}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{t(`overview.app_${m.key}` as 'overview.app_business')}</span>
+                </span>
+                <ArrowRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
+  );
+}
+
+/** Who is on leave today (with HR). */
+function OutToday({ slug }: { slug: string }) {
+  const { t } = useT();
+  const today = isoDay(new Date());
+  const { data } = useAbsences(slug, today, today);
+  return (
+    <Panel title={t('overview.outToday')} action={<Link href={`/${slug}/calendar`} className={linkClass}>{t('overview.calendar')}</Link>}>
+      {!data ? <div className="p-4"><Skeleton className="h-8" /></div> : data.length === 0 ? <p className="px-4 py-5 text-sm text-muted-foreground">{t('overview.everyoneIn')}</p> : (
+        <ul className="divide-y">
+          {data.slice(0, 6).map((a) => (
+            <li key={a.leaveId} className="flex items-center gap-3 px-4 py-2.5">
+              <PersonAvatar person={a.person} className="size-7" />
+              <span className="min-w-0 flex-1 truncate text-sm">{a.person.name}</span>
+              <span className="text-xs text-muted-foreground tabular">{a.endDate === today ? t('overview.backTomorrow') : t('overview.backAfter', { date: day(a.endDate) })}</span>
+            </li>
+          ))}
+          {data.length > 6 && <li className="px-4 py-2 text-xs text-muted-foreground">{t('overview.andMore', { count: data.length - 6 })}</li>}
+        </ul>
+      )}
+    </Panel>
+  );
+}
+
+/** People who joined in the last 30 days. */
+function NewPeople({ slug }: { slug: string }) {
+  const { t } = useT();
+  const { data } = useMembers(slug);
+  const since = Date.now() - 30 * 86_400_000;
+  const fresh = (data ?? []).filter((m) => m.status === 'ACTIVE' && new Date(m.joinedAt).getTime() >= since)
+    .sort((a, b) => b.joinedAt.localeCompare(a.joinedAt));
+  if (!data || fresh.length === 0) return null;
+  return (
+    <Panel title={t('overview.newPeople')} action={<Link href={`/${slug}/teams`} className={linkClass}>{t('overview.people')}</Link>}>
+      <div className="px-4 py-3.5">
+        <div className="flex -space-x-2">
+          {fresh.slice(0, 8).map((m) => <PersonAvatar key={m.membershipId} person={m} className="size-8 ring-2 ring-card" />)}
+        </div>
+        <p className="mt-2.5 text-sm text-muted-foreground">
+          {fresh.length > 2
+            ? t('overview.joinedRecently', { names: fresh.slice(0, 2).map((m) => m.name).join(', '), count: fresh.length - 2 })
+            : t('overview.joinedOnly', { names: fresh.map((m) => m.name).join(', ') })}
+        </p>
+      </div>
+    </Panel>
+  );
+}
+
 export default function OverviewPage() {
-  const { slug, can } = useOrg();
+  const { slug, can, modules } = useOrg();
   const { user } = useSession();
+  const hrOn = modules.some((m) => m.key === 'hr' && m.enabled);
   const { data, error, isPending, refetch } = useOverview(slug);
   const { t } = useT();
   const first = user?.name.split(' ')[0];
@@ -74,13 +170,16 @@ export default function OverviewPage() {
             <div className="space-y-6">
               <Panel title={t('overview.myTasks')} action={<Link href={`/${slug}/my-tasks`} className="text-xs font-medium text-primary hover:underline">{t('overview.viewAll')}</Link>}>
                 {!data.projectsEnabled ? <EmptyState className="m-4" icon={FolderKanban} title={t('overview.projectsOff')} body={t('overview.projectsOffBody')} />
-                  : data.myTasks.length === 0 ? <EmptyState className="m-4 border-0" icon={CheckSquare} title={t('overview.nothingAssigned')} body={t('overview.nothingAssignedBody')} />
+                  : data.myTasks.length === 0 ? <Quiet icon={CheckSquare}><span className="block font-medium text-foreground">{t('overview.nothingAssigned')}</span>{t('overview.nothingAssignedBody')}</Quiet>
                   : <div>{data.myTasks.map((t) => <TaskRow key={t.id} org={slug} task={t} />)}</div>}
               </Panel>
+              <Apps slug={slug} />
               <Panel title={t('overview.projectProgress')} action={<Link href={`/${slug}/projects`} className="text-xs font-medium text-primary hover:underline">{t('overview.allProjects')}</Link>}>
                 {data.projects.length === 0 ? (
-                  <EmptyState className="m-4 border-0" icon={FolderKanban} title={t('overview.noProjects')} body={t('overview.noProjectsBody')}
-                    action={can('projects.create') ? <Button size="sm" asChild><Link href={`/${slug}/projects?new=1`}>{t('overview.createProject')}</Link></Button> : undefined} />
+                  <Quiet icon={FolderKanban}
+                    action={can('projects.create') ? <Button size="sm" variant="outline" asChild><Link href={`/${slug}/projects?new=1`}>{t('overview.createProject')}</Link></Button> : undefined}>
+                    <span className="block font-medium text-foreground">{t('overview.noProjects')}</span>{t('overview.noProjectsBody')}
+                  </Quiet>
                 ) : (
                   <ul className="divide-y">
                     {data.projects.map((p) => (
@@ -109,6 +208,8 @@ export default function OverviewPage() {
                   </ul>
                 )}
               </Panel>
+              {hrOn && <OutToday slug={slug} />}
+              <NewPeople slug={slug} />
               <Panel title={t('overview.comingUp')} action={<Link href={`/${slug}/calendar`} className="text-xs font-medium text-primary hover:underline">{t('overview.calendar')}</Link>}>
                 {data.deadlines.length === 0 && data.events.length === 0 ? <p className="px-4 py-6 text-sm text-muted-foreground">{t('overview.nothingComing')}</p> : (
                   <ul className="divide-y">
@@ -129,7 +230,7 @@ export default function OverviewPage() {
                   </ul>
                 )}
               </Panel>
-              <Panel title={t('overview.recentActivity')}><div className="px-4 py-4 pl-8"><ActivityTimeline items={data.activity} empty={t('overview.activityEmpty')} /></div></Panel>
+              {data.activity.length > 0 && <Panel title={t('overview.recentActivity')}><div className="px-4 py-4 pl-8"><ActivityTimeline items={data.activity} empty={t('overview.activityEmpty')} /></div></Panel>}
             </div>
           </div>
         </div>

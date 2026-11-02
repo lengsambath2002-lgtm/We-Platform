@@ -179,7 +179,7 @@ function FeesPage() {
     <>
       <PageHeader title={t('education.feesTitle')} subtitle={t('education.feesSubtitle')} />
       <Tabs value={tab} onValueChange={(v) => router.replace(`/${slug}/education/fees${v === 'items' ? '?tab=items' : ''}`)} className="mb-4">
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="invoices">{t('education.invoices')}</TabsTrigger>
           <TabsTrigger value="items">{t('education.feeItems')}</TabsTrigger>
         </TabsList>

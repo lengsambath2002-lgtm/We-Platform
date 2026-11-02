@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { VirtualBizMark } from '@/components/common/virtualbiz-mark';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton, PermissionDenied } from '@/components/common/states';
 import {
@@ -99,7 +100,7 @@ export default function RetailPage() {
               <ul className="divide-y rounded-lg border bg-card">
                 {data!.shops.map((s) => (
                   <li key={s.businessId} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                    <span className="grid size-10 shrink-0 place-items-center rounded-md bg-primary/10 text-primary"><Store className="size-5" aria-hidden /></span>
+                    <VirtualBizMark className="size-10 shrink-0" aria-hidden />
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-medium">{s.businessName}</p>
                       <p className="text-xs text-muted-foreground">

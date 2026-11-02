@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Blocks, Check, ChevronsUpDown, Languages, LogOut, Menu, Monitor, Moon, Plus, Search, ShieldCheck, Sun, UserRound } from 'lucide-react';
+import { Bell, Blocks, Check, ChevronsUpDown, LogOut, Menu, Monitor, Moon, Plus, Search, ShieldCheck, Sun, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
@@ -21,8 +21,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -244,6 +242,29 @@ function Notifications({ org }: { org: string }) {
   );
 }
 
+/** One choice in a compact segmented row inside the account menu; choosing keeps the menu open. */
+function MenuChoice({ on, label, onPick, children }: { on: boolean; label: string; onPick: () => void; children: React.ReactNode }) {
+  return (
+    <DropdownMenuItem role="menuitemradio" aria-checked={on} aria-label={label} title={label}
+      onSelect={(e) => { e.preventDefault(); onPick(); }}
+      className={cn('h-7 flex-1 justify-center gap-1.5 rounded-md px-2 text-xs text-muted-foreground focus:text-foreground',
+        on && 'bg-background text-foreground shadow-xs focus:bg-background')}>
+      {children}
+    </DropdownMenuItem>
+  );
+}
+
+/** A labelled row with a segmented control on the right (theme, language). */
+function MenuRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-2 py-1.5">
+      <span className="text-sm text-foreground/80">{label}</span>
+      <div role="group" aria-label={label} className="flex w-36 items-center gap-0.5 rounded-lg bg-muted p-0.5">{children}</div>
+    </div>
+  );
+}
+
+/** The account menu: who you are, your account and (for super admins) the console, theme, language, sign out. */
 function UserMenu() {
   const { t, locale } = useT();
   const { user, signOut } = useSession();
@@ -251,6 +272,11 @@ function UserMenu() {
   const changeLocale = useChangeLocale();
   const router = useRouter();
   if (!user) return null;
+  const themes = [
+    { value: 'system', label: t('shell.themeDevice'), icon: Monitor },
+    { value: 'light', label: t('shell.themeLight'), icon: Sun },
+    { value: 'dark', label: t('shell.themeDark'), icon: Moon },
+  ];
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -258,33 +284,37 @@ function UserMenu() {
           <PersonAvatar person={user} className="size-8" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="font-normal">
-          <p className="truncate text-sm font-medium">{user.name}</p>
-          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-        </DropdownMenuLabel>
+      <DropdownMenuContent align="end" sideOffset={8} className="w-72 rounded-xl p-1.5">
+        <div className="flex items-center gap-3 px-2 pt-1.5 pb-2.5">
+          <PersonAvatar person={user} className="size-10 text-sm" />
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-sm font-semibold">{user.name}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{user.email}</p>
+          </div>
+        </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => router.push('/account')}><UserRound className="size-4" /> {t('shell.account')}</DropdownMenuItem>
+        <DropdownMenuItem className="h-9 gap-2.5" onSelect={() => router.push('/account')}><UserRound className="size-4" />{t('shell.account')}</DropdownMenuItem>
         {user.superAdmin && (
-          <DropdownMenuItem onSelect={() => router.push('/admin')}><ShieldCheck className="size-4" /> {t('shell.platformAdmin')}</DropdownMenuItem>
+          <DropdownMenuItem className="h-9 gap-2.5" onSelect={() => router.push('/admin')}>
+            <ShieldCheck className="size-4" />{t('shell.platformAdmin')}
+          </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs text-muted-foreground">{t('shell.theme')}</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
-          <DropdownMenuRadioItem value="system"><Monitor className="size-4" /> {t('shell.themeDevice')}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="light"><Sun className="size-4" /> {t('shell.themeLight')}</DropdownMenuRadioItem>
-          <DropdownMenuRadioItem value="dark"><Moon className="size-4" /> {t('shell.themeDark')}</DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs text-muted-foreground">{t('common.language')}</DropdownMenuLabel>
-        <DropdownMenuRadioGroup value={locale} onValueChange={(v) => void changeLocale(toLocale(v))}>
-          {LOCALES.map((l) => (
-            <DropdownMenuRadioItem key={l} value={l} lang={l}><Languages className="size-4" /> {LOCALE_NAME[l]}</DropdownMenuRadioItem>
+        <MenuRow label={t('shell.theme')}>
+          {themes.map((x) => (
+            <MenuChoice key={x.value} on={theme === x.value} label={x.label} onPick={() => setTheme(x.value)}><x.icon className="size-3.5" /></MenuChoice>
           ))}
-        </DropdownMenuRadioGroup>
+        </MenuRow>
+        <MenuRow label={t('common.language')}>
+          {LOCALES.map((l) => (
+            <MenuChoice key={l} on={locale === l} label={LOCALE_NAME[l]} onPick={() => void changeLocale(toLocale(l))}>
+              <span lang={l}>{l === 'en' ? 'EN' : LOCALE_NAME[l]}</span>
+            </MenuChoice>
+          ))}
+        </MenuRow>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={async () => { await signOut(); router.replace('/sign-in'); }}>
-          <LogOut className="size-4" /> {t('shell.signOut')}
+        <DropdownMenuItem className="h-9 gap-2.5" onSelect={async () => { await signOut(); router.replace('/sign-in'); }}>
+          <LogOut className="size-4" />{t('shell.signOut')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -1,6 +1,6 @@
 'use client';
 
-import { Archive, ArchiveRestore, FilePlus2, Pencil } from 'lucide-react';
+import { Archive, ArchiveRestore, FilePlus2, Pencil, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
@@ -20,7 +20,7 @@ import { useOrg } from '@/lib/org-context';
 
 /** One customer: details, what they owe, and their quotes and invoices. */
 export default function CustomerPage() {
-  const { slug } = useOrg();
+  const { slug, can, modules } = useOrg();
   const { t } = useT();
   const { id } = useParams<{ id: string }>();
   const { data, error, isPending, refetch } = useCustomer(slug, id);
@@ -42,6 +42,10 @@ export default function CustomerPage() {
         <div className="flex flex-wrap gap-2">
           {!c.archived && <Button size="sm" asChild><Link href={`${base}/invoices/new?customer=${c.id}`}><FilePlus2 className="size-4" />{t('business.newInvoice')}</Link></Button>}
           <Button size="sm" variant="outline" onClick={() => setEditing(true)}><Pencil className="size-4" />{t('common.edit')}</Button>
+          {/* The same customer in Service & Operations: its sites, assets, tickets and work orders. */}
+          {modules.some((m) => m.key === 'service' && m.enabled) && can('service.manage') && (
+            <Button size="sm" variant="outline" asChild><Link href={`/${slug}/service/customers/${c.id}`}><Wrench className="size-4" />{t('business.serviceRecords')}</Link></Button>
+          )}
           {data.canArchive && (
             <Button size="sm" variant="outline" disabled={archive.isPending} onClick={async () => {
               try { await archive.mutateAsync(!c.archived); toast.success(t(c.archived ? 'business.restored' : 'business.archivedDone')); } catch (e) { toast.error(errorMessage(e)); }

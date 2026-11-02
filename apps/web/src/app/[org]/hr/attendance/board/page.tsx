@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
+import { AttendanceTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { PersonAvatar } from '@/components/common/person';
 import { EmptyState, ErrorState, ListSkeleton, PermissionDenied } from '@/components/common/states';
@@ -33,6 +34,7 @@ function Board() {
 
   return (
     <>
+      <AttendanceTabs />
       <PageHeader title={t('hr.boardTitle')} subtitle={data ? t('hr.boardSummary', {
         present: count(['PRESENT', 'LATE']), late: count(['LATE']), absent: count(['ABSENT']), leave: count(['LEAVE']),
       }) : t('hr.boardSubtitle')} />

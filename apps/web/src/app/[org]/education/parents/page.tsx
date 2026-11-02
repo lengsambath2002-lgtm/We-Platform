@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { GuardianDialog } from '@/components/education/people-dialogs';
 import { Pager, studentName } from '@/components/education/ui';
+import { StudentsTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState, ListSkeleton } from '@/components/common/states';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ export default function Parents() {
 
   return (
     <>
+      <StudentsTabs />
       <PageHeader title={t('education.parentsTitle')} subtitle={data ? t('education.count', { count: data.total }) : t('education.parentsSubtitle')}
         actions={manage && <Button size="sm" onClick={() => setEditing('new')}><Plus className="size-4" />{t('education.newGuardian')}</Button>} />
       <div className="mb-4 space-y-1 sm:w-80">

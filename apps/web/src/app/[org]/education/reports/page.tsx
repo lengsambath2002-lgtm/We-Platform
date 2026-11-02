@@ -4,6 +4,7 @@ import { BarChart3 } from 'lucide-react';
 import { useState } from 'react';
 
 import { pct } from '@/components/education/ui';
+import { ReportsTabs } from '@/components/common/merged-tabs';
 import { PageHeader } from '@/components/common/page-header';
 import { EmptyState, ErrorState } from '@/components/common/states';
 import { ReportCard, ReportSkeleton, ReportTable, downloadCsv } from '@/components/reports/report-kit';
@@ -29,6 +30,7 @@ export default function Reports() {
 
   return (
     <>
+      <ReportsTabs />
       <PageHeader title={t('education.reportsTitle')} subtitle={t('education.reportsSubtitle')} />
       <div className="mb-6 grid grid-cols-2 gap-3 sm:flex sm:items-end">
         <div className="space-y-1">
