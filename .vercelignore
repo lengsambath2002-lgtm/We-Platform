@@ -1,0 +1,7 @@
+# The Vercel project builds only apps/web (its root directory); the API runs on Render.
+apps/api
+apps/web/node_modules
+apps/web/.next
+apps/web/test-results
+apps/web/playwright-report
+ops
