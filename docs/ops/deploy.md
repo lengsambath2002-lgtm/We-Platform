@@ -7,8 +7,8 @@ on Vercel and forwards `/api/*` to the API, so the sign-in cookie stays on the w
 
 1. render.com → **New → Blueprint** → connect GitHub → `lengsambath2002-lgtm/We-Platform` → `render.yaml`.
 2. Render asks for the `sync: false` values:
-   - `PLATFORM_APP_URL`: the web app's address, e.g. `https://we-platform.vercel.app` (pick the Vercel project name
-     now and use it in step 2; it must start with `https://`, or the API refuses to start in production).
+   - `PLATFORM_APP_URL`: `https://we-platform-gold.vercel.app` (the web app; it must start with `https://`, or the API
+     refuses to start in production).
    - `PLATFORM_SUPER_ADMINS`: your email.
    - Mail: `smtp.gmail.com`, `587`, the Gmail address, its app password, `Business Platform <that address>`;
      `PLATFORM_MAIL_ONLY_TO` empty to email everyone.
@@ -17,6 +17,9 @@ on Vercel and forwards `/api/*` to the API, so the sign-in cookie stays on the w
 
 ## 2. Vercel: web app
 
+Done: project **we-platform** in *lengsambath2002-lgtm's projects*, production at
+**https://we-platform-gold.vercel.app**, deployed from `main` on every push. To recreate it:
+
 1. vercel.com → **Add New → Project** → import `We-Platform`.
 2. **Root Directory**: `apps/web`. Framework: Next.js (found by itself).
 3. **Environment Variables** (Production and Preview):
@@ -24,11 +27,13 @@ on Vercel and forwards `/api/*` to the API, so the sign-in cookie stays on the w
    | Name | Value |
    | --- | --- |
    | `API_URL` | the Render address from step 1, without a trailing `/` |
-   | `ENABLE_EXPERIMENTAL_COREPACK` | `1` (builds with the pnpm version in `package.json`) |
+   | `ENABLE_EXPERIMENTAL_COREPACK` | `1` |
    | `NEXT_PUBLIC_FIREBASE_API_KEY`, `…_AUTH_DOMAIN`, `…_PROJECT_ID`, `…_APP_ID` | as in `docs/ops/firebase.md` |
    | `NEXT_PUBLIC_LEGAL_NAME`, `…_ADDRESS`, `…_EMAIL` | who runs the service (Terms and Privacy pages) |
 
-4. Deploy. If the address Vercel gives differs from `PLATFORM_APP_URL`, change it on Render (Environment) and
+4. **Install / Build Command**: `npx --yes pnpm@11.20.0 install --frozen-lockfile` and `npx --yes pnpm@11.20.0 build`
+   (the `packageManager` field is in `apps/web`, not the repository root, so Vercel doesn't find it); Node 22.
+5. Deploy. If the address Vercel gives differs from `PLATFORM_APP_URL`, change it on Render (Environment) and
    Render redeploys.
 
 ## 3. After the first deploy
