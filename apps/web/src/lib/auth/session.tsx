@@ -12,6 +12,8 @@ interface SessionState {
   ready: boolean;
   /** Resolves to the two-step challenge when a code is still needed, else null (signed in). */
   signIn: (email: string, password: string) => Promise<string | null>;
+  /** Google through Firebase: like signIn, with the Firebase ID token. */
+  signInWithGoogle: (idToken: string) => Promise<string | null>;
   /** The second step: the challenge and a code from the app (or a recovery code). */
   completeTwoStep: (challenge: string, code: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
@@ -58,6 +60,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       startSession: start,
       signIn: async (email, password) => {
         const s = await http.post<Session>('/auth/sign-in', { email, password });
+        if (s.twoStep) return s.twoStep;
+        start(s);
+        return null;
+      },
+      signInWithGoogle: async (idToken) => {
+        const s = await http.post<Session>('/auth/firebase', { idToken });
         if (s.twoStep) return s.twoStep;
         start(s);
         return null;

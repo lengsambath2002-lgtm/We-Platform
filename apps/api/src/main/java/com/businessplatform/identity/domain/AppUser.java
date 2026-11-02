@@ -72,6 +72,10 @@ public class AppUser {
     @Column(name = "email_verified_at")
     private Instant emailVerifiedAt;
 
+    /** The Firebase user (sign-in with Google) this account is linked to. */
+    @Column(name = "firebase_uid", length = 128, unique = true)
+    private String firebaseUid;
+
     /** The Terms of Service and Privacy Policy version accepted at sign-up (the web app's LEGAL_VERSION). */
     @Column(name = "terms_version", length = 20)
     private String termsVersion;

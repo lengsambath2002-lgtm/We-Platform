@@ -16,6 +16,7 @@ import com.businessplatform.identity.payload.AccountPayloads.ForgotPasswordReque
 import com.businessplatform.identity.payload.AccountPayloads.ResetPasswordRequest;
 import com.businessplatform.identity.payload.AccountPayloads.ResetTokenRequest;
 import com.businessplatform.identity.payload.AccountPayloads.ResetTokenState;
+import com.businessplatform.identity.payload.AuthPayloads.FirebaseRequest;
 import com.businessplatform.identity.payload.AuthPayloads.SessionResponse;
 import com.businessplatform.identity.payload.AuthPayloads.SignInRequest;
 import com.businessplatform.identity.payload.AuthPayloads.SignUpRequest;
@@ -58,6 +59,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<SessionResponse>> signIn(@Valid @RequestBody SignInRequest in,
             HttpServletRequest http, @RequestHeader(value = "X-Client", required = false) String client) {
         return session(auth.signIn(in.email(), in.password(), ua(http), ip(http)), client);
+    }
+
+    /** Sign-in with Google: the Firebase ID token from the web app's Google popup. */
+    @PostMapping("/firebase")
+    public ResponseEntity<ApiResponse<SessionResponse>> firebase(@Valid @RequestBody FirebaseRequest in,
+            HttpServletRequest http, @RequestHeader(value = "X-Client", required = false) String client) {
+        return session(auth.signInWithFirebase(in.idToken(), ua(http), ip(http)), client);
     }
 
     @PostMapping("/refresh")
