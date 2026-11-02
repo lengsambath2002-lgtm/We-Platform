@@ -48,6 +48,8 @@ public class AuthService {
     private final SuperAdmins superAdmins;
     private final EmailVerificationService verification;
     private final TwoStepChallenges twoStep;
+    @org.springframework.beans.factory.annotation.Value("${platform.legal-version:2026-11-02}")
+    private String legalVersion;
     private final Clock clock;
 
     @Transactional
@@ -64,6 +66,9 @@ public class AuthService {
         u.setPasswordHash(encoder.encode(password));
         u.setLocale(Messages.requestLanguage());
         u.setSuperAdmin(superAdmins.listed(email));
+        // Sign-up shows "By creating an account you agree to the Terms and the Privacy Policy".
+        u.setTermsVersion(legalVersion);
+        u.setTermsAcceptedAt(clock.instant());
         users.save(u);
         verification.send(u);
         return start(u, userAgent, ip);

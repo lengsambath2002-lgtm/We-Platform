@@ -182,6 +182,13 @@ memberships are suspended, not deleted, because deleting one cascades to the HR 
 table with `org_id` plus tables whose rows belong to one by a foreign key, so new modules are included without changes.
 Also `people.csv` and the uploaded files. Columns named like hash, secret, token or password are left out.
 
+### Terms, privacy and backups (built)
+
+`/terms` and `/privacy` in English and Khmer, linked from every sign-in page; sign-up records the accepted version
+(`app_user.terms_version`). See `docs/ops/legal.md` (to be reviewed by a lawyer). Daily backups of the database and
+uploaded files with checksums and 30-day retention (`ops/backup/backup.sh`, the `backup` service in
+docker-compose), a checked restore (`ops/backup/restore.sh`) and a drill: `docs/ops/backups.md`.
+
 ### Invoices and payment (built)
 
 `billing_invoice` (`PlatformInvoice`, `PlatformInvoiceService`): choosing a paid plan, and each renewal, issues an

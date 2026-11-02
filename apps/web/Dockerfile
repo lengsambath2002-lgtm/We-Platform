@@ -11,6 +11,9 @@ RUN corepack enable
 # The API address is compiled into the /api rewrite.
 ARG API_URL=http://api:8280
 ENV API_URL=$API_URL NEXT_TELEMETRY_DISABLED=1
+# Who runs the service, on the Terms of Service and Privacy Policy pages (compiled in).
+ARG NEXT_PUBLIC_LEGAL_NAME="" NEXT_PUBLIC_LEGAL_ADDRESS="" NEXT_PUBLIC_LEGAL_EMAIL=""
+ENV NEXT_PUBLIC_LEGAL_NAME=$NEXT_PUBLIC_LEGAL_NAME NEXT_PUBLIC_LEGAL_ADDRESS=$NEXT_PUBLIC_LEGAL_ADDRESS NEXT_PUBLIC_LEGAL_EMAIL=$NEXT_PUBLIC_LEGAL_EMAIL
 COPY --from=deps /app/node_modules node_modules
 COPY . .
 RUN pnpm build

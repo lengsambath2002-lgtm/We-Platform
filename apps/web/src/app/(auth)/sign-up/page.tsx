@@ -68,6 +68,9 @@ function SignUp() {
                 <FormMessage />
               </FormItem>
             )} />
+            <p className="text-xs text-muted-foreground">
+              {t('auth.agreePre')} <Link href="/terms" target="_blank" className="font-medium text-primary hover:underline">{t('auth.terms')}</Link> {t('auth.agreeAnd')} <Link href="/privacy" target="_blank" className="font-medium text-primary hover:underline">{t('auth.privacy')}</Link>{t('auth.agreePost')}
+            </p>
             <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? t('common.creating') : t('auth.createAccount')}
             </Button>

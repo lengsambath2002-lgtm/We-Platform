@@ -35,6 +35,8 @@ platform:
   files:
     dir: ${PLATFORM_FILES_DIR:./data/files}
   app-url: ${PLATFORM_APP_URL:http://localhost:3300}
+  # The Terms of Service / Privacy Policy version recorded at sign-up; keep it equal to the web app's LEGAL_VERSION.
+  legal-version: ${PLATFORM_LEGAL_VERSION:2026-11-02}
   # Emails (comma-separated) that become super admins (the platform console at /admin) on sign-up or start-up.
   super-admins: ${PLATFORM_SUPER_ADMINS:}
   # Email (invitations, password resets). Without a host, emails are only logged.
