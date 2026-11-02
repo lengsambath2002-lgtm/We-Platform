@@ -73,6 +73,11 @@ export const en = {
   agreePost: '.',
   legalUpdated: 'In effect from {date}',
   legalNav: 'Legal',
+  or: 'or',
+  continueGoogle: 'Continue with Google',
+  googleBlocked: 'The browser blocked the Google window. Allow pop-ups for this site and try again.',
+  googleUnavailable: 'Google sign-in isn’t available right now. Use your email and password.',
+  googleUseSignIn: 'This account uses two-step sign-in. Sign in from the Sign in page.',
 };
 
 export const km: Record<keyof typeof en, string> = {
@@ -144,4 +149,9 @@ export const km: Record<keyof typeof en, string> = {
   agreePost: '។',
   legalUpdated: 'ចូលជាធរមានចាប់ពី {date}',
   legalNav: 'ផ្លូវច្បាប់',
+  or: 'ឬ',
+  continueGoogle: 'បន្តជាមួយ Google',
+  googleBlocked: 'កម្មវិធីរុករកបានរារាំងផ្ទាំង Google។ សូមអនុញ្ញាតផ្ទាំងលោតសម្រាប់គេហទំព័រនេះ ហើយព្យាយាមម្ដងទៀត។',
+  googleUnavailable: 'ការចូលជាមួយ Google មិនអាចប្រើបានឥឡូវនេះទេ។ សូមប្រើអ៊ីមែល និងពាក្យសម្ងាត់របស់អ្នក។',
+  googleUseSignIn: 'គណនីនេះប្រើការចូលពីរជំហាន។ សូមចូលពីទំព័រចូលគណនី។',
 };

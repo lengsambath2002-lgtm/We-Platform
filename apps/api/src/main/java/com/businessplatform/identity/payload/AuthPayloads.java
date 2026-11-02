@@ -18,6 +18,9 @@ public final class AuthPayloads {
             @NotBlank @Size(min = 10, max = 128) String password) {
     }
 
+    public record FirebaseRequest(@NotBlank @Size(max = 4096) String idToken) {
+    }
+
     public record SignInRequest(@NotBlank @Email String email, @NotBlank String password) {
     }
 

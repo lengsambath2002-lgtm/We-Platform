@@ -7,6 +7,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { GoogleButton } from '@/components/account/google-button';
 import { applyServerErrors } from '@/components/forms/server-errors';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -121,6 +122,7 @@ function SignIn() {
             </Button>
           </form>
         </Form>
+        <GoogleButton onChallenge={setChallenge} onError={setError} />
         <p className="mt-6 text-center text-sm text-muted-foreground">
           {t('auth.newHere')} <Link className="font-medium text-primary hover:underline" href={`/sign-up${next ? `?next=${encodeURIComponent(next)}` : ''}`}>{t('auth.createAnAccount')}</Link>
         </p>

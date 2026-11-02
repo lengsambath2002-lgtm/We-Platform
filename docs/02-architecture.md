@@ -182,6 +182,13 @@ memberships are suspended, not deleted, because deleting one cascades to the HR 
 table with `org_id` plus tables whose rows belong to one by a foreign key, so new modules are included without changes.
 Also `people.csv` and the uploaded files. Columns named like hash, secret, token or password are left out.
 
+### Sign-in with Google (built)
+
+"Continue with Google" through Firebase Authentication, in VirtualBiz's Firebase project `virtaulbiz`
+(`POST /api/auth/firebase`): the API verifies the Firebase ID token with Google's public keys, then signs in the
+account with that email (linking `firebase_uid`) or creates one; two-step sign-in still applies. Passwords stay in
+Business Platform. See `docs/ops/firebase.md`.
+
 ### Terms, privacy and backups (built)
 
 `/terms` and `/privacy` in English and Khmer, linked from every sign-in page; sign-up records the accepted version

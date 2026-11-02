@@ -48,6 +48,7 @@ public class AuthService {
     private final SuperAdmins superAdmins;
     private final EmailVerificationService verification;
     private final TwoStepChallenges twoStep;
+    private final FirebaseTokens firebase;
     @org.springframework.beans.factory.annotation.Value("${platform.legal-version:2026-11-02}")
     private String legalVersion;
     private final Clock clock;
@@ -94,6 +95,52 @@ public class AuthService {
         u.setFailedLogins((short) 0);
         u.setLockedUntil(null);
         // Only after the right password, so a disabled account isn't revealed to someone guessing.
+        if (u.isDisabled()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
+        }
+        if (u.isTwoStepOn()) {
+            return SessionResponse.challenge(twoStep.issue(u.getId()));
+        }
+        return start(u, userAgent, ip);
+    }
+
+    /**
+     * Sign-in (or sign-up) with Google through Firebase. The token's email must be verified by Google. An account
+     * with that email is linked on first use (Google proved the address); otherwise a new account is made, with no
+     * usable password until the person sets one ("Forgot password"). Two-step sign-in still asks for its code.
+     */
+    @Transactional
+    public SessionResponse signInWithFirebase(String idToken, String userAgent, String ip) {
+        FirebaseTokens.Identity id = firebase.verify(idToken);
+        if (id.email() == null || !id.emailVerified()) {
+            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED, "Google didn't confirm this email address", List.of());
+        }
+        String email = normalise(id.email());
+        AppUser u = users.findByFirebaseUid(id.uid()).orElseGet(() -> users.findByEmail(email).orElse(null));
+        if (u != null && u.getFirebaseUid() != null && !u.getFirebaseUid().equals(id.uid())) {
+            throw new BusinessException(ErrorCode.CONFLICT, "This account is linked to another Google account", List.of());
+        }
+        Instant now = clock.instant();
+        if (u == null) {
+            u = new AppUser();
+            u.setId(Ids.next());
+            u.setEmail(email);
+            u.setName(id.name() == null || id.name().isBlank() ? email.substring(0, email.indexOf('@')) : id.name().strip());
+            u.setPasswordHash(encoder.encode(Tokens.random()));
+            u.setLocale(Messages.requestLanguage());
+            u.setSuperAdmin(superAdmins.listed(email));
+            u.setTermsVersion(legalVersion);
+            u.setTermsAcceptedAt(now);
+        }
+        u.setFirebaseUid(id.uid());
+        if (u.getEmailVerifiedAt() == null) {
+            u.setEmailVerifiedAt(now);
+        }
+        if (u.getAvatarUrl() == null && id.picture() != null && id.picture().startsWith("https://") && id.picture().length() <= 500) {
+            u.setAvatarUrl(id.picture());
+        }
+        u.setFailedLogins((short) 0);
+        users.save(u);
         if (u.isDisabled()) {
             throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
         }

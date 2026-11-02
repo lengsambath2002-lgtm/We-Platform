@@ -35,6 +35,9 @@ platform:
   files:
     dir: ${PLATFORM_FILES_DIR:./data/files}
   app-url: ${PLATFORM_APP_URL:http://localhost:3300}
+  # Sign-in with Google through Firebase Authentication (docs/ops/firebase.md); empty: off.
+  firebase:
+    project-id: ${PLATFORM_FIREBASE_PROJECT_ID:}
   # The Terms of Service / Privacy Policy version recorded at sign-up; keep it equal to the web app's LEGAL_VERSION.
   legal-version: ${PLATFORM_LEGAL_VERSION:2026-11-02}
   # Emails (comma-separated) that become super admins (the platform console at /admin) on sign-up or start-up.

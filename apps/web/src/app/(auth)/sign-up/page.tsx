@@ -7,6 +7,7 @@ import { Suspense, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
+import { GoogleButton } from '@/components/account/google-button';
 import { applyServerErrors } from '@/components/forms/server-errors';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -76,6 +77,8 @@ function SignUp() {
             </Button>
           </form>
         </Form>
+        {/* An existing account with two-step sign-in finishes on the sign-in page. */}
+        <GoogleButton onError={setError} onChallenge={() => setError(t('auth.googleUseSignIn'))} onSignedIn={() => router.replace(next ?? '/')} />
         <p className="mt-6 text-center text-sm text-muted-foreground">
           {t('auth.haveAccount')} <Link className="font-medium text-primary hover:underline" href={`/sign-in${next ? `?next=${encodeURIComponent(next)}` : ''}`}>{t('auth.signIn')}</Link>
         </p>
