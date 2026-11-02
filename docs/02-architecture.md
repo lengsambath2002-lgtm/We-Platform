@@ -168,6 +168,20 @@ password and a code; a super admin can turn it off for someone who lost their ph
 The authenticator secret is encrypted (AES-GCM, `SecretBox`, key derived from `PLATFORM_JWT_SECRET`: changing that
 secret means people set it up again). Not yet: an organisation setting that requires it for every member.
 
+### Delete my account; export a company's data (built)
+
+**Delete my account** (`AccountDeletionService`, `POST /api/me/delete`, account page): password (and a code with
+two-step sign-in on); primary owners and only owners hand over or delete their organisations first
+(`GET /api/me/delete/blockers`). The sign-in is erased (email freed for a new sign-up, password, photo, two-step,
+devices, connected apps, notifications), `app_user.deleted_at` is set and every membership is suspended. As in Slack
+or Google Workspace, organisations keep what they need as the employer (the name on tasks, HR and payroll records);
+memberships are suspended, not deleted, because deleting one cascades to the HR profile.
+
+**Export all data** (`OrgExportService`, `GET /api/orgs/{org}/export`, Settings, Owners only, 3 an hour, audited
+`org.exported`): a streamed ZIP with one CSV per table (UTF-8 with BOM, formula-safe), found from the schema: every
+table with `org_id` plus tables whose rows belong to one by a foreign key, so new modules are included without changes.
+Also `people.csv` and the uploaded files. Columns named like hash, secret, token or password are left out.
+
 ### Invoices and payment (built)
 
 `billing_invoice` (`PlatformInvoice`, `PlatformInvoiceService`): choosing a paid plan, and each renewal, issues an

@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { ConnectedAppsSection } from '@/components/account/connected-apps-section';
+import { DeleteAccountSection } from '@/components/account/delete-account-section';
 import { DevicesSection } from '@/components/account/devices-section';
 import { OrgsSection } from '@/components/account/orgs-section';
 import { PasswordSection } from '@/components/account/password-section';
@@ -93,6 +94,8 @@ function Account() {
         <div><h2 className="text-base font-semibold">{t('account.signOut')}</h2><p className="text-sm text-muted-foreground">{t('account.signOutHint')}</p></div>
         <Button variant="outline" onClick={() => signOut().then(() => { window.location.href = '/sign-in'; })}>{t('account.signOut')}</Button>
       </section>
+
+      <DeleteAccountSection />
     </main>
   );
 }

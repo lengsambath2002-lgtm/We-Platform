@@ -64,7 +64,9 @@ function SignIn() {
   const schema = useMemo(() => makeSchema(t), [t]);
   const { signIn, user, ready } = useSession();
   const router = useRouter();
-  const next = safeNext(useSearchParams().get('next'));
+  const params = useSearchParams();
+  const next = safeNext(params.get('next'));
+  const deleted = params.get('deleted') === '1';
   const [error, setError] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<string | null>(null);
   const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } });
@@ -92,6 +94,7 @@ function SignIn() {
         {!challenge && <CardDescription>{t('auth.welcomeBack')}</CardDescription>}
       </CardHeader>
       <CardContent>
+        {deleted && !challenge && <p role="status" className="mb-4 rounded-md bg-muted px-3 py-2 text-sm">{t('auth.accountDeleted')}</p>}
         {challenge ? <TwoStep challenge={challenge} onRestart={() => { setChallenge(null); setError(t('auth.twoStepExpired')); }} /> : <>
         <Form {...form}>
           <form onSubmit={onSubmit} className="space-y-4" noValidate>

@@ -4,7 +4,7 @@
 // (rename, leave, delete, resend an invitation).
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { api, http } from './client';
+import { api, getAccessToken, http } from './client';
 import { keys } from './queries';
 import type { Invitation, Member, OrgSummary, Session } from './types';
 
@@ -41,6 +41,8 @@ export const accountApi = {
     http.post<void>('/me/password', { currentPassword, newPassword }),
   verifyEmail: (token: string) => http.post<void>('/auth/verify-email', { token }),
   resendVerification: () => http.post<void>('/me/verify-email/resend'),
+  deletionBlockers: () => http.get<string[]>('/me/delete/blockers'),
+  deleteAccount: (password: string, code: string | null) => http.post<void>('/me/delete', { password, code }),
   twoStepStatus: () => http.get<TwoStepStatus>('/me/two-step'),
   setupTwoStep: () => http.post<TwoStepSetup>('/me/two-step/setup'),
   enableTwoStep: (code: string) => http.post<{ codes: string[] }>('/me/two-step/enable', { code }),
@@ -98,4 +100,14 @@ export function describeAgent(ua: string | null): { browser: string | null; os: 
   const os = /iPhone|iPad|iPod/.test(ua) ? 'iOS' : /Android/.test(ua) ? 'Android' : /Mac OS X|Macintosh/.test(ua) ? 'macOS'
     : /Windows/.test(ua) ? 'Windows' : /CrOS/.test(ua) ? 'ChromeOS' : /Linux/.test(ua) ? 'Linux' : null;
   return { browser, os, mobile: /Mobi|iPhone|Android/.test(ua) };
+}
+
+/** Owners: every row and file of the organisation as a ZIP of CSV files, downloaded with the bearer token. */
+export async function downloadOrgExport(org: string) {
+  const res = await fetch(`/api${o(org)}/export`, { headers: { Authorization: `Bearer ${getAccessToken() ?? ''}` }, credentials: 'include' });
+  if (!res.ok) throw new Error(String(res.status));
+  const name = /filename="([^"]+)"/.exec(res.headers.get('Content-Disposition') ?? '')?.[1] ?? `${org}-export.zip`;
+  const href = URL.createObjectURL(await res.blob());
+  Object.assign(document.createElement('a'), { href, download: name }).click();
+  URL.revokeObjectURL(href);
 }

@@ -32,6 +32,14 @@ export const en = {
   twoStepOffLead: 'Sign-in will ask only for your password. Enter your password and a code from the app or a recovery code.',
   twoStepOffDone: 'Two-step sign-in is off',
   twoStepCodeOrRecovery: 'Code from the app, or a recovery code',
+  deleteTitle: 'Delete my account',
+  deleteLead: 'Your sign-in, email, photo, two-step sign-in and devices are erased, and you leave every organisation. Organisations keep the records they need as your employer (your name on tasks, HR and payroll).',
+  deleteBlocked: 'First hand these organisations to another owner, or delete them: {orgs}',
+  deleteConfirmTitle: 'Delete your account for good?',
+  deleteConfirmBody: 'This can’t be undone. You can sign up again later with the same email, as a new account.',
+  deleteType: 'Type {word} to confirm',
+  deleteWord: 'DELETE',
+  deleteForever: 'Delete my account',
 };
 
 export const km: Record<keyof typeof en, string> = {
@@ -67,4 +75,12 @@ export const km: Record<keyof typeof en, string> = {
   twoStepOffLead: 'ការចូលនឹងសួររកតែពាក្យសម្ងាត់របស់អ្នក។ សូមបញ្ចូលពាក្យសម្ងាត់ និងលេខកូដពីកម្មវិធី ឬលេខកូដសង្គ្រោះ។',
   twoStepOffDone: 'ការចូលពីរជំហានត្រូវបានបិទ',
   twoStepCodeOrRecovery: 'លេខកូដពីកម្មវិធី ឬលេខកូដសង្គ្រោះ',
+  deleteTitle: 'លុបគណនីរបស់ខ្ញុំ',
+  deleteLead: 'ការចូល អ៊ីមែល រូបថត ការចូលពីរជំហាន និងឧបករណ៍របស់អ្នកនឹងត្រូវលុប ហើយអ្នកចាកចេញពីគ្រប់ស្ថាប័ន។ ស្ថាប័នរក្សាទុកកំណត់ត្រាដែលពួកគេត្រូវការក្នុងនាមជានិយោជក (ឈ្មោះរបស់អ្នកលើកិច្ចការ ធនធានមនុស្ស និងប្រាក់បៀវត្សរ៍)។',
+  deleteBlocked: 'ជាមុនសិន សូមប្រគល់ស្ថាប័នទាំងនេះទៅម្ចាស់ផ្សេង ឬលុបវាចោល៖ {orgs}',
+  deleteConfirmTitle: 'លុបគណនីរបស់អ្នកជាអចិន្ត្រៃយ៍?',
+  deleteConfirmBody: 'វាមិនអាចត្រឡប់វិញបានទេ។ អ្នកអាចចុះឈ្មោះម្ដងទៀតពេលក្រោយដោយប្រើអ៊ីមែលដដែល ជាគណនីថ្មី។',
+  deleteType: 'វាយ {word} ដើម្បីបញ្ជាក់',
+  deleteWord: 'DELETE',
+  deleteForever: 'លុបគណនីរបស់ខ្ញុំ',
 };

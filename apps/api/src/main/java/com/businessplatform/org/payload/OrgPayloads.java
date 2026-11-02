@@ -78,4 +78,9 @@ public final class OrgPayloads {
 
     public record TeamResponse(UUID id, String name, List<UUID> membershipIds) {
     }
+
+    /** {@code code}: from the authenticator app, or a recovery code; only with two-step sign-in on. */
+    public record DeleteAccountRequest(@jakarta.validation.constraints.NotBlank String password,
+            @jakarta.validation.constraints.Size(max = 20) String code) {
+    }
 }
