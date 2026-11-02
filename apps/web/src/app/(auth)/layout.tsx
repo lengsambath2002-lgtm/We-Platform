@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import { LegalLinks } from '@/components/legal/legal-page';
 import { LanguageSwitch } from '@/components/shell/language-switch';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
@@ -12,6 +13,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           <span className="text-base font-semibold">Business Platform</span>
         </div>
         {children}
+        <LegalLinks />
       </div>
     </div>
   );

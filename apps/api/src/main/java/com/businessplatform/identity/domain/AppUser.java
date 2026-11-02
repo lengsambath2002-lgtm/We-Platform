@@ -72,6 +72,13 @@ public class AppUser {
     @Column(name = "email_verified_at")
     private Instant emailVerifiedAt;
 
+    /** The Terms of Service and Privacy Policy version accepted at sign-up (the web app's LEGAL_VERSION). */
+    @Column(name = "terms_version", length = 20)
+    private String termsVersion;
+
+    @Column(name = "terms_accepted_at")
+    private Instant termsAcceptedAt;
+
     /** The person deleted their account: email and sign-in erased (see {@code AccountDeletionService}). */
     @Column(name = "deleted_at")
     private Instant deletedAt;

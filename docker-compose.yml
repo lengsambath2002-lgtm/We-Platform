@@ -44,10 +44,40 @@ services:
       PLATFORM_OIDC_SIGNING_KEY: ${PLATFORM_OIDC_SIGNING_KEY:-}
       PLATFORM_OIDC_CLIENTS: ${PLATFORM_OIDC_CLIENTS:-}
       PLATFORM_VIRTUALBIZ_URL: ${PLATFORM_VIRTUALBIZ_URL:-}
+      PLATFORM_AUTH_REQUIRE_VERIFIED_EMAIL: ${PLATFORM_AUTH_REQUIRE_VERIFIED_EMAIL:-true}
+      PLATFORM_LEGAL_VERSION: ${PLATFORM_LEGAL_VERSION:-2026-11-02}
+      PLATFORM_BILLING_SELLER_NAME: ${PLATFORM_BILLING_SELLER_NAME:-Business Platform}
+      PLATFORM_BILLING_SELLER_ADDRESS: ${PLATFORM_BILLING_SELLER_ADDRESS:-Phnom Penh, Cambodia}
+      PLATFORM_BILLING_SELLER_TAX_ID: ${PLATFORM_BILLING_SELLER_TAX_ID:-}
+      PLATFORM_BILLING_BANK_NAME: ${PLATFORM_BILLING_BANK_NAME:-}
+      PLATFORM_BILLING_BANK_ACCOUNT_NAME: ${PLATFORM_BILLING_BANK_ACCOUNT_NAME:-}
+      PLATFORM_BILLING_BANK_ACCOUNT_NUMBER: ${PLATFORM_BILLING_BANK_ACCOUNT_NUMBER:-}
+      PLATFORM_BILLING_BAKONG_ACCOUNT_ID: ${PLATFORM_BILLING_BAKONG_ACCOUNT_ID:-}
     volumes:
       - files:/data/files
     ports:
       - "8280:8280"
+
+  # Daily backups (docs/ops/backups.md): database + uploaded files into the backups volume, kept 30 days.
+  # 19:00 UTC = 02:00 in Phnom Penh. Run one now: docker compose exec backup sh /ops/backup.sh
+  backup:
+    image: postgres:16-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: bizplat
+      PGPASSWORD: ${DATABASE_PASSWORD}
+      PGDATABASE: business_platform
+      FILES_DIR: /data/files
+      BACKUP_DIR: /backups
+      BACKUP_KEEP_DAYS: ${BACKUP_KEEP_DAYS:-30}
+    volumes:
+      - files:/data/files:ro
+      - backups:/backups
+      - ./ops/backup:/ops:ro
+    entrypoint: ["/bin/sh", "-c", "echo '${BACKUP_SCHEDULE:-0 19 * * *} /bin/sh /ops/backup.sh > /proc/1/fd/1 2>&1' | crontab - && exec crond -f -l 8"]
 
   # Catches every email locally (nothing reaches a real inbox): http://localhost:8025.
   # Point the API at it with PLATFORM_MAIL_HOST=mailpit, PLATFORM_MAIL_PORT=1025, PLATFORM_MAIL_SECURITY=none.
@@ -62,6 +92,9 @@ services:
       context: ./apps/web
       args:
         API_URL: http://api:8280
+        NEXT_PUBLIC_LEGAL_NAME: ${LEGAL_NAME:-}
+        NEXT_PUBLIC_LEGAL_ADDRESS: ${LEGAL_ADDRESS:-}
+        NEXT_PUBLIC_LEGAL_EMAIL: ${LEGAL_EMAIL:-}
     depends_on:
       - api
     ports:
@@ -70,3 +103,4 @@ services:
 volumes:
   db-data:
   files:
+  backups:

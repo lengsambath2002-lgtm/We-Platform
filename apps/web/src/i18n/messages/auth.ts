@@ -66,6 +66,13 @@ export const en = {
   twoStepUseApp: 'Use the authenticator app instead',
   twoStepExpired: 'That took too long. Sign in again.',
   accountDeleted: 'Your account was deleted. Thank you for using Business Platform.',
+  terms: 'Terms of Service',
+  privacy: 'Privacy Policy',
+  agreePre: 'By creating an account you agree to the',
+  agreeAnd: 'and the',
+  agreePost: '.',
+  legalUpdated: 'In effect from {date}',
+  legalNav: 'Legal',
 };
 
 export const km: Record<keyof typeof en, string> = {
@@ -130,4 +137,11 @@ export const km: Record<keyof typeof en, string> = {
   twoStepUseApp: 'ប្រើកម្មវិធីផ្ទៀងផ្ទាត់ជំនួសវិញ',
   twoStepExpired: 'ចំណាយពេលយូរពេក។ សូមចូលម្ដងទៀត។',
   accountDeleted: 'គណនីរបស់អ្នកត្រូវបានលុប។ សូមអរគុណដែលបានប្រើ Business Platform។',
+  terms: 'លក្ខខណ្ឌប្រើប្រាស់',
+  privacy: 'គោលការណ៍ឯកជនភាព',
+  agreePre: 'ដោយការបង្កើតគណនី អ្នកយល់ព្រមនឹង',
+  agreeAnd: 'និង',
+  agreePost: '។',
+  legalUpdated: 'ចូលជាធរមានចាប់ពី {date}',
+  legalNav: 'ផ្លូវច្បាប់',
 };
