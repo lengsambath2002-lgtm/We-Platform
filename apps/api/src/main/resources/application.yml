@@ -5,9 +5,10 @@ spring:
   application:
     name: business-platform-api
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://127.0.0.1:5433/business_platform}
-    username: ${DATABASE_USERNAME:bizplat}
-    password: ${DATABASE_PASSWORD:bizplat}
+    # DATABASE_URL, or its parts (DB_HOST, DB_PORT, DB_NAME: how Render hands them over).
+    url: ${DATABASE_URL:jdbc:postgresql://${DB_HOST:127.0.0.1}:${DB_PORT:5433}/${DB_NAME:business_platform}}
+    username: ${DATABASE_USERNAME:${DB_USER:bizplat}}
+    password: ${DATABASE_PASSWORD:${DB_PASSWORD:bizplat}}
   jpa:
     open-in-view: false
     hibernate:
